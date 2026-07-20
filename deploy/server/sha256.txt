@@ -1,0 +1,10 @@
+81a714ac5e8e15687371fc95a180953a29b732962f6616f791063ff127559412  ./brain/mmproj-ThinkingCap-Qwen3.6-27B-f16.gguf
+efcb358ef86f07cf24bfd617a66bb0baa7220e9dd1c31b7d7beacd7b49e67d93  ./brain/ThinkingCap-Qwen3.6-27B-Q8_0.gguf
+197f49a93027f9843772bd24a6a9e0be2a32a788de5a3def330e9c585d86edd1  ./perceive/mmproj-gemma-4-E4B-it-Q8_0.gguf
+f38ae62962657c7a6303c49bbb147e9ae23634e911cfa532fac0818c2e18b665  ./perceive/mtp-gemma-4-E4B-it-Q8_0.gguf
+f77995e4b6a569ab8f0d1bfdb7e8da4a0fa5b9e6f309b9bf3bdb76164d75e29f  ./perceive/mmproj-gemma-4-E4B-it-BF16.gguf
+34be82b17b4942d389b9b527170c4b058027abdd32531fda063d3d97dd8ce80a  ./perceive/gemma-4-E4B-it-Q8_0.gguf
+6b0c74962c44bc6bf4b655b9b02c13eda9d5a0491543ae976d1ac18e4b7892e2  ./sentinel/MiniCPM-V-4_6-Q4_K_M.gguf
+ca931d861d0801d9003e50697cd764721a334107c0e0415a51168ee1938462de  ./sentinel/mmproj-model-f16.gguf
+0dc7638539067268774c275a14a6ec9c7e01f7eeb2cff606c8590361fa527e4c  ./fast/MiniCPM5-1B-Q8_0.gguf
+06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439  ./embed/Qwen3-Embedding-0.6B-Q8_0.gguf
