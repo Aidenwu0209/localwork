@@ -53,8 +53,8 @@
       "steps": "deploy/mac/compose.data.yml 起 pgvector/pg15 与 redis;.env.example 含 GATEWAY_URL/OCR_URL/DATA_ROOT/逻辑模型名;Makefile 提供 data-up/data-down。",
       "verify": "make data-up 后 postgres 与 redis 健康;psql 可连。",
       "depends": ["M1.1"],
-      "status": "false",
-      "note": ""
+      "status": "doing",
+      "note": "2026-07-20 文件全部就位(compose.data.yml/.env.example/Makefile),docker compose config 校验通过;runtime 验证被 Docker Desktop 首次启动卡住(需用户在 GUI 打开一次 Docker.app 完成初始化),daemon 起来后跑 make data-up 即可收尾。端口避让:pg=5433,redis=6380。"
     },
     {
       "id": "M2.1",
@@ -63,8 +63,8 @@
       "steps": "clone plastic-labs/honcho 到 third_party/honcho;git checkout 340175ad;记录上游 URL 与 commit 到 docs/verification-log.md。",
       "verify": "git -C third_party/honcho rev-parse HEAD == 340175ad。",
       "depends": ["M1.1"],
-      "status": "false",
-      "note": "补丁包位置:/Users/wu/Projects/Aidenwu0209/honcho-patches/honcho-local-patches/"
+      "status": "accept",
+      "note": "2026-07-20 完成:submodule 注册,HEAD=340175ad5f8b49b73007481eef1885ffe99ac768,上游 plastic-labs/honcho。"
     },
     {
       "id": "M2.2",
@@ -73,8 +73,8 @@
       "steps": "git apply(或 patch -p1)应用 honcho-patches/honcho-local-patches/git-diffs/all-local-patches.diff;确认无 reject。",
       "verify": "git status 显示与补丁一致的修改文件清单(Dockerfile/openai.py/deriver.py/prompts.py/representation.py/prometheus.yml)。",
       "depends": ["M2.1"],
-      "status": "false",
-      "note": ""
+      "status": "accept",
+      "note": "2026-07-20 完成:git apply 零 reject,6 文件与补丁清单一致;补丁本体入仓 deploy/mac/honcho-patches/01-local-patches.diff;重建脚本 deploy/mac/setup-honcho.sh(submodule 保持 pristine,工作树用补丁栈重建)。"
     },
     {
       "id": "M2.3",
@@ -83,8 +83,8 @@
       "steps": "src/deriver/prompts.py 中的真实城市/职业/项目/内网 IP 等示例替换为虚构且等信息密度的例子;TZ 统一 Asia/Shanghai。",
       "verify": "grep 不再命中原个人信息关键词(城市名/IP/项目名);例子数量与结构不变。",
       "depends": ["M2.2"],
-      "status": "false",
-      "note": "此项是提交合规硬要求,验收从严。"
+      "status": "accept",
+      "note": "2026-07-20 完成:prompts.py few-shot 全部替换为合成人物(新加坡后端工程师,等信息密度);grep Malaysia/192.168/starbia/Fortuner/2KDFTV/ECU/MSL 零命中;净化差量入仓 02-sanitize-prompts.diff(40 行);TZ 走 compose 层面 Asia/Shanghai。"
     },
     {
       "id": "M2.4",
@@ -93,8 +93,8 @@
       "steps": "删除或注释 cadvisor 的 platform: linux/arm64 问题项(监控主战场在服务器侧);SearXNG 保持 disabled;确认 api/deriver/database/redis 四服务可起。",
       "verify": "docker compose config 通过;honcho 栈 up 后 /health 返回 200。",
       "depends": ["M2.2"],
-      "status": "false",
-      "note": ""
+      "status": "doing",
+      "note": "2026-07-20 自建 compose.honcho.yml(api+deriver,库/redis 复用 data 层,无 cadvisor/searxng/监控,端口 8100)+ honcho.env.example(网关逻辑名路由:deriver=perceive,dialectic 五档=brain,embedding=embed 1024 维,dream 关闭,telemetry 关闭);config 校验通过;build+/health 验证等 Docker daemon。"
     },
     {
       "id": "M2.5",
@@ -123,8 +123,8 @@
       "steps": "deploy/mac/timeline-init.sql 按手册 §6.3;在 M1.3 的 postgres 里建独立 schema/db。",
       "verify": "\\d timeline_events 结构与手册一致;两个扩展 created;三个索引存在。",
       "depends": ["M1.3"],
-      "status": "false",
-      "note": ""
+      "status": "doing",
+      "note": "2026-07-20 DDL 已写入 deploy/mac/timeline-init.sql(随 postgres 首次启动自动执行,含 honcho 库创建、vector+pg_trgm、hnsw/trgm/ts 索引、end_ts 合并字段);验证同样等 Docker daemon。"
     },
     {
       "id": "M3.2",

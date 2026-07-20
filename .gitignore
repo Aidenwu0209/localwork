@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+deploy/mac/honcho.env
 *.pem
 *.key
 
