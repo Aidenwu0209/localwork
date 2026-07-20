@@ -1,0 +1,30 @@
+# secrets & env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# models & large artifacts (rebuildable via deploy/server/download-models.sh)
+*.gguf
+models/
+
+# user memory data (never in git)
+dejaview-data/
+data/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.uv/
+
+# node
+node_modules/
+
+# os / editor
+.DS_Store
+*.log
+.idea/
+.vscode/

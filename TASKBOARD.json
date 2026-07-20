@@ -1,0 +1,350 @@
+{
+  "project": "DejaView",
+  "board_version": 1,
+  "updated": "2026-07-20",
+  "authoritative_location": "/Users/wu/Projects/Aidenwu0209/localwork/TASKBOARD.json(仓库根,唯一权威;随每次 push 备份到 github.com/Aidenwu0209/localwork)",
+  "instructions": [
+    "状态机:false(未开始) -> doing(进行中) -> accept(完成且验收通过)。特殊态 blocked(被外部依赖卡住,note 必须写清缺什么)。",
+    "领取规则:从上到下找第一个 status=false 且 depends 全部为 accept 的任务;将其置为 doing 后开工;同一时间只允许一个 doing(并行 agent 除外,需在 note 写明认领人)。",
+    "完成规则:逐条核对 verify 字段 -> 状态改 accept -> note 写一行结果(含产物路径) -> git commit(格式 '<ID>: <summary>') -> git push。",
+    "崩溃恢复:若发现遗留的 doing 任务,先按其 verify 字段核验实际完成度:已达标则直接置 accept 并补 commit;未达标则清理半成品后重做。",
+    "git 身份纪律:所有 commit 的作者必须且只能是 Aidenwu0209 <1418557225@qq.com>(已是全局 git 配置,禁止覆盖);commit message 禁止出现 Co-authored-by、Generated with、AI/Agent 署名等任何附加 trailer。",
+    "备份纪律:每完成一个任务必须 push 到 GitHub(G0 未完成期间允许先本地 commit 积压,G0 一通过立即补 push)。仓库开发期 private,提交比赛前转 public。",
+    "存储策略:能进 GitHub 的一律进 GitHub(代码/脚本/文档/manifest/合成测试资产);模型不进 GitHub——靠 manifest+sha256+引导脚本重建,服务器模型在 overlay /root/dejaview-models/,引导脚本与清单持久化于 /workspace/dejaview-models/(唯一持久卷,仅 10GB);用户真实记忆数据永不进 GitHub。",
+    "硬件事实(已实测):Mac = Apple M5 / 16GB 统一内存 → 本地模型按需起停,禁止全员常驻;服务器 /workspace 仅 10GB,大文件放 overlay(2.0T 可用)。无云 API key:开发推理全部本地(Metal)。",
+    "服务器纪律(当前):仅允许 下载 + 只读检查(df/ls/echo);禁止查询或占用 GPU、禁止编译、禁止加载模型、禁止触碰任何在跑进程。S1 剩余(引擎+冒烟)与 S2(全量基准/联调)等用户开放。",
+    "隐私纪律:云端替身只喂合成数据;真实个人数据一律等全本地链路后再接入;密钥/真实个人信息禁止入库。"
+  ],
+  "tasks": [
+    {
+      "id": "G0",
+      "group": "github",
+      "title": "GitHub 远程仓库接线(用户指定 Aidenwu0209/localwork)",
+      "steps": "用户提供现成私有空仓 localwork;git remote add origin git@github.com:Aidenwu0209/localwork.git 并推送。SSH 推送身份已验证可用(Aidenwu0209)。",
+      "verify": "git push 成功;GitHub 上能看到仓库与首个 commit。",
+      "depends": [],
+      "status": "accept",
+      "note": "2026-07-20 完成:remote=git@github.com:Aidenwu0209/localwork.git,首批三个 commit 已推(M1.1/M1.2/D8),作者 Aidenwu0209,无附加 trailer。"
+    },
+    {
+      "id": "M1.1",
+      "group": "mac-dev",
+      "title": "仓库骨架:git init + 手册 §4.2 目录树 + README 占位 + 任务板入仓",
+      "steps": "在 /Users/wu/Projects/Aidenwu0209/localwork/ 建仓;目录树按手册 §4.2;把 TASKBOARD.json 移入仓库根;首个 commit。",
+      "verify": "tree 与手册 §4.2 一致;git log 有首个 commit 且作者为 Aidenwu0209;TASKBOARD.json 在仓库根。",
+      "depends": [],
+      "status": "accept",
+      "note": "2026-07-20 完成:/Users/wu/Projects/Aidenwu0209/localwork/,目录树+README+.gitignore+任务板入仓。"
+    },
+    {
+      "id": "M1.2",
+      "group": "mac-dev",
+      "title": "文档入仓:EXECUTION_HANDBOOK.md 与 AGENT_KICKOFF_PROMPT.md 复制进 docs/",
+      "steps": "复制两份文档到 dejaview/docs/;创建空 docs/verification-log.md 与 docs/assets/。",
+      "verify": "docs/ 下三个文件存在且已 commit。",
+      "depends": ["M1.1"],
+      "status": "accept",
+      "note": "2026-07-20 完成:EXECUTION_HANDBOOK.md、AGENT_KICKOFF_PROMPT.md、verification-log.md(带首批 [VERIFY] 结论)入 docs/。"
+    },
+    {
+      "id": "M1.3",
+      "group": "mac-dev",
+      "title": "数据端编排:compose.data.yml(postgres+pgvector+redis)+ .env.example + Makefile",
+      "steps": "deploy/mac/compose.data.yml 起 pgvector/pg15 与 redis;.env.example 含 GATEWAY_URL/OCR_URL/DATA_ROOT/逻辑模型名;Makefile 提供 data-up/data-down。",
+      "verify": "make data-up 后 postgres 与 redis 健康;psql 可连。",
+      "depends": ["M1.1"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M2.1",
+      "group": "mac-dev",
+      "title": "Honcho 源码就位:clone 并钉在 340175ad",
+      "steps": "clone plastic-labs/honcho 到 third_party/honcho;git checkout 340175ad;记录上游 URL 与 commit 到 docs/verification-log.md。",
+      "verify": "git -C third_party/honcho rev-parse HEAD == 340175ad。",
+      "depends": ["M1.1"],
+      "status": "false",
+      "note": "补丁包位置:/Users/wu/Projects/Aidenwu0209/honcho-patches/honcho-local-patches/"
+    },
+    {
+      "id": "M2.2",
+      "group": "mac-dev",
+      "title": "应用本地化补丁 all-local-patches.diff",
+      "steps": "git apply(或 patch -p1)应用 honcho-patches/honcho-local-patches/git-diffs/all-local-patches.diff;确认无 reject。",
+      "verify": "git status 显示与补丁一致的修改文件清单(Dockerfile/openai.py/deriver.py/prompts.py/representation.py/prometheus.yml)。",
+      "depends": ["M2.1"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M2.3",
+      "group": "mac-dev",
+      "title": "提示词清洗:few-shot 个人信息全部替换为合成人物",
+      "steps": "src/deriver/prompts.py 中的真实城市/职业/项目/内网 IP 等示例替换为虚构且等信息密度的例子;TZ 统一 Asia/Shanghai。",
+      "verify": "grep 不再命中原个人信息关键词(城市名/IP/项目名);例子数量与结构不变。",
+      "depends": ["M2.2"],
+      "status": "false",
+      "note": "此项是提交合规硬要求,验收从严。"
+    },
+    {
+      "id": "M2.4",
+      "group": "mac-dev",
+      "title": "compose 适配 Mac:cadvisor 修正/移除,监控栈按需精简",
+      "steps": "删除或注释 cadvisor 的 platform: linux/arm64 问题项(监控主战场在服务器侧);SearXNG 保持 disabled;确认 api/deriver/database/redis 四服务可起。",
+      "verify": "docker compose config 通过;honcho 栈 up 后 /health 返回 200。",
+      "depends": ["M2.2"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M2.5",
+      "group": "mac-dev",
+      "title": "全本地 Metal 推理栈接线(无云 key)",
+      "steps": "Mac 上以 llama.cpp(Metal)按需起:sentinel(MiniCPM-V 4.6 Q4)/fast(MiniCPM5-1B Q8)/embed(Qwen3-Embedding-0.6B Q8)+ perceive(gemma-4-E4B Q4_K_M + mmproj,≈5.5GB);LiteLLM 网关本地起,brain 逻辑名开发期映射到同一 E4B 实例(兼任);Honcho .env 的 deriver/dialectic/embedding 全指向网关。Mac 端模型单独下载 Q4 档。",
+      "verify": "网关上 brain/perceive/sentinel/fast/embed 五个逻辑名均完成一次调用(brain/perceive 落同一 E4B);Honcho 启动无 provider 报错。",
+      "depends": ["M2.3", "M2.4", "M1.3"],
+      "status": "false",
+      "note": "无云 API key → 开发期数据也全程不出设备。llama.cpp 已装(brew b10050)。16GB 内存:按当前任务只起需要的实例。"
+    },
+    {
+      "id": "M2.6",
+      "group": "mac-dev",
+      "title": "记忆链路点亮:合成消息 -> deriver 事实 -> dialectic 问答",
+      "steps": "灌 20 条合成用户消息(用 M6.2 资产的子集或临时生成);等待 deriver 队列消化;peer chat 提问 3 个画像问题。",
+      "verify": "conclusions 非空且事实符合输入;dialectic 3 问均给出有依据回答;结果截录进 docs/verification-log.md。",
+      "depends": ["M2.5"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M3.1",
+      "group": "mac-dev",
+      "title": "时间线库:DDL + pgvector/pg_trgm 扩展落地",
+      "steps": "deploy/mac/timeline-init.sql 按手册 §6.3;在 M1.3 的 postgres 里建独立 schema/db。",
+      "verify": "\\d timeline_events 结构与手册一致;两个扩展 created;三个索引存在。",
+      "depends": ["M1.3"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M3.2",
+      "group": "mac-dev",
+      "title": "memoryd 骨架:FastAPI /ingest/frame|audio|doc + 配置加载",
+      "steps": "services/memoryd 项目化(uv);实现三个 ingest 端点与 pipeline 编排器接口(哨兵/OCR/新颖度门/理解先用可插拔 stub);.env 读 GATEWAY_URL/OCR_URL。",
+      "verify": "uvicorn 起服;POST 假 payload 返回 202 并落审计日志。",
+      "depends": ["M1.1"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M3.3",
+      "group": "mac-dev",
+      "title": "假帧端到端:fixture 流水线 -> 入库 -> 双路检索",
+      "steps": "用 fixture JSON(mock 哨兵放行+mock 理解事件)走完整入库;写 search 接口:向量(嵌入走真 embed)+pg_trgm+时间过滤。",
+      "verify": "灌 50 条假事件后,语义查询与精确子串查询均命中预期;耗时记录。",
+      "depends": ["M3.1", "M3.2", "M2.5"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M3.4",
+      "group": "mac-dev",
+      "title": "全本地流水线:sentinel/fast/perceive 全真推理(Metal),合成帧全链路",
+      "steps": "用 M6.1/M6.3 合成截图跑真实哨兵分类与新颖度门;perceive=本地 E4B(Metal)产语义事件;OCR 用 M5.1 服务。",
+      "verify": "10 张合成帧端到端入库;哨兵对敏感测试帧 block 且不落图;新颖度门对重复帧合并。",
+      "depends": ["M3.3", "M5.1", "M6.1", "M6.3"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M4.1",
+      "group": "mac-dev",
+      "title": "采集客户端:截屏 + 前台窗口元数据 + 事件触发",
+      "steps": "clients/capture:mss 截屏;pyobjc 取前台 app/窗口标题(需用户授一次屏幕录制权限);窗口/标题变化触发 + 30s 兜底 + 3s 最小间隔。",
+      "verify": "切换窗口触发截图,元数据字段完整;权限缺失时给出清晰指引而非崩溃。",
+      "depends": ["M1.1"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M4.2",
+      "group": "mac-dev",
+      "title": "采集客户端:dhash 去重 + 节流 + 锁屏暂停",
+      "steps": "imagehash dhash 距离<10 丢弃;锁屏/屏保检测暂停;≤2560px 等比缩放 WebP。",
+      "verify": "静止画面 1 分钟零上报;锁屏期间零采集。",
+      "depends": ["M4.1"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M4.3",
+      "group": "mac-dev",
+      "title": "采集客户端:上报 memoryd + 零落盘验证",
+      "steps": "POST /ingest/frame(multipart);内存处理即发即删;异常时丢弃不缓存。",
+      "verify": "运行期间 fs 监控(fs_usage/lsof)确认客户端目录零写入;memoryd 侧收到完整 meta。",
+      "depends": ["M4.2", "M3.2"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M4.4",
+      "group": "mac-dev",
+      "title": "采集端 30 分钟真实运行验收(全本地栈)",
+      "steps": "全栈本地(Metal)运行:哨兵/OCR/新颖度门/perceive 全开;用户正常工作 30 分钟。",
+      "verify": "时间线长出真实事件;全程零外部网络调用(网关日志佐证);哨兵审计日志有记录;客户端零落盘。",
+      "depends": ["M4.3", "M3.4"],
+      "status": "false",
+      "note": "无云 key 使零外部调用天然成立;16GB 内存注意仅保留必需实例。"
+    },
+    {
+      "id": "M5.1",
+      "group": "mac-dev",
+      "title": "ocrd 服务:PP-OCRv6 在 Mac CPU 跑通(ARM 后端选型)",
+      "steps": "services/ocrd:优先 onnxruntime 后端(ARM 友好),paddle 原生作对照([VERIFY] PaddleOCR 3.7 API 与 v6 模型拉取);POST /ocr 返回 full_text+blocks(bbox)。",
+      "verify": "对样例截图返回正确文本与 bbox;接口契约与手册 §6.1 一致;[VERIFY] 结论落 verification-log。",
+      "depends": ["M1.1"],
+      "status": "false",
+      "note": "延迟数字标注'Mac 参考值,待 EPYC 复测'。"
+    },
+    {
+      "id": "M5.2",
+      "group": "mac-dev",
+      "title": "PP-OCRv6 medium vs small 精度 A/B(T0.5 的 OCR 半边)",
+      "steps": "用 M6.1 的 20 张截图集跑两档;脚本自动比对关键实体(报错码/URL/数字/标识符)逐字准确率。",
+      "verify": "docs/benchmarks.md 增加精度对比表 + 弱项场景清单;档位建议明确。",
+      "depends": ["M5.1", "M6.1"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M6.1",
+      "group": "mac-dev",
+      "title": "测试资产:20 张合成截图集(代码/终端报错/中英网页/聊天)",
+      "steps": "构造并截取 4 类各 5 张,内容全合成;每张配 ground-truth 关键实体清单(JSON)。",
+      "verify": "tests/assets/screenshots/ 20 张 + ground-truth 齐备。",
+      "depends": ["M1.1"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M6.2",
+      "group": "mac-dev",
+      "title": "测试资产:30 条合成消息 + 50 对相邻帧(T0.9 用)",
+      "steps": "30 条模拟真实用户消息(覆盖身份/项目/工具/偏好/问题模式);50 对相邻帧含 20 对高重复、20 对边界、10 对全新。",
+      "verify": "tests/assets/ 下资产齐备且带预期标签。",
+      "depends": ["M1.1"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M6.3",
+      "group": "mac-dev",
+      "title": "测试资产:哨兵敏感页测试集(全部合成)",
+      "steps": "合成银行登录/密码框/私人聊天/证件样式页面各 5 张 + 20 张正常页,标注预期分类。",
+      "verify": "tests/assets/sentinel/ 齐备;无任何真实账号信息。",
+      "depends": ["M1.1"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M7.1",
+      "group": "mac-dev",
+      "title": "agentd 工具层:4 个 tool + search_timeline 三模式",
+      "steps": "services/agentd:定义 search_timeline(hybrid/semantic/exact)/query_user_model/search_kb/fetch_screenshot(highlight);对 M3.3 的库联调。",
+      "verify": "每个 tool 单测通过;exact 模式命中植入的报错码。",
+      "depends": ["M3.3"],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "M7.2",
+      "group": "mac-dev",
+      "title": "agentd 出口:OpenAI-compatible 接口 + 一条带引用回答",
+      "steps": "/v1/chat/completions 暴露 model=dejaview;brain(开发期由 E4B 兼任)跑 tool-calling 循环;回答带 [event#id] 引用。",
+      "verify": "一个合成问题端到端:检索->引用->回答,引用可回溯到事件。",
+      "depends": ["M7.1"],
+      "status": "false",
+      "note": "全本地;开发期验链路正确性,回答质量待 S2 换 27B 后复验。"
+    },
+    {
+      "id": "D1",
+      "group": "server-download",
+      "title": "SSH 连通性 + 磁盘只读检查",
+      "steps": "ssh -p 30147 root@36.150.116.200(本机别名 radeon-cloud);echo/df/nproc 只读。",
+      "verify": "SSH 免密成功;磁盘余量已记录。",
+      "depends": [],
+      "status": "accept",
+      "note": "2026-07-20 规划 agent 已验证:免密可达;/ 可用 2.0T(overlay 文件系统,疑似容器环境);nproc=128。未触碰 GPU 与任何在跑进程。"
+    },
+    {
+      "id": "D2",
+      "group": "server-download",
+      "title": "确定模型存放路径(持久化确认)+ 建目录",
+      "steps": "根目录是 overlay(容器):先向用户确认哪条路径在容器重建后仍保留(如挂载卷);确认后 mkdir 并记录。",
+      "verify": "路径已获用户确认为持久;目录存在;note 记录路径。",
+      "depends": ["D1"],
+      "status": "accept",
+      "note": "2026-07-20 用户确认唯一持久卷为 /workspace,实测仅 10GB(NFS PVC)放不下模型 → 决定:模型放 overlay /root/dejaview-models/(已建,2.0T 可用),接受可重建风险;引导脚本+sha256 清单持久化于 /workspace/dejaview-models/ 并入 GitHub,重建后一键恢复。"
+    },
+    {
+      "id": "D3",
+      "group": "server-download",
+      "title": "下载 brain:ThinkingCap-Qwen3.6-27B Q8_0 + mmproj-f16(≈28GB)",
+      "steps": "已由引导脚本统一执行:/workspace/dejaview-models/download-models.sh(hf CLI 于 /root/hfenv,HF_ENDPOINT=hf-mirror.com,nohup,日志 /root/dejaview-models/download.log);接手 agent 负责核对完成与 sha256。",
+      "verify": "两文件大小符合(27.1GB/0.9GB);sha256 记录到 note。",
+      "depends": ["D2"],
+      "status": "accept",
+      "note": "2026-07-20 完成:28G 主模型 + 889M mmproj 落 /root/dejaview-models/brain/;sha256 见 /workspace/dejaview-models/sha256.txt。"
+    },
+    {
+      "id": "D4",
+      "group": "server-download",
+      "title": "下载 perceive:gemma-4-E4B-it Q8 + mmproj-BF16",
+      "steps": "由引导脚本统一执行(同 D3);注意脚本拉的是 ggml-org 仓库全部 mmproj 变体,接手 agent 确认其中含 BF16 版,缺则从 batiai/gemma-4-E4B-it-GGUF 补 mmproj-BF16.gguf。",
+      "verify": "主模型 Q8_0 + mmproj-BF16 齐;sha256 记录。",
+      "depends": ["D2"],
+      "status": "accept",
+      "note": "2026-07-20 完成:Q8_0 7.5G + mmproj-BF16 946M + mmproj-Q8 534M,另有意外收获 mtp-gemma-4-E4B-it-Q8_0.gguf(95M,E4B 的 MTP 投机解码头,S 窗口值得测)。Gemma License 标注留给 M 侧。"
+    },
+    {
+      "id": "D5",
+      "group": "server-download",
+      "title": "下载 sentinel:MiniCPM-V-4.6-gguf Q4_K_M + mmproj-f16",
+      "steps": "由引导脚本统一执行(同 D3)。",
+      "verify": "≈0.5GB + ≈1.1GB 齐;sha256 记录。",
+      "depends": ["D2"],
+      "status": "accept",
+      "note": "2026-07-20 完成:Q4_K_M 505M + mmproj-model-f16 1.1G。教训:hf CLI 经 hf-mirror 对新仓库(Xet 存储)会 401,HF_HUB_DISABLE_XET=1 也无效,最终用 wget 直连 resolve URL 成功——引导脚本已固化此方法。"
+    },
+    {
+      "id": "D6",
+      "group": "server-download",
+      "title": "下载 fast:MiniCPM5-1B GGUF Q8_0",
+      "steps": "引导脚本尝试两个候选 repo 名,均 404 会在日志打 FAST_REPO_NOT_FOUND;若失败,接手 agent 解决 [VERIFY](查官方 README GGUF 链接或 ModelScope)后手动补下。",
+      "verify": "文件齐;[VERIFY] 结论 + sha256 记录。",
+      "depends": ["D2"],
+      "status": "accept",
+      "note": "2026-07-20 完成:MiniCPM5-1B-Q8_0.gguf 1.1G。[VERIFY 已解决]官方 repo 确认为 openbmb/MiniCPM5-1B-GGUF(HF 与 ModelScope 双发);官方另有 llama.cpp 部署 cookbook,llama-server 建议加 --jinja。"
+    },
+    {
+      "id": "D7",
+      "group": "server-download",
+      "title": "下载 embed:Qwen3-Embedding-0.6B-GGUF Q8_0(顺带 Mac 一份)",
+      "steps": "服务器份由引导脚本统一执行(同 D3);Mac 本地份(供 M2.5:embed Q8 + sentinel Q4 + fast Q8 + E4B Q4_K_M+mmproj)由 M2.5 领取者下载。",
+      "verify": "服务器与 Mac 各一份;sha256 记录。",
+      "depends": ["D2"],
+      "status": "accept",
+      "note": "2026-07-20 服务器份完成:Qwen3-Embedding-0.6B-Q8_0.gguf 610M。Mac 本地份归 M2.5 领取者(用同一 wget 直连法)。"
+    },
+    {
+      "id": "D8",
+      "group": "server-download",
+      "title": "模型清单落档:docs/model-manifest.md",
+      "steps": "汇总五组模型的 repo/文件名/大小/sha256/存放路径;commit + push。",
+      "verify": "manifest 与服务器实际文件一一对应。",
+      "depends": ["D3", "D4", "D5", "D6", "D7", "M1.1"],
+      "status": "accept",
+      "note": "2026-07-20 完成:docs/model-manifest.md(10 文件×sha256×License)+ deploy/server/{download-models.sh,sha256.txt} 入仓。"
+    }
+  ]
+}
