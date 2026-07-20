@@ -1,0 +1,276 @@
+diff --git a/Dockerfile b/Dockerfile
+index 18f23a85..fba6cae1 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -29,6 +29,8 @@ COPY uv.lock pyproject.toml /app/
+ # Sync the project
+ RUN --mount=type=cache,target=/root/.cache/uv \
+     uv sync --frozen --no-group dev
++# Fix typing_extensions compatibility with pydantic_core on Python 3.13
++RUN uv pip install --no-deps typing-extensions>=4.15.0
+ 
+ # Place executables in the environment at the front of the path
+ ENV PATH="/app/.venv/bin:$PATH"
+diff --git a/docker/prometheus.yml b/docker/prometheus.yml
+index 18041391..7e26baa7 100644
+--- a/docker/prometheus.yml
++++ b/docker/prometheus.yml
+@@ -1,5 +1,6 @@
+ global:
+-  scrape_interval: 15s
++  scrape_interval: 10s
++  evaluation_interval: 30s
+ 
+ scrape_configs:
+   - job_name: honcho-api
+@@ -8,3 +9,13 @@ scrape_configs:
+   - job_name: honcho-deriver
+     static_configs:
+       - targets: ["deriver:9090"]
++  - job_name: node-exporter
++    static_configs:
++      - targets: ["host.docker.internal:9100"]
++  - job_name: docker-exporter
++    scrape_interval: 15s
++    static_configs:
++      - targets: ["host.docker.internal:9323"]
++  - job_name: cadvisor
++    static_configs:
++      - targets: ["cadvisor:8080"]
+diff --git a/src/crud/representation.py b/src/crud/representation.py
+index 558a5cce..77bc74ff 100644
+--- a/src/crud/representation.py
++++ b/src/crud/representation.py
+@@ -177,7 +177,7 @@ class RepresentationManager:
+             metadata: schemas.DocumentMetadata = schemas.DocumentMetadata(
+                 message_ids=message_ids,
+                 premises=obs_premises,
+-                message_created_at=format_datetime_utc(message_created_at),
++                message_created_at=message_created_at.isoformat(),
+             )
+ 
+             documents_to_create.append(
+diff --git a/src/deriver/deriver.py b/src/deriver/deriver.py
+index 303a6ec2..f29e9330 100644
+--- a/src/deriver/deriver.py
++++ b/src/deriver/deriver.py
+@@ -182,8 +182,11 @@ async def process_representation_tasks_batch(
+     message_ids = [m.id for m in messages if m.peer_name == observed]
+ 
+     # Convert to Representation and save
++    content = response.content
++    if isinstance(content, str):
++        content = PromptRepresentation.model_validate_json(content)
+     observations = Representation.from_prompt_representation(
+-        response.content,
++        content,
+         message_ids,
+         latest_message.session_name,
+         latest_message.created_at,
+diff --git a/src/deriver/prompts.py b/src/deriver/prompts.py
+index 683834bf..f5476049 100644
+--- a/src/deriver/prompts.py
++++ b/src/deriver/prompts.py
+@@ -1,8 +1,8 @@
+ """
+-Minimal prompts for the deriver module optimized for speed.
++Prompts for the deriver module - upgraded with draw-conclusions methodology.
+ 
+-This module contains simplified prompt templates focused only on observation extraction.
+-NO peer card instructions, NO working representation - just extract observations.
++Extracts specific, self-contained, durable atomic facts from messages.
++Quality over quantity: fewer specific facts beat many vague ones.
+ """
+ 
+ from functools import cache
+@@ -15,62 +15,71 @@ def _normalized_custom_instructions(custom_instructions: str | None) -> str | No
+     """Return stripped custom instructions, if any."""
+     if custom_instructions is None:
+         return None
+-
+     normalized = custom_instructions.strip()
+     return normalized or None
+ 
+ 
+ def _custom_instructions_section(custom_instructions: str | None) -> str:
+     """Render optional custom instructions for the deriver prompt."""
+-    normalized_custom_instructions = _normalized_custom_instructions(
+-        custom_instructions
+-    )
++    normalized_custom_instructions = _normalized_custom_instructions(custom_instructions)
+     if normalized_custom_instructions is None:
+         return ""
+-
+-    return c(
+-        f"""
++    return c(f"""
+         CUSTOM INSTRUCTIONS:
+         {normalized_custom_instructions}
+-        """
+-    )
+-
+-
+-def minimal_deriver_prompt(
+-    peer_id: str,
+-    messages: str,
+-    custom_instructions: str | None = None,
+-) -> str:
+-    """
+-    Generate minimal prompt for fast observation extraction.
+-
+-    Args:
+-        peer_id: The ID of the user being analyzed.
+-        messages: All messages in the range (interleaving messages and new turns combined).
++        """)
+ 
+-    Returns:
+-        Formatted prompt string for observation extraction.
+-    """
++def minimal_deriver_prompt(peer_id, messages, custom_instructions=None):
+     custom_instructions_section = _custom_instructions_section(custom_instructions)
+-    return c(
+-        f"""
+-Analyze messages from {peer_id} to extract **explicit atomic facts** about them.
+-
+-[EXPLICIT] DEFINITION: Facts about {peer_id} that can be derived directly from their messages.
+-   - Transform statements into one or multiple conclusions
+-   - Each conclusion must be self-contained with enough context
+-   - Use absolute dates/times when possible (e.g. "June 26, 2025" not "yesterday")
+-
+-RULES:
+-- Properly attribute observations to the correct subject: if it is about {peer_id}, say so. If {peer_id} is referencing someone or something else, make that clear.
+-- Observations should make sense on their own. Each observation will be used in the future to better understand {peer_id}.
+-- Extract ALL observations from {peer_id} messages, using others as context.
+-- Contextualize each observation sufficiently (e.g. "Ann is nervous about the job interview at the pharmacy" not just "Ann is nervous")
+-
+-EXAMPLES:
+-- EXPLICIT: "I just had my 25th birthday last Saturday" → "{peer_id} is 25 years old", "{peer_id}'s birthday is June 21st"
+-- EXPLICIT: "I took my dog for a walk in NYC" → "{peer_id} has a dog", "{peer_id} lives in NYC"
+-- EXPLICIT: "{peer_id} attended college" + general knowledge → "{peer_id} completed high school or equivalent"
++    return c(f"""
++Analyze messages from {peer_id} to extract **explicit atomic facts** about them. Respond with a JSON object.
++
++JSON FORMAT: {{"explicit": [{{"content": "fact about the user"}}]}}
++
++## WHAT TO EXTRACT
++
++Single-sentence, self-contained, verifiable claims about {peer_id}. Each observation will be used by future agents.
++
++### Quality criteria - every fact must be:
++1. **Subject-attributed**: Names exactly who ("{peer_id} uses Python" not "uses Python")
++2. **Self-contained**: Makes sense without surrounding context
++3. **Specific**: No vague words ("something", "things", "errors") - name the specific thing
++4. **Durable**: Will still be meaningful next week. Skip fleeting states and one-off events
++5. **Atomic**: One fact per observation. Split compound statements
++6. **Attributed**: Clear if about someone other than {peer_id}
++
++### Patterns to extract:
++- Identity: "{peer_id} is 34 years old", "{peer_id} is from Malaysia"
++- Role: "{peer_id} works as a freelance AI engineer specializing in sign language recognition and ECU reverse engineering"
++- Projects: "{peer_id} uses Ghidra for Toyota Fortuner 2KDFTV diesel ECU firmware analysis"
++- Tools: "{peer_id} uses Python with conda environment 'starbia' on Windows 10"
++- Systems: "{peer_id} has a self-hosted Honcho instance on Mac at 192.168.0.135"
++- Preferences: "{peer_id} prefers config-driven, self-hosted architectures"
++- Methods: "{peer_id} traces ECU firmware subsystem-by-subsystem, not batch-bulk"
++- Goals: "{peer_id} wants to identify which calibration maps to modify for hardware tuning"
++- Constraints: "{peer_id} wants review before any destructive graph or ROM writes"
++- Problems: "{peer_id} encountered PermissionError WinError 32 during log rotation on Windows"
++
++### Good examples:
++- "{peer_id} is 34 years old."
++- "{peer_id} works as a freelance AI engineer specializing in sign language recognition and ECU reverse engineering."
++- "{peer_id} uses Python with conda environment 'starbia' on Windows 10."
++- "{peer_id} wants to implement interpolation-based hand tracking using Kalman filtering for MSL recognition."
++
++### SKIP these (anti-patterns):
++- Timestamps: "sent a message at 3:03 PM" (system tracks timing)
++- One-off states: "marked Nous unhealthy for 60 seconds"
++- Message mechanics: "asked a question", "provided a file path"
++- Vague judgments without evidence: "is good at programming"
++- Ephemeral events stale in hours or days
++- Duplicate restatements
++- Conversation structure: "changed topic", "ended session"
++
++### Context rules:
++- Prefer absolute dates ("June 18, 2026") over relative ("yesterday")
++- Include enough context ("nervous about the job interview at the pharmacy" not just "nervous")
++- Preserve certainty level from source ("might" stays "might")
++- If message is purely conversational ("ok", "thanks"), emit nothing
+ 
+ {custom_instructions_section}
+ 
+@@ -78,32 +87,16 @@ Messages to analyze:
+ <messages>
+ {messages}
+ </messages>
+-"""
+-    )
+-
++""")
+ 
+ @cache
+-def estimate_minimal_deriver_prompt_tokens() -> int:
+-    """Estimate the static minimal deriver prompt without custom instructions."""
+-    prompt = minimal_deriver_prompt(
+-        peer_id="",
+-        messages="",
+-        custom_instructions=None,
+-    )
++def estimate_minimal_deriver_prompt_tokens():
++    prompt = minimal_deriver_prompt(peer_id="", messages="", custom_instructions=None)
+     return estimate_tokens(prompt)
+ 
+-
+-def estimate_deriver_prompt_tokens(custom_instructions: str | None) -> int:
+-    """Estimate minimal deriver prompt tokens, including custom instructions if present."""
+-    normalized_custom_instructions = _normalized_custom_instructions(
+-        custom_instructions
+-    )
+-    if normalized_custom_instructions is None:
++def estimate_deriver_prompt_tokens(custom_instructions=None):
++    normalized = _normalized_custom_instructions(custom_instructions)
++    if normalized is None:
+         return estimate_minimal_deriver_prompt_tokens()
+-
+-    prompt = minimal_deriver_prompt(
+-        peer_id="",
+-        messages="",
+-        custom_instructions=normalized_custom_instructions,
+-    )
++    prompt = minimal_deriver_prompt(peer_id="", messages="", custom_instructions=normalized)
+     return estimate_tokens(prompt)
+diff --git a/src/llm/backends/openai.py b/src/llm/backends/openai.py
+index b2d82d91..952144aa 100644
+--- a/src/llm/backends/openai.py
++++ b/src/llm/backends/openai.py
+@@ -141,7 +141,9 @@ class OpenAIBackend:
+             extra_params=extra_params,
+         )
+ 
+-        if isinstance(response_format, type):
++        if extra_params and extra_params.get("json_mode"):
++            params["response_format"] = {"type": "json_object"}
++        elif isinstance(response_format, type):
+             params["response_format"] = response_format
+             try:
+                 response = await self._client.chat.completions.parse(**params)
+@@ -231,7 +233,9 @@ class OpenAIBackend:
+         )
+         params["stream"] = True
+         params["stream_options"] = {"include_usage": True}
+-        if isinstance(response_format, type):
++        if extra_params and extra_params.get("json_mode"):
++            params["response_format"] = {"type": "json_object"}
++        elif isinstance(response_format, type):
+             # parse() supports BaseModel types but streaming create() does not —
+             # convert to a json_schema dict so the streaming path works.
+             params["response_format"] = {
+@@ -243,8 +247,6 @@ class OpenAIBackend:
+             }
+         elif response_format is not None:
+             params["response_format"] = response_format
+-        elif extra_params and extra_params.get("json_mode"):
+-            params["response_format"] = {"type": "json_object"}
+ 
+         response_stream = await self._client.chat.completions.create(**params)
+         finish_reason: str | None = None

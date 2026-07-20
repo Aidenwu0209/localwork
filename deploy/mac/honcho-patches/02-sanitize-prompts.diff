@@ -1,0 +1,40 @@
+diff --git a/src/deriver/prompts.py b/src/deriver/prompts.py
+index f547604..0239f2e 100644
+--- a/src/deriver/prompts.py
++++ b/src/deriver/prompts.py
+@@ -49,22 +49,22 @@ Single-sentence, self-contained, verifiable claims about {peer_id}. Each observa
+ 6. **Attributed**: Clear if about someone other than {peer_id}
+ 
+ ### Patterns to extract:
+-- Identity: "{peer_id} is 34 years old", "{peer_id} is from Malaysia"
+-- Role: "{peer_id} works as a freelance AI engineer specializing in sign language recognition and ECU reverse engineering"
+-- Projects: "{peer_id} uses Ghidra for Toyota Fortuner 2KDFTV diesel ECU firmware analysis"
+-- Tools: "{peer_id} uses Python with conda environment 'starbia' on Windows 10"
+-- Systems: "{peer_id} has a self-hosted Honcho instance on Mac at 192.168.0.135"
++- Identity: "{peer_id} is 29 years old", "{peer_id} is based in Singapore"
++- Role: "{peer_id} works as a backend engineer specializing in payment systems and data pipelines"
++- Projects: "{peer_id} uses Wireshark to debug a gRPC streaming service for an inventory platform"
++- Tools: "{peer_id} uses Go 1.22 with a devcontainer setup on Ubuntu 22.04"
++- Systems: "{peer_id} runs a self-hosted Gitea instance on a home NAS"
+ - Preferences: "{peer_id} prefers config-driven, self-hosted architectures"
+-- Methods: "{peer_id} traces ECU firmware subsystem-by-subsystem, not batch-bulk"
+-- Goals: "{peer_id} wants to identify which calibration maps to modify for hardware tuning"
+-- Constraints: "{peer_id} wants review before any destructive graph or ROM writes"
+-- Problems: "{peer_id} encountered PermissionError WinError 32 during log rotation on Windows"
++- Methods: "{peer_id} reviews database migrations table-by-table before applying them"
++- Goals: "{peer_id} wants to cut the p95 latency of the checkout API below 200ms"
++- Constraints: "{peer_id} wants review before any destructive schema or data writes"
++- Problems: "{peer_id} encountered ECONNRESET errors during nightly batch uploads"
+ 
+ ### Good examples:
+-- "{peer_id} is 34 years old."
+-- "{peer_id} works as a freelance AI engineer specializing in sign language recognition and ECU reverse engineering."
+-- "{peer_id} uses Python with conda environment 'starbia' on Windows 10."
+-- "{peer_id} wants to implement interpolation-based hand tracking using Kalman filtering for MSL recognition."
++- "{peer_id} is 29 years old."
++- "{peer_id} works as a backend engineer specializing in payment systems and data pipelines."
++- "{peer_id} uses Go 1.22 with a devcontainer setup on Ubuntu 22.04."
++- "{peer_id} wants to implement idempotent retry logic with exponential backoff for the checkout API."
+ 
+ ### SKIP these (anti-patterns):
+ - Timestamps: "sent a message at 3:03 PM" (system tracks timing)

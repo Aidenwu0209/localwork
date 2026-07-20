@@ -1,0 +1,47 @@
+# Honcho stack for DejaView (task M2.4): api + deriver only.
+# Database/redis come from compose.data.yml (host ports 5433/6380);
+# monitoring lives server-side; SearXNG intentionally absent (offline narrative).
+# Host port 8100 avoids clashing with any pre-existing local Honcho on 8000.
+name: dejaview-honcho
+
+services:
+  honcho-api:
+    build:
+      context: ../../third_party/honcho
+      dockerfile: Dockerfile
+    entrypoint: ["sh", "docker/entrypoint.sh"]
+    env_file: honcho.env
+    environment:
+      - TZ=Asia/Shanghai
+    ports:
+      - "127.0.0.1:8100:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "/app/.venv/bin/python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2).read()",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+
+  honcho-deriver:
+    build:
+      context: ../../third_party/honcho
+      dockerfile: Dockerfile
+    entrypoint: ["/app/.venv/bin/python", "-m", "src.deriver"]
+    env_file: honcho.env
+    environment:
+      - TZ=Asia/Shanghai
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      honcho-api:
+        condition: service_healthy
+    restart: unless-stopped

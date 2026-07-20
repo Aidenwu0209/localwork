@@ -1,0 +1,42 @@
+# DejaView data layer (Mac, task M1.3): one postgres (timeline + honcho DBs) + redis.
+# Host ports are offset (5433/6380) so an existing local Honcho stack keeps 5432/6379.
+name: dejaview-data
+
+services:
+  database:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5433:5432"
+    environment:
+      - POSTGRES_USER=dejaview
+      - POSTGRES_PASSWORD=dejaview
+      - POSTGRES_DB=dejaview
+      - TZ=Asia/Shanghai
+      - PGTZ=Asia/Shanghai
+    command: ["postgres", "-c", "max_connections=200"]
+    volumes:
+      - ./timeline-init.sql:/docker-entrypoint-initdb.d/timeline-init.sql:ro
+      - dejaview-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dejaview -d dejaview"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8.2
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6380:6379"
+    volumes:
+      - dejaview-redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  dejaview-pgdata:
+  dejaview-redis:
