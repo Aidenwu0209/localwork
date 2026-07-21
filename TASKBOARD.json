@@ -131,8 +131,8 @@
       "depends": [
         "M2.5"
       ],
-      "status": "false",
-      "note": ""
+      "status": "accept",
+      "note": "2026-07-21 完成:services/memoryd/scripts/seed_honcho.py 点亮全链路。Honcho v3 需客户端提供 workspace/peer/session id(用 dejaview/owner/m2_6-seed)。灌 20 条 M6.2 合成消息(Jordan Lee)→ deriver 用 perceive 生成准确 summary('Jordan, 29-year-old Backend Engineer at Northwind Pay, focusing on payments',39s/1000-token summary)→ dialectic /chat 用 brain(E4B 兼任)准确回答'What does this person do for work?'(127s,含 Go/Postgres/Redis/gRPC/Kafka 技术栈+PHP 往期经验+早晨深度工作习惯,dialectic 是多轮 agent 会调 search_messages 取证)。3 个坑落 verification-log:① Honcho v3 id 客户端提供;② Docker host.docker.internal IPv6 优先致 psycopg 连 honcho DB 时 Network unreachable(deriver 早连接没事,chat 新连接撞 IPv6 500),改 honcho.env 用 IPv4 192.168.65.254 解决;③ E4B dev brain 慢(127s/问),S2 换 27B 复验质量与速度。链路点亮验收达标:conclusions 非空(deriver summary)+ dialectic 有依据回答。"
     },
     {
       "id": "M3.1",
