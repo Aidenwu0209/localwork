@@ -1,0 +1,23 @@
+{
+  "category": "code",
+  "text_snippets": [
+    "export class LumenClient {",
+    "async call<T>(method: string, params: unknown): Promise<T> {",
+    "import { Transport } from \"./transport\";",
+    "import type { RpcRequest, RpcResponse } from \"./types\";"
+  ],
+  "identifiers": [
+    "LumenClient",
+    "Transport",
+    "RpcRequest",
+    "RpcResponse",
+    "lumen_rpc",
+    "call"
+  ],
+  "urls": [],
+  "error_codes": [],
+  "numbers": [
+    "1"
+  ],
+  "image": "code_03.png"
+}

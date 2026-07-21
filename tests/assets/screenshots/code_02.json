@@ -1,0 +1,23 @@
+{
+  "category": "code",
+  "text_snippets": [
+    "pub fn next_token(&mut self) -> Result<Token> {",
+    "use crate::ast::{Token, Span};",
+    "pub struct Lexer<'a> {",
+    "use crate::errors::{AcmeError, Result};"
+  ],
+  "identifiers": [
+    "Lexer",
+    "next_token",
+    "Token",
+    "Span",
+    "AcmeError",
+    "UnexpectedChar",
+    "acme_parser",
+    "Lexer"
+  ],
+  "urls": [],
+  "error_codes": [],
+  "numbers": [],
+  "image": "code_02.png"
+}

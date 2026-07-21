@@ -1,0 +1,23 @@
+{
+  "category": "webpage",
+  "text_snippets": [
+    "DejaView 时间线设计 / Timeline Design Notes",
+    "DejaView 把屏幕活动建模为一条单调递增的事件流 (timeline)。"
+  ],
+  "identifiers": [],
+  "urls": [
+    "https://docs.demo-acme.io/zh/design/timeline.html",
+    "https://docs.demo-acme.io/zh/design/sentinel.html",
+    "https://docs.demo-acme.io/en/api/memoryd.html"
+  ],
+  "error_codes": [],
+  "numbers": [
+    "2026-07-15",
+    "142",
+    "v0.8.2",
+    "412",
+    "98.2",
+    "8"
+  ],
+  "image": "webpage_01.png"
+}

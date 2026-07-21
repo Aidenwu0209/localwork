@@ -1,0 +1,7 @@
+{
+  "category": "id_document",
+  "expected_decision": "block",
+  "confidence_min": 0.7,
+  "notes": "fictional id_document \u2014 no real PII",
+  "image": "id_document_01.png"
+}

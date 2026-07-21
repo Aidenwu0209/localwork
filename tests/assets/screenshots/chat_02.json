@@ -1,0 +1,26 @@
+{
+  "category": "chat",
+  "text_snippets": [
+    "ImportError: libacme.so.3: cannot open shared object file",
+    "opened ACME-7781, fix is in PR 142",
+    "also got LUMEN-5563 once the ingest worker started"
+  ],
+  "identifiers": [
+    "jordan_ops",
+    "casey_eng",
+    "riley_ml",
+    "acme-parser",
+    "libacme"
+  ],
+  "urls": [],
+  "error_codes": [
+    "ACME-7781",
+    "LUMEN-5563"
+  ],
+  "numbers": [
+    "3",
+    "142",
+    "8004"
+  ],
+  "image": "chat_02.png"
+}

@@ -1,0 +1,27 @@
+{
+  "category": "webpage",
+  "text_snippets": [
+    "lumen-rpc 基准测试 / Benchmarks",
+    "call            p50=8.00ms   p99=21.40ms   42910 req/s"
+  ],
+  "identifiers": [
+    "lumen-rpc"
+  ],
+  "urls": [
+    "https://bench.demo-acme.io/lumen-rpc/2026-07-15.html",
+    "https://bench.demo-acme.io/lumen-rpc/raw.csv",
+    "https://docs.demo-acme.io/en/lumen-rpc/method.html"
+  ],
+  "error_codes": [],
+  "numbers": [
+    "2026-07-15",
+    "1.2.0",
+    "42,910",
+    "31,204",
+    "8",
+    "88,210",
+    "5,170",
+    "64"
+  ],
+  "image": "webpage_03.png"
+}

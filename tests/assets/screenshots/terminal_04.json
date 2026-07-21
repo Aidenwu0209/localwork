@@ -1,0 +1,25 @@
+{
+  "category": "terminal",
+  "text_snippets": [
+    "LUMEN-5563: connection refused (target 127.0.0.1:8004)",
+    "LUMEN-5563: no lumen-rpc gateway listening on 8004",
+    "https://docs.demo-acme.io/errors/LUMEN-5563"
+  ],
+  "identifiers": [
+    "lumen-rpc",
+    "lumen",
+    "gateway",
+    "grpcurl"
+  ],
+  "urls": [
+    "https://docs.demo-acme.io/errors/LUMEN-5563"
+  ],
+  "error_codes": [
+    "LUMEN-5563"
+  ],
+  "numbers": [
+    "8004",
+    "3.000"
+  ],
+  "image": "terminal_04.png"
+}

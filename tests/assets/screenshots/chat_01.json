@@ -1,0 +1,28 @@
+{
+  "category": "chat",
+  "text_snippets": [
+    "error: ROCM-4042: HIP buffer alloc failed, asked for 2048 MiB but only 1024 free",
+    "https://docs.demo-acme.io/errors/ROCM-4042",
+    "logged it as NOVA-9012 in the synthetic tracker"
+  ],
+  "identifiers": [
+    "alex_w",
+    "morgan_dev",
+    "sam_qa",
+    "dejaview-core",
+    "sentinel"
+  ],
+  "urls": [
+    "https://docs.demo-acme.io/errors/ROCM-4042"
+  ],
+  "error_codes": [
+    "ROCM-4042",
+    "NOVA-9012"
+  ],
+  "numbers": [
+    "2048",
+    "1024",
+    "512"
+  ],
+  "image": "chat_01.png"
+}

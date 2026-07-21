@@ -1,0 +1,27 @@
+{
+  "category": "chat",
+  "text_snippets": [
+    "panic: runtime error: index out of range [5] with length 3",
+    "verifyBatch is iterating past the end of the 3-element slice",
+    "fix in PR 91, also filed NOVA-9012"
+  ],
+  "identifiers": [
+    "taylor_build",
+    "casey_eng",
+    "alex_w",
+    "nova-cipher",
+    "verifyBatch",
+    "TestVerifyEnvelope"
+  ],
+  "urls": [],
+  "error_codes": [
+    "NOVA-9012"
+  ],
+  "numbers": [
+    "5",
+    "3",
+    "91",
+    "0.3.4"
+  ],
+  "image": "chat_03.png"
+}

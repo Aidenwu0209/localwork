@@ -1,0 +1,21 @@
+{
+  "category": "code",
+  "text_snippets": [
+    "func NewSigner(km *keys.KeyManager) (*Signer, error) {",
+    "func (s *Signer) Sign(payload []byte) []byte {",
+    "type Signer struct {",
+    "package signing"
+  ],
+  "identifiers": [
+    "Signer",
+    "NewSigner",
+    "Sign",
+    "KeyManager",
+    "nova_cipher",
+    "signing"
+  ],
+  "urls": [],
+  "error_codes": [],
+  "numbers": [],
+  "image": "code_05.png"
+}

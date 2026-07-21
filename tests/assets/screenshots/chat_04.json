@@ -1,0 +1,26 @@
+{
+  "category": "chat",
+  "text_snippets": [
+    "ZEPHYR-3300: signature verification failed, issuer mismatch",
+    "the bundle was signed with the old key",
+    "https://docs.demo-acme.io/zh/zephyr-index/faq.html"
+  ],
+  "identifiers": [
+    "riley_ml",
+    "morgan_dev",
+    "sam_qa",
+    "zephyr-index",
+    "zephyr"
+  ],
+  "urls": [
+    "https://docs.demo-acme.io/zh/zephyr-index/faq.html"
+  ],
+  "error_codes": [
+    "ZEPHYR-3300"
+  ],
+  "numbers": [
+    "2026-06-30",
+    "3300"
+  ],
+  "image": "chat_04.png"
+}

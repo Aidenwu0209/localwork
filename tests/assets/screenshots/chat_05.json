@@ -1,0 +1,26 @@
+{
+  "category": "chat",
+  "text_snippets": [
+    "LUMEN-5563: connection refused (target 127.0.0.1:8004)",
+    "compose up gateway was skipped in the deploy",
+    "https://docs.demo-acme.io/en/lumen-rpc/method.html"
+  ],
+  "identifiers": [
+    "jordan_ops",
+    "taylor_build",
+    "casey_eng",
+    "lumen-rpc",
+    "gateway"
+  ],
+  "urls": [
+    "https://docs.demo-acme.io/en/lumen-rpc/method.html"
+  ],
+  "error_codes": [
+    "LUMEN-5563"
+  ],
+  "numbers": [
+    "8004",
+    "8"
+  ],
+  "image": "chat_05.png"
+}

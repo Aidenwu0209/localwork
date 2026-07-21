@@ -1,0 +1,26 @@
+{
+  "category": "terminal",
+  "text_snippets": [
+    "panic: runtime error: index out of range [5] with length 3",
+    "NOVA-9012: panicking test",
+    "https://docs.demo-acme.io/errors/NOVA-9012"
+  ],
+  "identifiers": [
+    "nova-cipher",
+    "verifyBatch",
+    "TestVerifyEnvelope",
+    "verify"
+  ],
+  "urls": [
+    "https://docs.demo-acme.io/errors/NOVA-9012"
+  ],
+  "error_codes": [
+    "NOVA-9012"
+  ],
+  "numbers": [
+    "44",
+    "91",
+    "0.412"
+  ],
+  "image": "terminal_03.png"
+}

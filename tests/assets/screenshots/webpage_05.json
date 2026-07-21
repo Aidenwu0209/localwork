@@ -1,0 +1,27 @@
+{
+  "category": "webpage",
+  "text_snippets": [
+    "nova-cipher 安全公告 / Advisory SEC-2026-0142",
+    "nova-cipher >= 0.3.0, < 0.3.4"
+  ],
+  "identifiers": [
+    "nova-cipher",
+    "zephyr"
+  ],
+  "urls": [
+    "https://security.demo-acme.io/advisories/SEC-2026-0142.html",
+    "https://docs.demo-acme.io/en/nova-cipher/upgrade.html",
+    "https://security.demo-acme.io/diffs/nova-0.3.4.patch"
+  ],
+  "error_codes": [
+    "SEC-2026-0142"
+  ],
+  "numbers": [
+    "2026-07-11",
+    "0.3.0",
+    "0.3.4",
+    "3",
+    "142"
+  ],
+  "image": "webpage_05.png"
+}

@@ -1,0 +1,7 @@
+{
+  "category": "private_chat",
+  "expected_decision": "block",
+  "confidence_min": 0.7,
+  "notes": "fictional private_chat \u2014 no real PII",
+  "image": "private_chat_04.png"
+}

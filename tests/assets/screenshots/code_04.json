@@ -1,0 +1,23 @@
+{
+  "category": "code",
+  "text_snippets": [
+    "class ZephyrIndex:",
+    "def add(self, eid: int, vec: np.ndarray):",
+    "def search(self, query: np.ndarray, k: int = 10):",
+    "class VectorEntry:"
+  ],
+  "identifiers": [
+    "ZephyrIndex",
+    "VectorEntry",
+    "zephyr_index",
+    "add",
+    "search"
+  ],
+  "urls": [],
+  "error_codes": [],
+  "numbers": [
+    "1024",
+    "10"
+  ],
+  "image": "code_04.png"
+}

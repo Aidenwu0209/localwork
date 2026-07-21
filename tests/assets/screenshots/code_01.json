@@ -1,0 +1,24 @@
+{
+  "category": "code",
+  "text_snippets": [
+    "def parse_timeline(self, events):",
+    "from acme_parser import Tokenizer, LexerError",
+    "class TimelineParser:",
+    "from lumen_rpc import RemoteCursor"
+  ],
+  "identifiers": [
+    "parse_timeline",
+    "TimelineParser",
+    "acme_parser",
+    "Tokenizer",
+    "LexerError",
+    "lumen_rpc",
+    "RemoteCursor"
+  ],
+  "urls": [],
+  "error_codes": [],
+  "numbers": [
+    "5000"
+  ],
+  "image": "code_01.png"
+}

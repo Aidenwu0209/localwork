@@ -1,0 +1,25 @@
+{
+  "category": "terminal",
+  "text_snippets": [
+    "ImportError: libacme.so.3: cannot open shared object file: No such file or directory",
+    "ImportError: ACME-7781: native backend missing (expected libacme.so.3)",
+    "https://docs.demo-acme.io/errors/ACME-7781"
+  ],
+  "identifiers": [
+    "acme_parser",
+    "ingest_pipeline",
+    "NativeLex",
+    "libacme"
+  ],
+  "urls": [
+    "https://docs.demo-acme.io/errors/ACME-7781"
+  ],
+  "error_codes": [
+    "ACME-7781"
+  ],
+  "numbers": [
+    "58",
+    "12"
+  ],
+  "image": "terminal_02.png"
+}

@@ -1,0 +1,182 @@
+[
+  {
+    "id": "msg_001",
+    "role": "user",
+    "content": "I'm Jordan, 29, based in Singapore. Backend engineer at Northwind Pay - a mid-size fintech - for about three and a half years now.",
+    "tags": ["identity", "background"]
+  },
+  {
+    "id": "msg_002",
+    "role": "user",
+    "content": "Our backend team is six engineers plus two SREs and one EM. I'm one of two focusing on the payments core; the others own onboarding, reconciliation, and reporting.",
+    "tags": ["identity", "team"]
+  },
+  {
+    "id": "msg_003",
+    "role": "user",
+    "content": "Most of my work is in Go 1.22, with Postgres 15 as the source of truth and Redis for hot caches. gRPC between services, Kafka for the async stuff.",
+    "tags": ["identity", "stack"]
+  },
+  {
+    "id": "msg_004",
+    "role": "user",
+    "content": "Before Northwind I spent two years at a logistics startup doing PHP, then switched to Go and never looked back. The concurrency model just clicks for me.",
+    "tags": ["identity", "background"]
+  },
+  {
+    "id": "msg_005",
+    "role": "user",
+    "content": "I work from home most days from my flat on the east side of Singapore. The office is in the CBD but I only go in for planning and postmortems.",
+    "tags": ["identity", "location"]
+  },
+  {
+    "id": "msg_006",
+    "role": "user",
+    "content": "Finished the auth refactor on acme-api today - split the monolithic middleware into per-route scopes. The PR is up, just waiting on Priya's review.",
+    "tags": ["project", "progress"]
+  },
+  {
+    "id": "msg_007",
+    "role": "user",
+    "content": "dejaview-demo is shaping up: the timeline ingest pipeline is wired up, and I got the embeddings flowing into pgvector. Next step is the novelty gate so we stop storing duplicate frames.",
+    "tags": ["project", "progress"]
+  },
+  {
+    "id": "msg_008",
+    "role": "user",
+    "content": "p95 on the checkout endpoint of acme-api is stuck at 340ms. The plan is idempotent retry with exponential backoff plus moving the fraud check off the hot path. Target is under 200ms by end of quarter.",
+    "tags": ["project", "goal"]
+  },
+  {
+    "id": "msg_009",
+    "role": "user",
+    "content": "Migrations for the new idempotency-key table are written. I reviewed them table-by-table like always - the last one backfills 12M rows so I'm batching it to avoid locking writers.",
+    "tags": ["project", "progress"]
+  },
+  {
+    "id": "msg_010",
+    "role": "user",
+    "content": "Kafka consumer lag on the reconciliation topic spiked again last night. I think it's the new batch flush logic; going to add per-partition metrics before I touch anything.",
+    "tags": ["project", "progress"]
+  },
+  {
+    "id": "msg_011",
+    "role": "user",
+    "content": "Cut a new build of dejaview-demo with the Honcho deriver hooked up. Atomic facts are landing in the user model - first time I can actually ask it what I was doing last Tuesday and get a sane answer.",
+    "tags": ["project", "progress"]
+  },
+  {
+    "id": "msg_012",
+    "role": "user",
+    "content": "Neovim with a fairly minimal config - lazy.nvim, telescope, lspconfig, and that's about it. I tried VS Code for a month but the modal editing hole was too big.",
+    "tags": ["tools", "preference"]
+  },
+  {
+    "id": "msg_013",
+    "role": "user",
+    "content": "tmux all day. One window per project, three panes - editor, tests, repl. Never could get into the IDE-embedded-terminal workflow.",
+    "tags": ["tools", "preference"]
+  },
+  {
+    "id": "msg_014",
+    "role": "user",
+    "content": "Devcontainer on an Ubuntu 22.04 base image. Means the new hires get a working toolchain in five minutes instead of two days of works-on-my-machine.",
+    "tags": ["tools", "preference"]
+  },
+  {
+    "id": "msg_015",
+    "role": "user",
+    "content": "Wireshark over tcpdump for gRPC debugging every time. Being able to dissect the HTTP/2 frames and see the actual message bodies beats squinting at hex.",
+    "tags": ["tools", "preference"]
+  },
+  {
+    "id": "msg_016",
+    "role": "user",
+    "content": "Self-hosted over SaaS where it makes sense - I run my own Gitea on a home NAS for personal projects, and I'd always rather own the Postgres and Redis config than fight a vendor's defaults.",
+    "tags": ["tools", "preference"]
+  },
+  {
+    "id": "msg_017",
+    "role": "user",
+    "content": "I do my deep work 7 to 11 in the morning, before standup. Afternoons are for reviews, pairing, and the slack-and-meetings tax. Anything that needs real focus gets scheduled into the AM block.",
+    "tags": ["habits", "workflow"]
+  },
+  {
+    "id": "msg_018",
+    "role": "user",
+    "content": "Database migrations get a table-by-table review before I apply them - schema, indexes, the backfill plan, the rollback. I've seen one too many lock-the-whole-table incidents to wing it.",
+    "tags": ["habits", "workflow"]
+  },
+  {
+    "id": "msg_019",
+    "role": "user",
+    "content": "Tests before the PR, no exceptions. Go's table-driven tests plus an integration suite on testcontainers. If CI is green and coverage on the touched paths is over 80 percent, I'm comfortable shipping.",
+    "tags": ["habits", "workflow"]
+  },
+  {
+    "id": "msg_020",
+    "role": "user",
+    "content": "Async over sync for anything that can wait. I'd rather write a one-paragraph doc comment than schedule a meeting - most quick calls are just badly-written documents.",
+    "tags": ["habits", "workflow"]
+  },
+  {
+    "id": "msg_021",
+    "role": "user",
+    "content": "I keep a running decisions log in the repo - just a markdown file with dated entries. Saves the same architecture argument every three months when someone new joins.",
+    "tags": ["habits", "workflow"]
+  },
+  {
+    "id": "msg_022",
+    "role": "user",
+    "content": "Hit ECONNRESET storms during the nightly batch uploads again. The retries amplify it - looks like the upstream load balancer is dropping idle connections at exactly 60 seconds. Tuning keepalive next.",
+    "tags": ["problem", "technical"]
+  },
+  {
+    "id": "msg_023",
+    "role": "user",
+    "content": "Postgres threw PG-08006 connection failures on the reporting pod this morning. Pool exhaustion - peak of 90 concurrent out of a max 100. Bumped the pool and added pgbouncer in transaction mode as a stopgap.",
+    "tags": ["problem", "technical"]
+  },
+  {
+    "id": "msg_024",
+    "role": "user",
+    "content": "acme-api's been logging GRPC-14 unavailable intermittently. Traced it to the fraud service timing out at exactly 2.5 seconds - its own DB is the bottleneck. Filed a ticket with the fraud team.",
+    "tags": ["problem", "technical"]
+  },
+  {
+    "id": "msg_025",
+    "role": "user",
+    "content": "Memory on the dejaview-demo embedding worker keeps climbing - looks like a leak in the HNSW index build. pprof points at the allocator, going to cap the batch size and force a GC between batches.",
+    "tags": ["problem", "technical"]
+  },
+  {
+    "id": "msg_026",
+    "role": "user",
+    "content": "Wireshark showed the gRPC stream on reconciliation is sending pings every 30s but the server ACKs late, so the client hits keepalive-timeout and tears down. Flipped the policy to allow more in-flight pings.",
+    "tags": ["problem", "technical"]
+  },
+  {
+    "id": "msg_027",
+    "role": "user",
+    "content": "Anyone got a rule of thumb for when to split a Kafka topic vs. add partitions? Our reconciliation topic is at 24 partitions and consumer lag is still rough - wondering if I'm patching the wrong layer.",
+    "tags": ["question", "open"]
+  },
+  {
+    "id": "msg_028",
+    "role": "user",
+    "content": "What's the current best practice for idempotency keys on a payments API - server-generated UUID vs. client-supplied hash of the request? I've seen both, the pros and cons aren't obvious to me.",
+    "tags": ["question", "open"]
+  },
+  {
+    "id": "msg_029",
+    "role": "user",
+    "content": "For pgvector HNSW indexes - m=16 ef_construction=64 has been fine for 1M vectors, but I'm projecting 50M. Anyone scaled past that on a single node, or is it time to shard?",
+    "tags": ["question", "open"]
+  },
+  {
+    "id": "msg_030",
+    "role": "user",
+    "content": "How do you all keep deriver prompts from drifting? Mine extract great for a week, then edge cases creep in and I'm patching few-shots again. Curious if there's a regression-test pattern that works.",
+    "tags": ["question", "open"]
+  }
+]

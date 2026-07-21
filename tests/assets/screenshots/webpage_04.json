@@ -1,0 +1,28 @@
+{
+  "category": "webpage",
+  "text_snippets": [
+    "zephyr-index 常见问题 / FAQ",
+    "默认 1024 维 (Qwen3-Embedding-0.6B)。"
+  ],
+  "identifiers": [
+    "zephyr-index",
+    "Qwen3-Embedding",
+    "HNSW"
+  ],
+  "urls": [
+    "https://docs.demo-acme.io/zh/zephyr-index/faq.html",
+    "https://docs.demo-acme.io/zh/zephyr-index/tuning.html",
+    "https://docs.demo-acme.io/zh/zephyr-index/sharding.html"
+  ],
+  "error_codes": [],
+  "numbers": [
+    "2026-06-30",
+    "58",
+    "1024",
+    "4",
+    "412",
+    "98.2",
+    "12"
+  ],
+  "image": "webpage_04.png"
+}

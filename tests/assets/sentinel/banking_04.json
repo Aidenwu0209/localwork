@@ -1,0 +1,7 @@
+{
+  "category": "banking_finance",
+  "expected_decision": "block",
+  "confidence_min": 0.7,
+  "notes": "fictional banking_finance \u2014 no real PII",
+  "image": "banking_04.png"
+}

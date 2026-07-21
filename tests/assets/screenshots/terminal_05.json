@@ -1,0 +1,24 @@
+{
+  "category": "terminal",
+  "text_snippets": [
+    "error: ZEPHYR-3300: signature verification failed",
+    "ZEPHYR-3300: bundle rejected (signature mismatch)",
+    "https://docs.demo-acme.io/errors/ZEPHYR-3300"
+  ],
+  "identifiers": [
+    "zephyr",
+    "zephyr-index",
+    "verify"
+  ],
+  "urls": [
+    "https://docs.demo-acme.io/errors/ZEPHYR-3300"
+  ],
+  "error_codes": [
+    "ZEPHYR-3300"
+  ],
+  "numbers": [
+    "412",
+    "3300"
+  ],
+  "image": "terminal_05.png"
+}

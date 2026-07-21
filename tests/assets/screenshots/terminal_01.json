@@ -1,0 +1,25 @@
+{
+  "category": "terminal",
+  "text_snippets": [
+    "error: ROCM-4042: HIP buffer alloc failed (requested 2048 MiB, available 1024 MiB)",
+    "https://docs.demo-acme.io/errors/ROCM-4042",
+    "let buf = device.alloc(bytes)?;"
+  ],
+  "identifiers": [
+    "dejaview-core",
+    "acme-parser",
+    "hip_alloc"
+  ],
+  "urls": [
+    "https://docs.demo-acme.io/errors/ROCM-4042"
+  ],
+  "error_codes": [
+    "ROCM-4042"
+  ],
+  "numbers": [
+    "2048",
+    "1024",
+    "142"
+  ],
+  "image": "terminal_01.png"
+}

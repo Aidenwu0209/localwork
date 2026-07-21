@@ -1,0 +1,27 @@
+{
+  "category": "webpage",
+  "text_snippets": [
+    "acme-parser CHANGELOG",
+    "Lexer::next_token() now returns Eof instead of panicking on empty input"
+  ],
+  "identifiers": [
+    "acme-parser",
+    "Lexer"
+  ],
+  "urls": [
+    "https://docs.demo-acme.io/en/acme-parser/changelog.html",
+    "https://docs.demo-acme.io/dl/acme-parser-0.4.1.tar.gz",
+    "https://docs.demo-acme.io/dl/acme-parser-0.4.1.sig"
+  ],
+  "error_codes": [],
+  "numbers": [
+    "2026-07-09",
+    "37",
+    "0.4.1",
+    "412",
+    "18",
+    "64",
+    "52"
+  ],
+  "image": "webpage_02.png"
+}

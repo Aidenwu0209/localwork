@@ -1,0 +1,7 @@
+{
+  "category": "normal",
+  "expected_decision": "allow",
+  "confidence_min": 0.5,
+  "notes": "ordinary working content, no sensitive data",
+  "image": "normal_web_04.png"
+}

@@ -1,0 +1,934 @@
+[
+  {
+    "id": "pair_001",
+    "category": "high_overlap",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  ctx, cancel := context.WithCancel(context.Background())\n  defer cancel()\n  log.Println(\"listening on :8080\")\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  ctx, cancel := context.WithCancel(context.Background())\n  defer cancel()\n  log.Println(\"listening on :8080\") \n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 1.0,
+    "expected_jaccard_min": 0.85,
+    "expected_novelty_max": 0.2,
+    "expected_decision": "merge"
+  },
+  {
+    "id": "pair_002",
+    "category": "high_overlap",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  log.Println(\"starting server\")\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  log.Println(\"starting server\")\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  2 warnings"
+    },
+    "_audit_jaccard": 0.9574,
+    "expected_jaccard_min": 0.85,
+    "expected_novelty_max": 0.2,
+    "expected_decision": "merge"
+  },
+  {
+    "id": "pair_003",
+    "category": "high_overlap",
+    "frame_a": {
+      "app": "Terminal",
+      "title": "go test ./internal/auth/...",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\nok  github.com/northwind/acme-api/internal/auth  0.041s\n"
+    },
+    "frame_b": {
+      "app": "Terminal",
+      "title": "go test ./internal/auth/...",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\nok  github.com/northwind/acme-api/internal/auth  0.041s\nok  github.com/northwind/acme-api/internal/auth  0.041s\n"
+    },
+    "_audit_jaccard": 1.0,
+    "expected_jaccard_min": 0.85,
+    "expected_novelty_max": 0.2,
+    "expected_decision": "merge"
+  },
+  {
+    "id": "pair_004",
+    "category": "high_overlap",
+    "frame_a": {
+      "app": "Slack",
+      "title": "# payments-team",
+      "ocr_text": "Slack  |  # # payments-team  |  12 members\n  Priya  9:42   lgtm, ship it\n  Marcus 9:43   👍\n  Jordan 9:44   anyone seen the kafka lag this morning?\n  Type a message...\n"
+    },
+    "frame_b": {
+      "app": "Slack",
+      "title": "# payments-team",
+      "ocr_text": "Slack  |  # # payments-team  |  12 members\n  Priya  9:42   lgtm, ship it\n  Marcus 9:43   👍\n  Jordan 9:44   anyone seen the kafka lag this morning?\n  Jordan 9:45   yeah checking now\n  Type a message...\n"
+    },
+    "_audit_jaccard": 0.8667,
+    "expected_jaccard_min": 0.85,
+    "expected_novelty_max": 0.2,
+    "expected_decision": "merge"
+  },
+  {
+    "id": "pair_005",
+    "category": "high_overlap",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  srv := &http.Server{Addr: \":8080\"}\n}\n>>> srv := &http.Server\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  srv := &http.Server{Addr: \":8080\"}\n}\n>>> go srv.ListenAndServe()\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.9608,
+    "expected_jaccard_min": 0.85,
+    "expected_novelty_max": 0.2,
+    "expected_decision": "merge"
+  },
+  {
+    "id": "pair_006",
+    "category": "high_overlap",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/internal/auth/handler.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- internal/auth/handler.go ---\npackage auth\n\nimport (\n  \"net/http\"\n  \"time\"\n)\n\ntype Handler struct {\n  svc *Service\n}\n\nfunc (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {\n  h.svc.Authorize(r)\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/internal/auth/handler.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- internal/auth/handler.go ---\npackage auth\n\nimport (\n  \"net/http\"\n  \"time\"\n)\n\ntype Handler struct {\n  svc *Service\n}\n\nfunc (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {\n  // TODO: rate limit\n  h.svc.Authorize(r)\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.9286,
+    "expected_jaccard_min": 0.85,
+    "expected_novelty_max": 0.2,
+    "expected_decision": "merge"
+  },
+  {
+    "id": "pair_007",
+    "category": "borderline",
+    "frame_a": {
+      "app": "Chrome",
+      "title": "pkg.go.dev/net/http",
+      "ocr_text": "Chrome  |  pkg.go.dev/net/http\nListenAndServe starts an HTTP server with a given address and handler.\n"
+    },
+    "frame_b": {
+      "app": "Chrome",
+      "title": "pkg.go.dev/net/http",
+      "ocr_text": "Chrome  |  pkg.go.dev/net/http\nListenAndServe starts an HTTP server with a given address and handler.\nThe handler is typically nil, in which case DefaultServeMux is used.\n"
+    },
+    "_audit_jaccard": 0.5833,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_008",
+    "category": "borderline",
+    "frame_a": {
+      "app": "GitHub",
+      "title": "PR #412 - auth refactor",
+      "ocr_text": "GitHub  |  northwind/acme-api  |  Pull request #412\njordan opened this pull request 2 hours ago\n"
+    },
+    "frame_b": {
+      "app": "GitHub",
+      "title": "PR #412 - auth refactor",
+      "ocr_text": "GitHub  |  northwind/acme-api  |  Pull request #412\njordan opened this pull request 2 hours ago\npriya: looks good, minor nit on naming\n"
+    },
+    "_audit_jaccard": 0.6316,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_009",
+    "category": "high_overlap",
+    "frame_a": {
+      "app": "Terminal",
+      "title": "make run",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\nmake run\nserving on :8080"
+    },
+    "frame_b": {
+      "app": "Terminal",
+      "title": "make run",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\nmake run\nserving on :8080\n^C\n"
+    },
+    "_audit_jaccard": 0.9091,
+    "expected_jaccard_min": 0.85,
+    "expected_novelty_max": 0.2,
+    "expected_decision": "merge"
+  },
+  {
+    "id": "pair_010",
+    "category": "high_overlap",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  ctx, cancel := context.WithCancel(context.Background())\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  ctx, cancel := context.WithCancel(context.Background())\n  defer cancel()\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.96,
+    "expected_jaccard_min": 0.85,
+    "expected_novelty_max": 0.2,
+    "expected_decision": "merge"
+  },
+  {
+    "id": "pair_011",
+    "category": "high_overlap",
+    "frame_a": {
+      "app": "Slack",
+      "title": "# payments-team",
+      "ocr_text": "Slack  |  # # payments-team  |  12 members\n  Priya  9:42   lgtm, ship it\n  Marcus 9:43   👍\n  Jordan 9:44   kafka lag fixed, was the flush logic\n  Type a message...\n"
+    },
+    "frame_b": {
+      "app": "Slack",
+      "title": "# payments-team",
+      "ocr_text": "Slack  |  # # payments-team  |  12 members\n  Priya  9:42   lgtm, ship it\n  Marcus 9:43   👍\n  Jordan 9:44   kafka lag fixed, was the flush logic :tada:\n  Type a message...\n"
+    },
+    "_audit_jaccard": 0.963,
+    "expected_jaccard_min": 0.85,
+    "expected_novelty_max": 0.2,
+    "expected_decision": "merge"
+  },
+  {
+    "id": "pair_012",
+    "category": "borderline",
+    "frame_a": {
+      "app": "Chrome",
+      "title": "localhost:8080/health",
+      "ocr_text": "Chrome  |  localhost:8080/health\n{\"status\":\"ok\",\"uptime\":312}\n"
+    },
+    "frame_b": {
+      "app": "Chrome",
+      "title": "localhost:8080/health",
+      "ocr_text": "Chrome  |  localhost:8080/health\n{\"status\":\"ok\",\"uptime\":313}\n"
+    },
+    "_audit_jaccard": 0.6,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_013",
+    "category": "high_overlap",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/internal/auth/handler.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- internal/auth/handler.go ---\npackage auth\n\nimport (\n  \"net/http\"\n  \"time\"\n)\n\ntype Handler struct {\n  svc *Service\n}\n\nfunc (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {\n  now := time.Now()\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/internal/auth/handler.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- internal/auth/handler.go ---\npackage auth\n\nimport (\n  \"net/http\"\n  t \"time\"\n)\n\ntype Handler struct {\n  svc *Service\n}\n\nfunc (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {\n  now := time.Now()\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.9818,
+    "expected_jaccard_min": 0.85,
+    "expected_novelty_max": 0.2,
+    "expected_decision": "merge"
+  },
+  {
+    "id": "pair_014",
+    "category": "borderline",
+    "frame_a": {
+      "app": "Terminal",
+      "title": "pwd",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\npwd\n/home/jordan/dev/acme-api"
+    },
+    "frame_b": {
+      "app": "Terminal",
+      "title": "pwd",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\npwd\n/home/jordan/dev/acme-api\ncd .. && pwd\n/home/jordan/dev"
+    },
+    "_audit_jaccard": 0.6364,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_015",
+    "category": "high_overlap",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  log.Println(\"listening on :8080\")\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  log.Println(\"listening on :8081\")\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.9583,
+    "expected_jaccard_min": 0.85,
+    "expected_novelty_max": 0.2,
+    "expected_decision": "merge"
+  },
+  {
+    "id": "pair_016",
+    "category": "borderline",
+    "frame_a": {
+      "app": "Slack",
+      "title": "# dejaview-demo",
+      "ocr_text": "Slack  |  # # dejaview-demo  |  12 members\n  Priya  9:42   lgtm, ship it\n  Marcus 9:43   👍\n  Jordan 9:44   embedding worker is leaking memory\n  Type a message...\n"
+    },
+    "frame_b": {
+      "app": "Slack",
+      "title": "# dejaview-demo",
+      "ocr_text": "Slack  |  # # dejaview-demo  |  12 members\n  Priya  9:42   lgtm, ship it\n  Marcus 9:43   👍\n  Jordan 9:44   embedding worker is leaking memory\n  Jordan 9:45   pprof pointed at the allocator, capping batch size\n  Type a message...\n"
+    },
+    "_audit_jaccard": 0.7273,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_017",
+    "category": "borderline",
+    "frame_a": {
+      "app": "Chrome",
+      "title": "redis.io/docs",
+      "ocr_text": "Chrome  |  redis.io/docs\nRedis documentation. Copyright 2025.\n"
+    },
+    "frame_b": {
+      "app": "Chrome",
+      "title": "redis.io/docs",
+      "ocr_text": "Chrome  |  redis.io/docs\nRedis documentation. Copyright 2026.\n"
+    },
+    "_audit_jaccard": 0.75,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_018",
+    "category": "borderline",
+    "frame_a": {
+      "app": "GitHub",
+      "title": "PR #412 checks",
+      "ocr_text": "GitHub  |  northwind/acme-api  |  Pull request #412\nCI: build (passing)  test (passing)  lint (passing)\n"
+    },
+    "frame_b": {
+      "app": "GitHub",
+      "title": "PR #412 checks",
+      "ocr_text": "GitHub  |  northwind/acme-api  |  Pull request #412\nCI: build (passing)  test (passing)  lint (passing)\nre-run all checks\n"
+    },
+    "_audit_jaccard": 0.7857,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_019",
+    "category": "borderline",
+    "frame_a": {
+      "app": "Terminal",
+      "title": "git log",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\ngit log --oneline\n4f3c2a1 fix: kafka flush logic"
+    },
+    "frame_b": {
+      "app": "Terminal",
+      "title": "git log",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\ngit log --oneline\n4f3c2a1 fix: kafka flush logic\n9b8d7e6 feat: auth scopes"
+    },
+    "_audit_jaccard": 0.7647,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_020",
+    "category": "high_overlap",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  log.Fatal(srv.ListenAndServe())\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  log.Fatal(srv.ListenAndServe())\n\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 1.0,
+    "expected_jaccard_min": 0.85,
+    "expected_novelty_max": 0.2,
+    "expected_decision": "merge"
+  },
+  {
+    "id": "pair_021",
+    "category": "borderline",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  ctx, cancel := context.WithCancel(context.Background())\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- internal/auth/handler.go ---\npackage auth\n\nimport (\n  \"net/http\"\n  \"time\"\n)\n\ntype Handler struct {\n  svc *Service\n}\n\nfunc (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {\n  h.svc.Authorize(r)\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.6129,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_022",
+    "category": "novel",
+    "frame_a": {
+      "app": "Terminal",
+      "title": "go test ./...",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\nok  github.com/northwind/acme-api/internal/auth  0.041s"
+    },
+    "frame_b": {
+      "app": "Terminal",
+      "title": "go test ./...",
+      "ocr_text": "Chrome  |  pkg.go.dev/context\nWithCancel returns a copy of parent with a new Done channel.\n"
+    },
+    "_audit_jaccard": 0.0,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_023",
+    "category": "borderline",
+    "frame_a": {
+      "app": "Slack",
+      "title": "# payments-team",
+      "ocr_text": "Slack  |  # # payments-team  |  12 members\n  Priya  9:42   lgtm, ship it\n  Marcus 9:43   👍\n  Jordan 9:44   kafka lag spike again overnight\n  Type a message...\n"
+    },
+    "frame_b": {
+      "app": "Slack",
+      "title": "# payments-team",
+      "ocr_text": "Slack  |  # # dejaview-demo  |  12 members\n  Priya  9:42   lgtm, ship it\n  Marcus 9:43   👍\n  Jordan 9:44   embedding worker is leaking memory\n  Type a message...\n"
+    },
+    "_audit_jaccard": 0.6,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_024",
+    "category": "borderline",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  srv := &http.Server{Addr: \":8080\"}\n  log.Fatal(srv.ListenAndServe())\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  srv := &http.Server{Addr: \":8080\"}\n  if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {\n    log.Fatal(err)\n  }\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.8421,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_025",
+    "category": "borderline",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/internal/auth/handler.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- internal/auth/handler.go ---\npackage auth\n\nimport (\n  \"net/http\"\n  \"time\"\n)\n\ntype Handler struct {\n  svc *Service\n}\n\nfunc (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {\n  h.svc.Authorize(r)\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/internal/auth/handler.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- internal/auth/handler.go ---\npackage auth\n\nimport (\n  \"net/http\"\n  \"time\"\n)\n\ntype Handler struct {\n  svc *Service\n}\n\nfunc (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {\n  token := r.Header.Get(\"Authorization\")\n  if token == \"\" {\n    http.Error(w, \"missing token\", 401)\n    return\n  }\n  h.svc.Authorize(r)\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.8254,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_026",
+    "category": "novel",
+    "frame_a": {
+      "app": "Terminal",
+      "title": "make build",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\nmake build\ngo build -o bin/server ./cmd/server\nbuilt bin/server"
+    },
+    "frame_b": {
+      "app": "Terminal",
+      "title": "make build",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\nmake deploy\nsending bin/server to northwind-prod\nrelease 4.12.0 promoted"
+    },
+    "_audit_jaccard": 0.3889,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_027",
+    "category": "novel",
+    "frame_a": {
+      "app": "GitHub",
+      "title": "PR #412",
+      "ocr_text": "GitHub  |  northwind/acme-api  |  Pull request #412\ndiff --git a/cmd/server/main.go b/cmd/server/main.go\n+ ctx, cancel := context.WithCancel(context.Background())\n"
+    },
+    "frame_b": {
+      "app": "GitHub",
+      "title": "PR #412",
+      "ocr_text": "GitHub  |  northwind/acme-api  |  Pull request #412\nCI: build passing  test passing  lint failing\n  golangci-lint: errcheck disabled\n"
+    },
+    "_audit_jaccard": 0.25,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_028",
+    "category": "novel",
+    "frame_a": {
+      "app": "Chrome",
+      "title": "localhost:8080/health",
+      "ocr_text": "Chrome  |  localhost:8080/health\n{\"status\":\"ok\",\"uptime\":312}\n"
+    },
+    "frame_b": {
+      "app": "Chrome",
+      "title": "localhost:8080/health",
+      "ocr_text": "Chrome  |  localhost:8080/metrics\nhttp_requests_total 41203\nhttp_request_duration_seconds 0.034\n"
+    },
+    "_audit_jaccard": 0.2222,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_029",
+    "category": "borderline",
+    "frame_a": {
+      "app": "Slack",
+      "title": "# payments-team",
+      "ocr_text": "Slack  |  # # payments-team  |  12 members\n  Priya  9:42   lgtm, ship it\n  Marcus 9:43   👍\n  Jordan 9:44   idempotency key approach?\n  Type a message...\n"
+    },
+    "frame_b": {
+      "app": "Slack",
+      "title": "# payments-team",
+      "ocr_text": "Slack  |  # # payments-team  |  12 members\n  Priya  9:42   lgtm, ship it\n  Marcus 9:43   👍\n  Jordan 9:44   idempotency key approach?\n  Jordan 9:45   func (h *Handler) Authorize(r *http.Request) error {\n  key := r.Header.Get('Idempotency-Key')\n  return h.svc.Apply(key, r.Body)\n}\n  Type a message...\n"
+    },
+    "_audit_jaccard": 0.6111,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_030",
+    "category": "borderline",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  log.Println(\"listening on :8080\")\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  logger.Info(\"server starting\",\n    \"addr\", \":8080\",\n    \"version\", version,\n  )\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.8302,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_031",
+    "category": "novel",
+    "frame_a": {
+      "app": "Terminal",
+      "title": "go test ./...",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\nok  github.com/northwind/acme-api/internal/auth  0.041s"
+    },
+    "frame_b": {
+      "app": "Terminal",
+      "title": "go test ./...",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\ngo test -bench=. -benchmem\nBenchmarkAuthorize-8   20000   61234 ns/op   1024 B/op   12 allocs/op"
+    },
+    "_audit_jaccard": 0.2778,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_032",
+    "category": "borderline",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/internal/auth/handler.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- internal/auth/handler.go ---\npackage auth\n\nimport (\n  \"net/http\"\n  \"time\"\n)\n\ntype Handler struct {\n  svc *Service\n}\n\nfunc (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {\n  h.svc.Authorize(r)\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/internal/auth/handler.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  ctx, cancel := context.WithCancel(context.Background())\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.6129,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_033",
+    "category": "novel",
+    "frame_a": {
+      "app": "Chrome",
+      "title": "redis.io/docs",
+      "ocr_text": "Chrome  |  redis.io/docs\nRedis is an in-memory data structure store.\n"
+    },
+    "frame_b": {
+      "app": "Chrome",
+      "title": "github.com/pgvector/pgvector",
+      "ocr_text": "Chrome  |  github.com/pgvector/pgvector\npgvector: open-source vector similarity search for Postgres.\n"
+    },
+    "_audit_jaccard": 0.1111,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_034",
+    "category": "novel",
+    "frame_a": {
+      "app": "GitHub",
+      "title": "northwind/acme-api",
+      "ocr_text": "GitHub  |  northwind/acme-api  |  Pull request #412\njordan opened this pull request\n"
+    },
+    "frame_b": {
+      "app": "GitHub",
+      "title": "northwind/acme-api",
+      "ocr_text": "GitHub  |  northwind/acme-api  |  Issue #88 - kafka consumer lag\nMarcus opened 3 days ago\nLabels: bug, payments\n"
+    },
+    "_audit_jaccard": 0.1818,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_035",
+    "category": "borderline",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  srv := &http.Server{Addr: \":8080\"}\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  cfg := Config{\n    Addr: \":8080\",\n    ReadTimeout: 5 * time.Second,\n    WriteTimeout: 10 * time.Second,\n  }\n  srv := &http.Server{Addr: cfg.Addr}\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.7966,
+    "expected_jaccard_min": 0.5,
+    "expected_jaccard_max": 0.85,
+    "expected_novelty_min": 0.3,
+    "expected_novelty_max": 0.7,
+    "expected_decision": "uncertain"
+  },
+  {
+    "id": "pair_036",
+    "category": "novel",
+    "frame_a": {
+      "app": "Slack",
+      "title": "# payments-team",
+      "ocr_text": "Slack  |  # # payments-team  |  12 members\n  Priya  9:42   lgtm, ship it\n  Marcus 9:43   👍\n  Jordan 9:44   anyone seen the kafka lag?\n  Type a message...\n"
+    },
+    "frame_b": {
+      "app": "Slack",
+      "title": "# payments-team",
+      "ocr_text": "Slack  |  Priya Nair (DM)\n  Priya 9:50   on it, checking grafana\n  Jordan 9:51   ty\n"
+    },
+    "_audit_jaccard": 0.1212,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_037",
+    "category": "novel",
+    "frame_a": {
+      "app": "Terminal",
+      "title": "go test ./...",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\nok  github.com/northwind/acme-api/internal/auth  0.041s"
+    },
+    "frame_b": {
+      "app": "Terminal",
+      "title": "go test ./...",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\ndlv test ./internal/auth/\n(dlv) break handler.go:42\nBreakpoint set at handler.go:42"
+    },
+    "_audit_jaccard": 0.3125,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_038",
+    "category": "novel",
+    "frame_a": {
+      "app": "Chrome",
+      "title": "grafana.northwind/payments",
+      "ocr_text": "Chrome  |  grafana.northwind/payments\nKafka consumer lag (reconciliation)  24000\n"
+    },
+    "frame_b": {
+      "app": "Chrome",
+      "title": "grafana.northwind/payments",
+      "ocr_text": "Chrome  |  grafana.northwind/latency\ncheckout API p95 latency  340ms\n"
+    },
+    "_audit_jaccard": 0.1429,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_039",
+    "category": "high_overlap",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  srv := &http.Server{Addr: \":8080\"}\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  mux := http.NewServeMux()\n  mux.Handle(\"/v1/checkout\", h)\n  srv := &http.Server{Handler: mux}\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.8519,
+    "expected_jaccard_min": 0.85,
+    "expected_novelty_max": 0.2,
+    "expected_decision": "merge"
+  },
+  {
+    "id": "pair_040",
+    "category": "novel",
+    "frame_a": {
+      "app": "GitHub",
+      "title": "PR #412",
+      "ocr_text": "GitHub  |  northwind/acme-api  |  Pull request #412\nCI: build passing  test passing\n"
+    },
+    "frame_b": {
+      "app": "GitHub",
+      "title": "PR #412",
+      "ocr_text": "GitHub  |  northwind/acme-api  |  Pull request #412\nFiles changed (3)\n  cmd/server/main.go      +12 -3\n  internal/auth/handler.go +8 -1\n  go.mod                   +1\n"
+    },
+    "_audit_jaccard": 0.2857,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_041",
+    "category": "novel",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  srv := &http.Server{Addr: \":8080\"}\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "Slack",
+      "title": "Priya Nair (DM)",
+      "ocr_text": "Slack  |  Priya Nair (DM)\n  Priya 9:55   hey, got a minute to review the auth PR?\n  Type a message...\n"
+    },
+    "_audit_jaccard": 0.0317,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_042",
+    "category": "novel",
+    "frame_a": {
+      "app": "Terminal",
+      "title": "git log",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\ngit log --oneline\n4f3c2a1 fix: kafka flush"
+    },
+    "frame_b": {
+      "app": "System Settings",
+      "title": "Wi-Fi",
+      "ocr_text": "System Settings\nWi-Fi  Connected to Northwind-5G\nSignal: excellent\nIP: 10.0.1.42\nAppearance  Sound  Network  Bluetooth  Privacy\n"
+    },
+    "_audit_jaccard": 0.0,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_043",
+    "category": "novel",
+    "frame_a": {
+      "app": "Chrome",
+      "title": "pkg.go.dev/net/http",
+      "ocr_text": "Chrome  |  pkg.go.dev/net/http\nListenAndServe starts an HTTP server with a given address and handler.\n"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/internal/auth/handler.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- internal/auth/handler.go ---\npackage auth\n\nimport (\n  \"net/http\"\n  \"time\"\n)\n\ntype Handler struct {\n  svc *Service\n}\n\nfunc (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {\n  h.svc.Authorize(r)\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.0154,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_044",
+    "category": "novel",
+    "frame_a": {
+      "app": "GitHub",
+      "title": "PR #412",
+      "ocr_text": "GitHub  |  northwind/acme-api  |  Pull request #412\njordan opened this pull request\n"
+    },
+    "frame_b": {
+      "app": "Slack",
+      "title": "# general",
+      "ocr_text": "Slack  |  # # general  |  12 members\n  Priya  9:42   lgtm, ship it\n  Marcus 9:43   👍\n  Jordan 9:44   lunch orders? going to the hawker centre at 12\n  Type a message...\n"
+    },
+    "_audit_jaccard": 0.0588,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_045",
+    "category": "novel",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  log.Fatal(srv.ListenAndServe())\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "Chrome",
+      "title": "localhost:8080/metrics",
+      "ocr_text": "Chrome  |  localhost:8080/metrics\nhttp_requests_total 41203\nhttp_request_duration_seconds 0.034\nmemory_alloc_bytes 8388608\n"
+    },
+    "_audit_jaccard": 0.0189,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_046",
+    "category": "novel",
+    "frame_a": {
+      "app": "Terminal",
+      "title": "go test ./...",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\nok  github.com/northwind/acme-api/internal/auth  0.041s"
+    },
+    "frame_b": {
+      "app": "VS Code",
+      "title": "acme-api/internal/auth/handler.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- internal/auth/handler.go ---\npackage auth\n\nimport (\n  \"net/http\"\n  \"time\"\n)\n\ntype Handler struct {\n  svc *Service\n}\n\nfunc (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {\n  h.svc.Authorize(r)\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "_audit_jaccard": 0.0169,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_047",
+    "category": "novel",
+    "frame_a": {
+      "app": "Slack",
+      "title": "# payments-team",
+      "ocr_text": "Slack  |  # # payments-team  |  12 members\n  Priya  9:42   lgtm, ship it\n  Marcus 9:43   👍\n  Jordan 9:44   kafka lag spike again\n  Type a message...\n"
+    },
+    "frame_b": {
+      "app": "System Settings",
+      "title": "Notifications",
+      "ocr_text": "System Settings\nNotifications  Do Not Disturb  On until 5 PM\nSlack  Allow\nAppearance  Sound  Network  Bluetooth  Privacy\n"
+    },
+    "_audit_jaccard": 0.0256,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_048",
+    "category": "novel",
+    "frame_a": {
+      "app": "Chrome",
+      "title": "grafana.northwind/payments",
+      "ocr_text": "Chrome  |  grafana.northwind/payments\nKafka consumer lag  24000\ncheckout p95  340ms\n"
+    },
+    "frame_b": {
+      "app": "Terminal",
+      "title": "make deploy",
+      "ocr_text": "jordan@northwind-pay:~/dev/acme-api (main)$ go test ./internal/auth/...\nmake deploy\nsending bin/server to northwind-prod\nrelease 4.12.0 promoted"
+    },
+    "_audit_jaccard": 0.0,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_049",
+    "category": "novel",
+    "frame_a": {
+      "app": "VS Code",
+      "title": "acme-api/cmd/server/main.go",
+      "ocr_text": "File Edit Selection View Go Run Terminal Help\nEXPLORER  ACME-API - JORDAN@NORTHWIND  \n  > acme-api\n    > cmd\n    > internal\n      > auth\n        main.go\n        handler.go\n    go.mod\n    go.sum\n--- cmd/server/main.go ---\npackage main\n\nimport (\n  \"context\"\n  \"log\"\n  \"net/http\"\n\n  \"github.com/northwind/acme-api/internal/auth\"\n  \"go.opentelemetry.io/otel\"\n)\n\nfunc main() {\n  srv := &http.Server{Addr: \":8080\"}\n}\nGo 1.22  |  main  |  UTF-8  |  LF  |  0 errors  |  3 warnings"
+    },
+    "frame_b": {
+      "app": "Chrome",
+      "title": "app.slack.com/client/T0/C0",
+      "ocr_text": "Chrome  |  app.slack.com/client/T0/C0\n# dejaview-demo\njordan: deriver is drifting again\nmarcus: regression test?\n"
+    },
+    "_audit_jaccard": 0.0167,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  },
+  {
+    "id": "pair_050",
+    "category": "novel",
+    "frame_a": {
+      "app": "GitHub",
+      "title": "Issue #88",
+      "ocr_text": "GitHub  |  northwind/acme-api  |  Issue #88 - kafka consumer lag\nMarcus opened 3 days ago\nLabels: bug, payments\n"
+    },
+    "frame_b": {
+      "app": "Music",
+      "title": "Now Playing",
+      "ocr_text": "Music  |  Now Playing\n  Track: Synthetic Dreams\n  Artist: Vector Field\n  00:42 / 03:14\n"
+    },
+    "_audit_jaccard": 0.0345,
+    "expected_jaccard_max": 0.5,
+    "expected_novelty_min": 0.7,
+    "expected_decision": "new"
+  }
+]
