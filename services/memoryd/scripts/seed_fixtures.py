@@ -17,11 +17,12 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 
+import os
 import psycopg
 
 # Connection info (host, port, user, password, dbname) — keep it simple.
-DSN = "postgresql://dejaview:dejaview@127.0.0.1:5433/dejaview"
-GATEWAY = "http://127.0.0.1:4000/v1"
+DSN = os.environ.get("TIMELINE_DB_URL", "postgresql://dejaview:dejaview@127.0.0.1:5433/dejaview")
+GATEWAY = os.environ.get("GATEWAY_URL", "http://127.0.0.1:4000/v1").rstrip("/").removesuffix("/v1") + "/v1"
 
 # 50 synthetic events. Each: (hours_ago, app, title, activity, ocr_text).
 # ocr_text plants the exact-substring targets (ERR-xxxx codes, URLs).
@@ -190,10 +191,19 @@ FIXTURE_EVENTS = [
 
 def embed(text: str) -> list[float]:
     import httpx
-    with httpx.Client(timeout=30.0) as c:
-        r = c.post(f"{GATEWAY}/embeddings", json={"model": "embed", "input": text})
-        r.raise_for_status()
-        return r.json()["data"][0]["embedding"]
+    # Timeout generous: in dev the gateway is often reached via an SSH tunnel
+    # (Mac -> AMD server), which can add latency jitter on top of the actual
+    # ~30ms GPU inference. Retry once on transient failure.
+    for attempt in range(3):
+        try:
+            with httpx.Client(timeout=120.0) as c:
+                r = c.post(f"{GATEWAY}/embeddings", json={"model": "embed", "input": text})
+                r.raise_for_status()
+                return r.json()["data"][0]["embedding"]
+        except (httpx.ReadTimeout, httpx.ConnectError):
+            if attempt == 2:
+                raise
+            continue
 
 
 def main() -> int:

@@ -307,8 +307,8 @@
       "depends": [
         "M3.3"
       ],
-      "status": "false",
-      "note": ""
+      "status": "accept",
+      "note": "2026-07-21 完成:services/agentd(uv 包)。tools.py 实现 4 个 tool + OpenAI function-calling specs:① search_timeline(query,mode=hybrid|semantic|exact,k,time_from?,time_to?)——semantic 用 HNSW cosine(score=1-dist/2),exact 用 pg_trgm similarity(threshold 0.05 兼容短报错码),hybrid 双路 union 去重按平均分排序;查询侧 embed 加 'Instruct: 检索用户活动时间线\\nQuery: ' 前缀(Qwen3 instruction-aware)。② query_user_model(question)——Honcho dialectic(dejaview/owner peer,idempotent 建 workspace/peer)。③ search_kb(query,k)——kb_chunks 向量检索。④ fetch_screenshot(event_id,highlight_text?)——返回截图路径 + ocr_blocks 里命中文字的 bbox。dispatch() 路由 brain 的 tool call。实测(经 SSH 隧道用服务器 ROCm embed):semantic 'database connection problem'→psycopg pool(0.78);exact 'ROCM-4042'命中;hybrid 'GPU memory error'→GPU status+ROCM OOM;fetch_screenshot 逻辑正确。embed.py + seed_fixtures.py 经隧道加 retry+长 timeout(隧道抖动)。"
     },
     {
       "id": "M7.2",
