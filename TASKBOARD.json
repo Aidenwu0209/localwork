@@ -246,8 +246,8 @@
       "depends": [
         "M1.1"
       ],
-      "status": "false",
-      "note": "延迟数字标注'Mac 参考值,待 EPYC 复测'。"
+      "status": "accept",
+      "note": "2026-07-21 完成:services/ocrd(uv 包,FastAPI + python-multipart)。engine.py 双后端:rapidocr-onnxruntime(Mac 默认,PP-OCRv4 ONNX 封装,~0.8-1.3s/图) + paddleocr 3.7(EPYC 生产,PP-OCRv6),OCR_BACKEND 环境变量切换,懒加载单例。server.py POST /ocr(image)→{full_text, blocks:[{text,bbox[x1,y1,x2,y2],conf}]},契约与 memoryd.OcrBlock 兼容;4 错误路径(400/415/413/422);/health 报 engine_loaded 状态。实测 terminal_01(1.04s,12 blocks):dejaview-core/acme-parser/报错码 4042/URL 全部命中,bbox 4 元素 conf∈[0,1];R0cM vs ROCM 的小字 O/0 混淆印证 verbatim 防幻觉规则。前处理三开关全关。[VERIFY] 落 verification-log:PaddleOCR 3.7 ARM 必须用 engine='onnxruntime'(paddle_static 不可用),PP-OCRv6 首次 predict 自动下载到 ~/.paddlex/,但 M5 上 20-116s/图不可用→rapidocr 快 60× 精度不差做 dev 默认。延迟标注 Mac 参考值待 EPYC 复测。"
     },
     {
       "id": "M5.2",

@@ -1,0 +1,25 @@
+[project]
+name = "ocrd"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Aidenwu0209", email = "1418557225@qq.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.139.2",
+    "onnxruntime>=1.27.0",
+    "paddleocr>=3.7.0",
+    "pillow>=12.3.0",
+    "python-multipart>=0.0.32",
+    "rapidocr-onnxruntime>=1.4.4",
+    "uvicorn[standard]>=0.51.0",
+]
+
+[project.scripts]
+ocrd = "ocrd:main"
+
+[build-system]
+requires = ["uv_build>=0.11.3,<0.12.0"]
+build-backend = "uv_build"
