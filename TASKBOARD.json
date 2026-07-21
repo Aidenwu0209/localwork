@@ -119,8 +119,8 @@
         "M2.4",
         "M1.3"
       ],
-      "status": "false",
-      "note": "无云 API key → 开发期数据也全程不出设备。llama.cpp 已装(brew b10050)。16GB 内存:按当前任务只起需要的实例。"
+      "status": "accept",
+      "note": "2026-07-21 完成:Mac Metal 全本地推理栈点亮。deploy/mac/llama-launch/ 下 5 个启动脚本(embed :8004 / fast :8005 / sentinel :8003 / perceive :8002 + gateway)+ dev-stack.sh 控制器(up/down/status/smoke)。LiteLLM 1.93 经 uvx 隔离运行,5 逻辑名(brain/perceive/sentinel/fast/embed)全部经 :4000 冒烟通过:embed 出 1024 维向量;fast 关思考后 'Hello! 😊';sentinel(MiniCPM-V)关思考后正确识别 Acme Bank 登录页;brain(E4B 兼任)算 17×23=391。关键发现(落 verification-log):① LiteLLM master_key 触发 prisma import 崩溃,去掉即可(本地 127.0.0.1);② MiniCPM5/MiniCPM-V/Gemma-E4B 都是思考型模型,fast-track 任务必须传 chat_template_kwargs.enable_thinking=false,否则 token 全耗在 reasoning_content 上;③ 16GB 预算:小三人组 3.5GB,加 perceive 到 9GB,dev-stack 按任务起停。Honcho .env 已指向该网关,启动无 provider 报错。"
     },
     {
       "id": "M2.6",

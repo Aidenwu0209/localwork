@@ -73,6 +73,11 @@ model_list:
 # ----------------------------------------------------------------------------
 # Gateway behavior. Privacy: drop request content from LiteLLM's own logs so
 # prompts are never persisted at the gateway layer (Handbook §2.2).
+#
+# No master_key on purpose: setting one makes LiteLLM 1.93 take the DB-backed
+# auth path, which imports `prisma` and crashes when prisma isn't installed.
+# The gateway binds 127.0.0.1 only, so open access is fine for local dev. On
+# the AMD server, put LiteLLM behind the LAN/Tailscale boundary instead.
 # ----------------------------------------------------------------------------
 litellm_settings:
   # Don't log prompt/response bodies at the gateway (defense in depth; the
@@ -81,6 +86,5 @@ litellm_settings:
   request_timeout: 120
 
 general_settings:
-  master_key: sk-dejaview-local   # local-only dummy; no real secrets in repo
   disable_spend_logs: true
   disable_reset_budget: true
