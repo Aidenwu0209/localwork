@@ -48,9 +48,22 @@ def _make_embed(settings: Settings):
 
 
 def _default_pipeline(settings: Settings) -> Pipeline:
-    """M3.2 default: stub pipeline + real Postgres store, BUT with a real
-    gateway-backed embed when the gateway is reachable (M3.3). M3.4 replaces the
-    rest of the stubs with gateway-backed stages."""
+    """Pipeline wiring. Set env MEMORYD_REAL_PIPELINE=1 to use the real Metal
+    inference stack (M3.4): sentinel + ocrd + fast novelty + perceive + embed,
+    all via the gateway / ocrd. Without it (default), the stub stages run except
+    for embed, which auto-upgrades to GatewayEmbed when the gateway is up."""
+    import os
+    real = os.environ.get("MEMORYD_REAL_PIPELINE", "").strip() in ("1", "true", "yes")
+    if real:
+        from memoryd.stages import GatewayPerceive, GatewaySentinel, OcrdClient, RealNovelty
+        return Pipeline(
+            sentinel=GatewaySentinel(settings.gateway_url),
+            ocr=OcrdClient(settings.ocr_url),
+            novelty=RealNovelty(settings.gateway_url),
+            perceive=GatewayPerceive(settings.gateway_url),
+            embed=_make_embed(settings),
+            store=TimelineStore(dsn=settings.timeline_db_url, data_root=settings.data_root),
+        )
     return Pipeline(
         sentinel=StubSentinel(),
         ocr=StubOcr(),

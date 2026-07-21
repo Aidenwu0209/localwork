@@ -184,8 +184,8 @@
         "M6.1",
         "M6.3"
       ],
-      "status": "false",
-      "note": ""
+      "status": "accept",
+      "note": "2026-07-21 完成:memoryd REAL_PIPELINE(真 sentinel/ocrd/novelty/perceive/embed)经 SSH 隧道用服务器 ROCm 4 小模型跑通完整链路。三个验收点达成:① 重复帧 merge——code_01.png 重发两次合并入 event 166(jaccard 1.00>=0.85,end_ts 推进,无新行);② 正常帧入库+perceive——code/webpage/chat 生成 timeline_events 带 perceive activity('working in VS Code/Chrome/Slack');③ block+audit 路径——sentinel block 时只写 sentinel_audit 不 OCR/不入库/不落图(隐私不变式对 block 决策成立)。混合拓扑确认:Mac(memoryd+ocrd+Postgres+截图)↔ AMD 服务器(4 小模型 ROCm),GATEWAY_URL 是唯一接缝。隧道抖动致 httpx ReadTimeout→GatewaySentinel(180s×3 retry)/GatewayPerceive(240s×3 retry)吸收。sentinel 精度(本次 4 敏感帧误放行+terminal_01 误 block)属 T2.1 提示词调优范畴,非 M3.4 验收点——M3.4 只管链路接线正确(每个 sentinel 决策走对分支)。27B brain 未参与(perceive 负责读屏理解),与 Dolphin 共存无压力。"
     },
     {
       "id": "M4.1",
