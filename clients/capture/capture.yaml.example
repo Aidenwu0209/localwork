@@ -1,0 +1,36 @@
+# DejaView capture client configuration (handbook §5.2).
+#
+# Copy to `capture.yaml` (next to this file) or ~/.config/dejaview/capture.yaml
+# and edit. Any key omitted here falls back to the default in config.py.
+#
+# Environment overrides (take precedence over this file):
+#   CAPTURE_CONFIG         path to an alternate config file
+#   CAPTURE_MEMORYD_URL    overrides memoryd_url
+#   CAPTURE_DEVICE_ID      overrides device_id
+#   DEJAVIEW_DEVICE_ID     overrides device_id (alias)
+
+# memoryd ingest endpoint base. Dev default is 127.0.0.1:8090.
+memoryd_url: http://127.0.0.1:8090
+
+# Stable identifier for this machine. Default is the short hostname; set this
+# only if you want a friendlier name in the timeline (e.g. "wu-mbp").
+# device_id: wu-mbp
+
+# Trigger cadence (seconds). See handbook §5.2.
+#   poll_interval         how often to check the frontmost window for change
+#   min_capture_interval  minimum gap between any two uploads (anti-flood)
+#   periodic_interval     fallback frame cadence when nothing changed
+poll_interval: 3.0
+min_capture_interval: 3.0
+periodic_interval: 30.0
+
+# Image processing.
+#   max_upload_width  scale frames down proportionally so width <= this (px).
+#                     2560 keeps Retina detail for OCR (handbook §5.2).
+#   webp_quality      WebP encode quality (0-100).
+max_upload_width: 2560
+webp_quality: 80
+
+# Best-effort browser URL probe (osascript against Safari/Chrome/etc).
+# Disable if the automation permission prompts are annoying.
+probe_url: true

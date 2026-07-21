@@ -196,8 +196,8 @@
       "depends": [
         "M1.1"
       ],
-      "status": "false",
-      "note": ""
+      "status": "accept",
+      "note": "2026-07-21 完成:clients/capture(uv 包,Python 3.12)macOS MVP。7 模块:screenshot(mss 抓屏→Pillow 缩至宽≤2560px LANCZOS→WebP q80 全内存 io.BytesIO)/windows(pyobjc NSWorkspace+CGWindowListCopyWindowInfo 取前台 app+title)/permissions(黑帧启发式检测屏幕录制权限,缺失打印 4 步指引不崩溃)/url_probe(osascript 探 Safari/Chrome/Edge/Brave/Arc 6 浏览器 tab URL)/uploader(httpx 异步 POST /v1/ingest/frame multipart)/agent(3s 轮询前台变化触发 change + 30s 兜底 periodic + 最小间隔 3s + NSDistributedNotificationCenter+@objc.typedSelector 订阅锁屏/屏保暂停)/config(读 capture.yaml,device_id 默认 socket.gethostname)。真实验证:切窗口触发→memoryd 202 Accepted→timeline_events 0→1(app+title+url 全字段),osascript URL 探测拿到真实 Chrome tab。零落盘确认(无 open(w)/write/tempfile,运行期目录文件数不变)。运行期捕获的真实 URL/标题(测试用)已从 DB DELETE,代码无任何真实隐私。"
     },
     {
       "id": "M4.2",
