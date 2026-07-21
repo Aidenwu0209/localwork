@@ -133,8 +133,8 @@
       "steps": "services/memoryd 项目化(uv);实现三个 ingest 端点与 pipeline 编排器接口(哨兵/OCR/新颖度门/理解先用可插拔 stub);.env 读 GATEWAY_URL/OCR_URL。",
       "verify": "uvicorn 起服;POST 假 payload 返回 202 并落审计日志。",
       "depends": ["M1.1"],
-      "status": "false",
-      "note": ""
+      "status": "accept",
+      "note": "2026-07-21 完成:services/memoryd(uv 项目,Python 3.12,FastAPI+psycopg+pillow)。模块:config(读 .env 逻辑名)/models(pydantic v2 契约)/stages(5 个 Protocol + Stub 实现)/storage(Postgres timeline+sentinel_audit 写入器)/pipeline(§6.2 编排:sentinel→ocr→novelty→perceive→embed→store,block 即停)/server(3 端点+/health)。冒烟全绿:POST /v1/ingest/frame 返回 202,timeline_events(id=1)+sentinel_audit 双写,screenshot 落 webp 到 DATA_ROOT/screenshots/YYYY/MM/DD/;第二帧同窗口正确 merge(end_ts 更新,无新行)。stub 让链路零 GPU 可跑,M3.4 换真实现只改 Pipeline 构造。"
     },
     {
       "id": "M3.3",
