@@ -1,0 +1,3989 @@
+{
+  "schema_version": 1,
+  "generated_at_unix": 1784611709,
+  "assets_dir": "/Users/wu/Projects/Aidenwu0209/localwork/tests/assets/screenshots",
+  "rapidocr_images": [
+    "chat_01.png",
+    "chat_02.png",
+    "chat_03.png",
+    "chat_04.png",
+    "chat_05.png",
+    "code_01.png",
+    "code_02.png",
+    "code_03.png",
+    "code_04.png",
+    "code_05.png",
+    "terminal_01.png",
+    "terminal_02.png",
+    "terminal_03.png",
+    "terminal_04.png",
+    "terminal_05.png",
+    "webpage_01.png",
+    "webpage_02.png",
+    "webpage_03.png",
+    "webpage_04.png",
+    "webpage_05.png"
+  ],
+  "paddleocr_images": [
+    "chat_01.png",
+    "chat_02.png",
+    "chat_03.png",
+    "chat_04.png",
+    "chat_05.png",
+    "code_01.png",
+    "code_02.png",
+    "code_03.png",
+    "code_04.png",
+    "code_05.png",
+    "terminal_01.png",
+    "terminal_02.png",
+    "terminal_03.png",
+    "terminal_04.png",
+    "terminal_05.png",
+    "webpage_01.png",
+    "webpage_02.png",
+    "webpage_03.png",
+    "webpage_04.png",
+    "webpage_05.png"
+  ],
+  "aggregates": {
+    "by_entity_type": {
+      "paddleocr": {
+        "text_snippets": {
+          "hit": 58,
+          "total": 60,
+          "recall": 0.9667
+        },
+        "urls": {
+          "hit": 23,
+          "total": 23,
+          "recall": 1.0
+        },
+        "error_codes": {
+          "hit": 13,
+          "total": 13,
+          "recall": 1.0
+        },
+        "identifiers": {
+          "hit": 80,
+          "total": 84,
+          "recall": 0.9524
+        },
+        "numbers": {
+          "hit": 61,
+          "total": 63,
+          "recall": 0.9683
+        }
+      },
+      "rapidocr": {
+        "text_snippets": {
+          "hit": 41,
+          "total": 60,
+          "recall": 0.6833
+        },
+        "urls": {
+          "hit": 21,
+          "total": 23,
+          "recall": 0.913
+        },
+        "error_codes": {
+          "hit": 11,
+          "total": 13,
+          "recall": 0.8462
+        },
+        "identifiers": {
+          "hit": 80,
+          "total": 84,
+          "recall": 0.9524
+        },
+        "numbers": {
+          "hit": 60,
+          "total": 63,
+          "recall": 0.9524
+        }
+      }
+    },
+    "by_screenshot_category": {
+      "paddleocr": {
+        "code": {
+          "hit": 52,
+          "total": 56,
+          "recall": 0.9286
+        },
+        "terminal": {
+          "hit": 53,
+          "total": 55,
+          "recall": 0.9636
+        },
+        "webpage": {
+          "hit": 65,
+          "total": 67,
+          "recall": 0.9701
+        },
+        "chat": {
+          "hit": 65,
+          "total": 65,
+          "recall": 1.0
+        }
+      },
+      "rapidocr": {
+        "code": {
+          "hit": 52,
+          "total": 56,
+          "recall": 0.9286
+        },
+        "terminal": {
+          "hit": 44,
+          "total": 55,
+          "recall": 0.8
+        },
+        "webpage": {
+          "hit": 59,
+          "total": 67,
+          "recall": 0.8806
+        },
+        "chat": {
+          "hit": 58,
+          "total": 65,
+          "recall": 0.8923
+        }
+      }
+    },
+    "overall": {
+      "paddleocr": {
+        "hit": 235,
+        "total": 243,
+        "recall": 0.9671,
+        "n_images": 20
+      },
+      "rapidocr": {
+        "hit": 213,
+        "total": 243,
+        "recall": 0.8765,
+        "n_images": 20
+      }
+    },
+    "timings_ms": {
+      "paddleocr": {
+        "count": 20,
+        "mean": 13997.0,
+        "median": 11898.0,
+        "min": 7450.7,
+        "max": 27584.9,
+        "total_s": 279.9
+      },
+      "rapidocr": {
+        "count": 20,
+        "mean": 1144.8,
+        "median": 1219.0,
+        "min": 593.8,
+        "max": 1829.5,
+        "total_s": 22.9
+      }
+    }
+  },
+  "results": [
+    {
+      "image": "chat_01.png",
+      "category": "chat",
+      "backend": "rapidocr",
+      "elapsed_ms": 953.6657499847934,
+      "n_blocks": 30,
+      "full_text": "dejaview-core\n#dejaview-core\n timeline parsing + ROCm build\nalex_w·4 members\nAW\nalex_w09:14\nChannels\nhey,thereleasebuild justblewupontheHIPbuffer\n#general\n#dejaview-core\nAW\nalex_w09:14\n#sentinel\nerror:ROCM-4042:HIP buffer allocfailed,asked for2048 MiB but only 1024 free\n#errors\nMD\nmorgan_dev09:16\nDirect\nseenthatbefore,thesentinelisholdingtheotherhalfofVRAM\ndirect\nmorgan_dev 09:16\nMD\ngatethesentinelto512MiBandrebuild,thenitfits\nSQ\nsam_qa09:21\nlogged it asNOVA-9012in the synthetictracker,linkinghttps://docs.demo-acme.io/errors/ROCM-4042\nalex_w09:23\nAW\nthanks,rebuildingnowwiththecap\nMessage #dejaview-core",
+      "entities": [
+        {
+          "entity": "error: ROCM-4042: HIP buffer alloc failed, asked for 2048 MiB but only 1024 free",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "error: rocm-4042: hip buffer alloc failed asked for 2048 mib but only 1024 free",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ROCM-4042",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/rocm-4042",
+          "note": ""
+        },
+        {
+          "entity": "logged it as NOVA-9012 in the synthetic tracker",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "logged it as nova-9012 in the synthetic tracker",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ROCM-4042",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/rocm-4042",
+          "note": ""
+        },
+        {
+          "entity": "ROCM-4042",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "rocm-4042",
+          "note": ""
+        },
+        {
+          "entity": "NOVA-9012",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "nova-9012",
+          "note": ""
+        },
+        {
+          "entity": "alex_w",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "alex_w",
+          "note": ""
+        },
+        {
+          "entity": "morgan_dev",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "morgan_dev",
+          "note": ""
+        },
+        {
+          "entity": "sam_qa",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "sam_qa",
+          "note": ""
+        },
+        {
+          "entity": "dejaview-core",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "dejaview-core",
+          "note": ""
+        },
+        {
+          "entity": "sentinel",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "sentinel",
+          "note": ""
+        },
+        {
+          "entity": "2048",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2048",
+          "note": ""
+        },
+        {
+          "entity": "1024",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "1024",
+          "note": ""
+        },
+        {
+          "entity": "512",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "512",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "chat_02.png",
+      "category": "chat",
+      "backend": "rapidocr",
+      "elapsed_ms": 813.4689580183476,
+      "n_blocks": 30,
+      "full_text": "acme-parser\n#builds\nCi is red on main\njordan_ops · 6 members\njordan_ops 11:02\nChannels\nJO\nCl red on main again,libacme.so.3 missing in the container image\n#general\n#builds\njordan_ops 11:02\nJO\n#ingest\nImportError:libacme.so.3:cannot open shared object file\n#native\nCE\ncasey_eng 11:05\nDirect\nyep, the bootstrap script did not pin the .so version\ndirect\nCE\ncasey_eng 11:06\nopened ACME-7781,fix is inPR 142\nRM\nriley_ml 11:09\nalso got LUMEN-5563 once the ingest worker started, gateway was down on 8004\njordan_ops 11:11\nJO\nmerging the pin, rebuilding image now\nMessage #builds",
+      "entities": [
+        {
+          "entity": "ImportError: libacme.so.3: cannot open shared object file",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "importerror: libacme.so.3: cannot open shared object file",
+          "note": ""
+        },
+        {
+          "entity": "opened ACME-7781, fix is in PR 142",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "opened acme-7781 fix is in pr 142",
+          "note": ""
+        },
+        {
+          "entity": "also got LUMEN-5563 once the ingest worker started",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "also got lumen-5563 once the ingest worker started",
+          "note": ""
+        },
+        {
+          "entity": "ACME-7781",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "acme-7781",
+          "note": ""
+        },
+        {
+          "entity": "LUMEN-5563",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "lumen-5563",
+          "note": ""
+        },
+        {
+          "entity": "jordan_ops",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "jordan_ops",
+          "note": ""
+        },
+        {
+          "entity": "casey_eng",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "casey_eng",
+          "note": ""
+        },
+        {
+          "entity": "riley_ml",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "riley_ml",
+          "note": ""
+        },
+        {
+          "entity": "acme-parser",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "acme-parser",
+          "note": ""
+        },
+        {
+          "entity": "libacme",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "libacme",
+          "note": ""
+        },
+        {
+          "entity": "3",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "3",
+          "note": ""
+        },
+        {
+          "entity": "142",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "142",
+          "note": ""
+        },
+        {
+          "entity": "8004",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "8004",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "chat_03.png",
+      "category": "chat",
+      "backend": "rapidocr",
+      "elapsed_ms": 593.7711669830605,
+      "n_blocks": 28,
+      "full_text": "nova-cipher\n#signing\nverify panic on main\ntaylor_build · 3 members\ntaylor_build14:40\nChannels\nTB\nTestVerifyEnvelope panics on main, looks like an index bug\n#general\n#signing\nTB\ntaylor_build14:40\n#security\npanic:runtime error:index out of range[5] withlength3\n#releases\nCE\ncasey_eng\n14:43\nDirect\nverifyBatch is iterating past the end of the 3-element slice,off by a couple\ndirect\nCE\ncasey_eng14:44\nfixinPR91,alsofiledNOVA-9012\nalex_w14:50\nAW\nIgtm, ship 0.3.4 after it merges\nMessage #signing",
+      "entities": [
+        {
+          "entity": "panic: runtime error: index out of range [5] with length 3",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "panic: runtime error: index out of range 5 with length 3",
+          "note": ""
+        },
+        {
+          "entity": "verifyBatch is iterating past the end of the 3-element slice",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "verifybatch is iterating past the end of the 3-element slice",
+          "note": ""
+        },
+        {
+          "entity": "fix in PR 91, also filed NOVA-9012",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "fix in pr 91 also filed nova-9012",
+          "note": ""
+        },
+        {
+          "entity": "NOVA-9012",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "nova-9012",
+          "note": ""
+        },
+        {
+          "entity": "taylor_build",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "taylor_build",
+          "note": ""
+        },
+        {
+          "entity": "casey_eng",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "casey_eng",
+          "note": ""
+        },
+        {
+          "entity": "alex_w",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "alex_w",
+          "note": ""
+        },
+        {
+          "entity": "nova-cipher",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "nova-cipher",
+          "note": ""
+        },
+        {
+          "entity": "verifyBatch",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "verifybatch",
+          "note": ""
+        },
+        {
+          "entity": "TestVerifyEnvelope",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "testverifyenvelope",
+          "note": ""
+        },
+        {
+          "entity": "5",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "5",
+          "note": ""
+        },
+        {
+          "entity": "3",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "3",
+          "note": ""
+        },
+        {
+          "entity": "91",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "91",
+          "note": ""
+        },
+        {
+          "entity": "0.3.4",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "0.3.4",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "chat_04.png",
+      "category": "chat",
+      "backend": "rapidocr",
+      "elapsed_ms": 609.149832976982,
+      "n_blocks": 27,
+      "full_text": "zephyr-index\n#indexing\nbundle signature mismatch\nriley_ml · 5 members\nriley_ml 10:05\nChannels\nRM\nzephyr verifyisrejecting therelease bundle\n#general\n#indexing\nriley_ml 10:05\nRM\n#security\nZEPHYR-3300:signatureverificationfailed,issuermismatch\n#bench\nMD\nmorgan_dev10:08\nDirect\nthe bundle was signed with the old key,we rotated on 2026-06-30\ndirect\nMD\nmorgan_dev10:09\nre-sign with release.pub and it should verify\nSQ\nsam_qa10:12\nadding a rotation note to https://docs.demo-acme.io/zh/zephyr-index/faq.html\nMessage#indexing",
+      "entities": [
+        {
+          "entity": "ZEPHYR-3300: signature verification failed, issuer mismatch",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "zephyr-3300: signature verification failed issuer mismatch",
+          "note": ""
+        },
+        {
+          "entity": "the bundle was signed with the old key",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "the bundle was signed with the old key",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/zephyr-index/faq.html",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/zephyr-index/faq.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/zephyr-index/faq.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/zephyr-index/faq.html",
+          "note": ""
+        },
+        {
+          "entity": "ZEPHYR-3300",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "zephyr-3300",
+          "note": ""
+        },
+        {
+          "entity": "riley_ml",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "riley_ml",
+          "note": ""
+        },
+        {
+          "entity": "morgan_dev",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "morgan_dev",
+          "note": ""
+        },
+        {
+          "entity": "sam_qa",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "sam_qa",
+          "note": ""
+        },
+        {
+          "entity": "zephyr-index",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyr-index",
+          "note": ""
+        },
+        {
+          "entity": "zephyr",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyr",
+          "note": ""
+        },
+        {
+          "entity": "2026-06-30",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2026-06-30",
+          "note": ""
+        },
+        {
+          "entity": "3300",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "3300",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "chat_05.png",
+      "category": "chat",
+      "backend": "rapidocr",
+      "elapsed_ms": 741.7540409951471,
+      "n_blocks": 27,
+      "full_text": "lumen-rpc\n#gateway\ngateway down on 8004\njordan_ops· 4 members\njordan_ops 16:20\nChannels\nJO\nqueries are timing out, gateway not listening on 8004\n#general\n#gateway\njordan_ops16:20\nJO\n#bench\nLUMEN-5563: connection refused (target 127.0.0.1:8004)\n# incidents\ntaylor_build 16:23\nTB\nDirect\ncompose up gateway was skipped in the deploy, restarting now\ndirect\nTB\ntaylor_build 16:25\nback up, p50 latency back to 8 ms\ncasey_eng 16:30\nCE\npostmortem going in https://docs.demo-acme.io/en/lumen-rpc/method.html\nMessage #gateway",
+      "entities": [
+        {
+          "entity": "LUMEN-5563: connection refused (target 127.0.0.1:8004)",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "lumen-5563: connection refused target 127.0.0.1:8004",
+          "note": ""
+        },
+        {
+          "entity": "compose up gateway was skipped in the deploy",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "compose up gateway was skipped in the deploy",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/en/lumen-rpc/method.html",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/en/lumen-rpc/method.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/en/lumen-rpc/method.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/en/lumen-rpc/method.html",
+          "note": ""
+        },
+        {
+          "entity": "LUMEN-5563",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "lumen-5563",
+          "note": ""
+        },
+        {
+          "entity": "jordan_ops",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "jordan_ops",
+          "note": ""
+        },
+        {
+          "entity": "taylor_build",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "taylor_build",
+          "note": ""
+        },
+        {
+          "entity": "casey_eng",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "casey_eng",
+          "note": ""
+        },
+        {
+          "entity": "lumen-rpc",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lumen-rpc",
+          "note": ""
+        },
+        {
+          "entity": "gateway",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "gateway",
+          "note": ""
+        },
+        {
+          "entity": "8004",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "8004",
+          "note": ""
+        },
+        {
+          "entity": "8",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "8",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "code_01.png",
+      "category": "code",
+      "backend": "rapidocr",
+      "elapsed_ms": 1829.513666976709,
+      "n_blocks": 54,
+      "full_text": "parse.py\ntokenizer.py\ncursor.py\ndejaview-core/timeline/parse.py\nDEJAVIEW-CORE\n dejaview-core\n# dejaview-core / timeline parsing\ntimeline\n2\nfrom acme_parser import Tokenizer, LexerError\nparse.py\nfrom lumen_rpc import RemoteCursor\ntokenizer.py\nrpc\nclass TimelineParser:\ncursor.py\n6\ntests\ndef __init__(self, endpoint: str = \"local://ipc\"):\ntest_parse.py\n8\nself.tokenizer = Tokenizer()\n9\nself.cursor = RemoteCursor(endpoint)\n10\n11\ndef parse_timeline(self, events):\n12\ntokens = self.tokenizer.lex(events)\n13\nif not tokens:\n14\nraise LexerError(\"empty timeline batch\")\n15\nreturn [t.as_event() for t in tokens]\n16\n17\ndef window(self, span_ms: int = 5000):\n18\nordered = sorted(self.events, key=lambda e: e.ts)\n19\nreturn ordered[-span_ms:]\n20\n21\nif\nname__\n==\n22\nparser = TimelineParser(\"local://ipc\")\n23\nprint(parser.parse_timeline([]))\nmain\nO errors O warnings\nUTF-8 LF Python Ln 42, Col 18 ",
+      "entities": [
+        {
+          "entity": "def parse_timeline(self, events):",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "def parse_timeline self events :",
+          "note": ""
+        },
+        {
+          "entity": "from acme_parser import Tokenizer, LexerError",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "from acme_parser import tokenizer lexererror",
+          "note": ""
+        },
+        {
+          "entity": "class TimelineParser:",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "class timelineparser:",
+          "note": ""
+        },
+        {
+          "entity": "from lumen_rpc import RemoteCursor",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "from lumen_rpc import remotecursor",
+          "note": ""
+        },
+        {
+          "entity": "parse_timeline",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "parse_timeline",
+          "note": ""
+        },
+        {
+          "entity": "TimelineParser",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "timelineparser",
+          "note": ""
+        },
+        {
+          "entity": "acme_parser",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "acme_parser",
+          "note": ""
+        },
+        {
+          "entity": "Tokenizer",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "tokenizer",
+          "note": ""
+        },
+        {
+          "entity": "LexerError",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lexererror",
+          "note": ""
+        },
+        {
+          "entity": "lumen_rpc",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lumen_rpc",
+          "note": ""
+        },
+        {
+          "entity": "RemoteCursor",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "remotecursor",
+          "note": ""
+        },
+        {
+          "entity": "5000",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "5000",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "code_02.png",
+      "category": "code",
+      "backend": "rapidocr",
+      "elapsed_ms": 1231.862083019223,
+      "n_blocks": 46,
+      "full_text": "lexer.rs\nast.rs\nerrors.rs\nacme-parser/src/lexer.rs\nACME-PARSER\n acme-parser\nacme-parser: hand-written lexer\nSrc\n2\nuse crate::ast::{Token, Span};\nlexer.rs\nuse crate::errors::{AcmeError, Result};\nast.rs\nerrors.rs\npub struct Lexer<'a>{\n Cargo.toml \n6\nsrc: &'a str,\npos: usize,\n6\n10\nimpl<'a> Lexer<'a> {\n11\npub fn new(src: &'a str) -> Self {\n12\nLexer { src, pos: 0}\n13\n14\n15\npub fn next_token(&mut self) -> Result<Token>\n16\nself.skip_whitespace();\n17\nif self.pos >= self.src.len() {\n18\nreturn Ok(Token::Eof);\n19\n20\nlet span = Span::at(self.pos, self.pos + 1);\n21\nErr(AcmeError::UnexpectedChar(span))\n22\n23\nmain\nO errors o warnings\nUTF-8 LF Python Ln 42, Col 18",
+      "entities": [
+        {
+          "entity": "pub fn next_token(&mut self) -> Result<Token> {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "pub fn next_token mut self - result token",
+          "note": ""
+        },
+        {
+          "entity": "use crate::ast::{Token, Span};",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "use crate::ast:: token span",
+          "note": ""
+        },
+        {
+          "entity": "pub struct Lexer<'a> {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "pub struct lexer a",
+          "note": ""
+        },
+        {
+          "entity": "use crate::errors::{AcmeError, Result};",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "use crate::errors:: acmeerror result",
+          "note": ""
+        },
+        {
+          "entity": "Lexer",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lexer",
+          "note": ""
+        },
+        {
+          "entity": "next_token",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "next_token",
+          "note": ""
+        },
+        {
+          "entity": "Token",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "token",
+          "note": ""
+        },
+        {
+          "entity": "Span",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "span",
+          "note": ""
+        },
+        {
+          "entity": "AcmeError",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "acmeerror",
+          "note": ""
+        },
+        {
+          "entity": "UnexpectedChar",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "unexpectedchar",
+          "note": ""
+        },
+        {
+          "entity": "acme_parser",
+          "category": "identifiers",
+          "hit": false,
+          "normalized": "acme_parser",
+          "note": ""
+        },
+        {
+          "entity": "Lexer",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lexer",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "code_03.png",
+      "category": "code",
+      "backend": "rapidocr",
+      "elapsed_ms": 1328.0240419553593,
+      "n_blocks": 43,
+      "full_text": "client.ts\ntransport.ts\nindex.ts\nlumen-rpc/src/client.ts\nLUMEN-RPC\nlumen-rpc\n// lumen-rpc: typed JSON-RPC client\nSrc\nimport { Transport } from \"./transport\";\nclient.ts\nimport type { RpcRequest, RpcResponse } from \"./types\";\n transport.ts\nindex.ts\nexport class Lumenclient {\npackage.json\n6\nprivate nextId = 1;\nconstructor(private transport: Transport) {}\n6\nasync call<T>(method: string, params: unknown): Promise<T> {\n10\nconst req: RpcRequest = {\n11\nid: this.nextId++,\n12\nmethod,\n13\nparams,\n14\n15\nconst res: RpcResponse = await this.transport.send(req);\n16\nif (res.error) {\n17\nthrow new Error(^lumen-rpc: ${res.error.message});\n18\n19\nreturn res.result as T;\n20\n21\nmain\nO errors O warnings\nUTF-8 LF Python Ln 42, Col 18 ",
+      "entities": [
+        {
+          "entity": "export class LumenClient {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "export class lumenclient",
+          "note": ""
+        },
+        {
+          "entity": "async call<T>(method: string, params: unknown): Promise<T> {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "async call t method: string params: unknown : promise t",
+          "note": ""
+        },
+        {
+          "entity": "import { Transport } from \"./transport\";",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "import transport from ./transport",
+          "note": ""
+        },
+        {
+          "entity": "import type { RpcRequest, RpcResponse } from \"./types\";",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "import type rpcrequest rpcresponse from ./types",
+          "note": ""
+        },
+        {
+          "entity": "LumenClient",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lumenclient",
+          "note": ""
+        },
+        {
+          "entity": "Transport",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "transport",
+          "note": ""
+        },
+        {
+          "entity": "RpcRequest",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "rpcrequest",
+          "note": ""
+        },
+        {
+          "entity": "RpcResponse",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "rpcresponse",
+          "note": ""
+        },
+        {
+          "entity": "lumen_rpc",
+          "category": "identifiers",
+          "hit": false,
+          "normalized": "lumen_rpc",
+          "note": ""
+        },
+        {
+          "entity": "call",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "call",
+          "note": ""
+        },
+        {
+          "entity": "1",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "1",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "code_04.png",
+      "category": "code",
+      "backend": "rapidocr",
+      "elapsed_ms": 1354.123166995123,
+      "n_blocks": 50,
+      "full_text": "index.py\nstore.py\nquery.py\nzephyr-index/src/index.py\nZEPHYR-INDEX\n zephyr-index\n# zephyr-index: HNSW-ish vector index\nsrc\n2\nfrom dataclasses import dataclass\nindex.py\n3\nimport numpy as np\nstore.py\nquery.py\n@dataclass\n6\nclass VectorEntry:\neid: int\nvec: np.ndarray\n6\n10\nclass ZephyrIndex:\n11\ndef __init__(self, dim: int = 1024):\n12\nself.dim = dim\n13\nself.entries: list[VectorEntry] = []\n14\n15\ndef add(self, eid: int, vec: np.ndarray):\n16\nassert vec.shape == (self.dim,)\n17\nself.entries.append(VectorEntry(eid, vec))\n18\n19\ndef search(self, query: np.ndarray, k: int = 10):\n20\nscores = [(e.eid, float(np.dot(e.vec, query)))\n21\nfor e in self.entries]\n22\nscores.sort(key=lambda t: t[1], reverse=True)\n23\nreturn scores[:k]\nmain\nO errors O warnings\nUTF-8 LF Python Ln 42, Col 18 ",
+      "entities": [
+        {
+          "entity": "class ZephyrIndex:",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "class zephyrindex:",
+          "note": ""
+        },
+        {
+          "entity": "def add(self, eid: int, vec: np.ndarray):",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "def add self eid: int vec: np.ndarray :",
+          "note": ""
+        },
+        {
+          "entity": "def search(self, query: np.ndarray, k: int = 10):",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "def search self query: np.ndarray k: int 10 :",
+          "note": ""
+        },
+        {
+          "entity": "class VectorEntry:",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "class vectorentry:",
+          "note": ""
+        },
+        {
+          "entity": "ZephyrIndex",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyrindex",
+          "note": ""
+        },
+        {
+          "entity": "VectorEntry",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "vectorentry",
+          "note": ""
+        },
+        {
+          "entity": "zephyr_index",
+          "category": "identifiers",
+          "hit": false,
+          "normalized": "zephyr_index",
+          "note": ""
+        },
+        {
+          "entity": "add",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "add",
+          "note": ""
+        },
+        {
+          "entity": "search",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "search",
+          "note": ""
+        },
+        {
+          "entity": "1024",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "1024",
+          "note": ""
+        },
+        {
+          "entity": "10",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "10",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "code_05.png",
+      "category": "code",
+      "backend": "rapidocr",
+      "elapsed_ms": 1219.003000005614,
+      "n_blocks": 43,
+      "full_text": "signing.go\nkeys.go\ngo.mod\nnova-cipher/signing/signing.go\nNOVA-CIPHER\nnova-cipher\n// nova-cipher: ed25519 envelope signing\n· signing\npackage signing\nsigning.go\nkeys.go\nimport (\ngo.mod\n\"crypto/ed25519\"\"\n\"nova-cipher/keys\"\n8\n9\ntype Signer struct {\n10\npriv ed25519.PrivateKey\n11\n12\n13\nfunc NewSigner(km *keys.KeyManager) (*Signer, error）\n14\npriv, err := km.Primary()\n15\nif err != nil {\n16\nreturn nil, err\n17\n18\nreturn &Signer{priv: priv}, nil\n19\n20\n21\nfunc (s *Signer) Sign(payload []byte) []byte {\n22\nreturn ed25519.Sign(s.priv, payload)\n23\nmain\nO errors O warnings\nUTF-8 LF Python Ln 42, Col 18 ",
+      "entities": [
+        {
+          "entity": "func NewSigner(km *keys.KeyManager) (*Signer, error) {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "func newsigner km keys.keymanager signer error",
+          "note": ""
+        },
+        {
+          "entity": "func (s *Signer) Sign(payload []byte) []byte {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "func s signer sign payload byte byte",
+          "note": ""
+        },
+        {
+          "entity": "type Signer struct {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "type signer struct",
+          "note": ""
+        },
+        {
+          "entity": "package signing",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "package signing",
+          "note": ""
+        },
+        {
+          "entity": "Signer",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "signer",
+          "note": ""
+        },
+        {
+          "entity": "NewSigner",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "newsigner",
+          "note": ""
+        },
+        {
+          "entity": "Sign",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "sign",
+          "note": ""
+        },
+        {
+          "entity": "KeyManager",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "keymanager",
+          "note": ""
+        },
+        {
+          "entity": "nova_cipher",
+          "category": "identifiers",
+          "hit": false,
+          "normalized": "nova_cipher",
+          "note": ""
+        },
+        {
+          "entity": "signing",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "signing",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "terminal_01.png",
+      "category": "terminal",
+      "backend": "rapidocr",
+      "elapsed_ms": 1080.2709579584189,
+      "n_blocks": 12,
+      "full_text": "dejaview@macbook:cargo\ndejaview@macbook ~/dev/dejaview-core cargo run --release --bin dejaview-core\nCompiling dejaview-core v0.8.2\nCompiling acme-parser v0.4.1\nerror: R0cM-4042: HIP buffer alloc failed (requested 2048 MiB, available 1024 MiB)\n-> src/gpu/hip_alloc.rs:142:17\n1421\nlet buf = device.alloc(bytes)?;\n^^^<^^<^^<^^^ HIPruntime out ofmemory\n= note: see https://docs.demo-acme.io/errors/R0cM-4042\nerror: could not compile ^dejaview-core^ due to previous error\ndejaview@macbook ~/dev/dejaview-core$",
+      "entities": [
+        {
+          "entity": "error: ROCM-4042: HIP buffer alloc failed (requested 2048 MiB, available 1024 MiB)",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "error: rocm-4042: hip buffer alloc failed requested 2048 mib available 1024 mib",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ROCM-4042",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "https://docs.demo-acme.io/errors/rocm-4042",
+          "note": ""
+        },
+        {
+          "entity": "let buf = device.alloc(bytes)?;",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "let buf device.alloc bytes",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ROCM-4042",
+          "category": "urls",
+          "hit": false,
+          "normalized": "https://docs.demo-acme.io/errors/rocm-4042",
+          "note": ""
+        },
+        {
+          "entity": "ROCM-4042",
+          "category": "error_codes",
+          "hit": false,
+          "normalized": "rocm-4042",
+          "note": ""
+        },
+        {
+          "entity": "dejaview-core",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "dejaview-core",
+          "note": ""
+        },
+        {
+          "entity": "acme-parser",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "acme-parser",
+          "note": ""
+        },
+        {
+          "entity": "hip_alloc",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "hip_alloc",
+          "note": ""
+        },
+        {
+          "entity": "2048",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2048",
+          "note": ""
+        },
+        {
+          "entity": "1024",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "1024",
+          "note": ""
+        },
+        {
+          "entity": "142",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "142",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "terminal_02.png",
+      "category": "terminal",
+      "backend": "rapidocr",
+      "elapsed_ms": 1318.7579169753008,
+      "n_blocks": 11,
+      "full_text": "dejaview@macbook:python\nTraceback (most recent call last):\nFile \"/Users/dev/acme-parser/src/cli.py\", line 58, in <module>\nfrom acme_parser import ingest_pipeline\nFile \"/Users/dev/acme-parser/src/acme_parser/__init__-py\", line 12, in <module>\nfrom -_native import NativeLex\nImportError: libacme.so.3: cannot open shared object file: No such file or directory\nDuring handling of the above exception, another exception occurred:\nImportError: ACME-7781: native backend missing (expected libacme.so.3)\nhint: run ^scripts/bootstrap.sh^ or see https://docs.demo-acme.io/errors/AcME-7781\ndejaview@macbook ~/dev/acme-parser $",
+      "entities": [
+        {
+          "entity": "ImportError: libacme.so.3: cannot open shared object file: No such file or directory",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "importerror: libacme.so.3: cannot open shared object file: no such file or directory",
+          "note": ""
+        },
+        {
+          "entity": "ImportError: ACME-7781: native backend missing (expected libacme.so.3)",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "importerror: acme-7781: native backend missing expected libacme.so.3",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ACME-7781",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/acme-7781",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ACME-7781",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/acme-7781",
+          "note": ""
+        },
+        {
+          "entity": "ACME-7781",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "acme-7781",
+          "note": ""
+        },
+        {
+          "entity": "acme_parser",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "acme_parser",
+          "note": ""
+        },
+        {
+          "entity": "ingest_pipeline",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "ingest_pipeline",
+          "note": ""
+        },
+        {
+          "entity": "NativeLex",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "nativelex",
+          "note": ""
+        },
+        {
+          "entity": "libacme",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "libacme",
+          "note": ""
+        },
+        {
+          "entity": "58",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "58",
+          "note": ""
+        },
+        {
+          "entity": "12",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "12",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "terminal_03.png",
+      "category": "terminal",
+      "backend": "rapidocr",
+      "elapsed_ms": 1147.1143750241026,
+      "n_blocks": 14,
+      "full_text": "dejaview@macbook:go\ndejaview@macbook ~/dev/nova-cipher go test ./signing/... -run TestVerify\n== RUNTestVerifyEnvelope\nsigning_test.go:91: verifying payload #7\npanic: runtime error: index out of range [5] with length 3\ngoroutine 1 [running]:\nnova-cipher/signing.verifyBatch({0xc000200000?， 0x3, 0x3})\n/Users/dev/nova-cipher/signing/verify-go:44 +0x1a2\nnova-cipher/signing.TestVerifyEnvelope(0xc00010e680)\n/Users/dev/nova-cipher/signing/signing_test.go:91 +0x2f1\nexit status 2\nFAIL\nnova-cipher/signing 0.412s (N0vA-9012: panicking test)\nsee https://docs.demo-acme.io/errors/N0vA-9012",
+      "entities": [
+        {
+          "entity": "panic: runtime error: index out of range [5] with length 3",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "panic: runtime error: index out of range 5 with length 3",
+          "note": ""
+        },
+        {
+          "entity": "NOVA-9012: panicking test",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "nova-9012: panicking test",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/NOVA-9012",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "https://docs.demo-acme.io/errors/nova-9012",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/NOVA-9012",
+          "category": "urls",
+          "hit": false,
+          "normalized": "https://docs.demo-acme.io/errors/nova-9012",
+          "note": ""
+        },
+        {
+          "entity": "NOVA-9012",
+          "category": "error_codes",
+          "hit": false,
+          "normalized": "nova-9012",
+          "note": ""
+        },
+        {
+          "entity": "nova-cipher",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "nova-cipher",
+          "note": ""
+        },
+        {
+          "entity": "verifyBatch",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "verifybatch",
+          "note": ""
+        },
+        {
+          "entity": "TestVerifyEnvelope",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "testverifyenvelope",
+          "note": ""
+        },
+        {
+          "entity": "verify",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "verify",
+          "note": ""
+        },
+        {
+          "entity": "44",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "44",
+          "note": ""
+        },
+        {
+          "entity": "91",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "91",
+          "note": ""
+        },
+        {
+          "entity": "0.412",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "0.412",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "terminal_04.png",
+      "category": "terminal",
+      "backend": "rapidocr",
+      "elapsed_ms": 1162.9190419916995,
+      "n_blocks": 11,
+      "full_text": "dejaview@macbook: grpcurl\nError invoking RPC: LUMEN-5563: connection refused (target 127.0.0.1:8004)\ndebug: dial tcp 127.0.0.1:8004: connect: connection refused\ncontext:deadlineexceededafter3.0o0s\nLUMEN-5563: nolumen-rpc gatewaylistening on 8004\nremediation:\n1）start the gateway:\ncomposeupgateway\n2） check the firewall rules for 8004\ndocs:https://docs.demo-acme.io/errors/LUMEN-5563\ndejaview@macbook ~/dev/lumen-rpc $",
+      "entities": [
+        {
+          "entity": "LUMEN-5563: connection refused (target 127.0.0.1:8004)",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "lumen-5563: connection refused target 127.0.0.1:8004",
+          "note": ""
+        },
+        {
+          "entity": "LUMEN-5563: no lumen-rpc gateway listening on 8004",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "lumen-5563: no lumen-rpc gateway listening on 8004",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/LUMEN-5563",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/lumen-5563",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/LUMEN-5563",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/lumen-5563",
+          "note": ""
+        },
+        {
+          "entity": "LUMEN-5563",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "lumen-5563",
+          "note": ""
+        },
+        {
+          "entity": "lumen-rpc",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lumen-rpc",
+          "note": ""
+        },
+        {
+          "entity": "lumen",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lumen",
+          "note": ""
+        },
+        {
+          "entity": "gateway",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "gateway",
+          "note": ""
+        },
+        {
+          "entity": "grpcurl",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "grpcurl",
+          "note": ""
+        },
+        {
+          "entity": "8004",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "8004",
+          "note": ""
+        },
+        {
+          "entity": "3.000",
+          "category": "numbers",
+          "hit": false,
+          "normalized": "3.000",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "terminal_05.png",
+      "category": "terminal",
+      "backend": "rapidocr",
+      "elapsed_ms": 968.2535829488188,
+      "n_blocks": 15,
+      "full_text": "dejaview@macbook:openssl\ndejaview@macbook ~/dev/zephyr-index zephyr verify --key release.pub bundle.zf\nloading bundle.zf...412 chunks\nverifying signature ..:\nerror:ZEPHYR-3300:signature verification failed\nexpected issuer: zephyr-index/release\nfound issuer:\nunknown/3f2a1c0b\npubkey alg:\ned25519\nsig bytes:\n9c4f22107a88...0e\nZEPHYR-3300: bundle rejected (signature mismatch)\nreference: https://docs.demo-acme.io/errors/ZEPHYR-3300\nexit code 1",
+      "entities": [
+        {
+          "entity": "error: ZEPHYR-3300: signature verification failed",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "error: zephyr-3300: signature verification failed",
+          "note": ""
+        },
+        {
+          "entity": "ZEPHYR-3300: bundle rejected (signature mismatch)",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "zephyr-3300: bundle rejected signature mismatch",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ZEPHYR-3300",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/zephyr-3300",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ZEPHYR-3300",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/zephyr-3300",
+          "note": ""
+        },
+        {
+          "entity": "ZEPHYR-3300",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "zephyr-3300",
+          "note": ""
+        },
+        {
+          "entity": "zephyr",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyr",
+          "note": ""
+        },
+        {
+          "entity": "zephyr-index",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyr-index",
+          "note": ""
+        },
+        {
+          "entity": "verify",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "verify",
+          "note": ""
+        },
+        {
+          "entity": "412",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "412",
+          "note": ""
+        },
+        {
+          "entity": "3300",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "3300",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "webpage_01.png",
+      "category": "webpage",
+      "backend": "rapidocr",
+      "elapsed_ms": 1221.0981670068577,
+      "n_blocks": 20,
+      "full_text": "DejaView n · docs.demo-acme.io\nhttps://docs.demo-acme.io/zh/design/timeline.html\nUpdated 2026-07-15#142repliesv0.8.2\nDejaView时间线设计/TimelineDesignNotes\nDejaView把屏幕活动建模为一条单调递增的事件流（timeline）。每张截图经过OCR与语义理解后产出一条原子事件，事件按时间戳排序写入Postgres。\nTimeline is modeled as a strictly monotonic event stream. Each screenshot becomes one atomic event after OcR + perception, persisted to Postgres with an HNsW embedding index.\n关键指标/KeyMetrics\n412\n98.2%\n8 ms\nevents captured today\nOCR block confidence (avg)\nembedding latency p50\n相关链接/SeeAlso\nhttps://docs.demo-acme.io/zh/design/sentinel.html\nhttps://docs.demo-acme.io/en/api/memoryd.html\nPostgres\nHNSW\nPaddleOCR\nQwen3-Embedding",
+      "entities": [
+        {
+          "entity": "DejaView 时间线设计 / Timeline Design Notes",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "dejaview 时间线设计 / timeline design notes",
+          "note": ""
+        },
+        {
+          "entity": "DejaView 把屏幕活动建模为一条单调递增的事件流 (timeline)。",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "dejaview 把屏幕活动建模为一条单调递增的事件流 timeline",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/design/timeline.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/design/timeline.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/design/sentinel.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/design/sentinel.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/en/api/memoryd.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/en/api/memoryd.html",
+          "note": ""
+        },
+        {
+          "entity": "2026-07-15",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2026-07-15",
+          "note": ""
+        },
+        {
+          "entity": "142",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "142",
+          "note": ""
+        },
+        {
+          "entity": "v0.8.2",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "v0.8.2",
+          "note": ""
+        },
+        {
+          "entity": "412",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "412",
+          "note": ""
+        },
+        {
+          "entity": "98.2",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "98.2",
+          "note": ""
+        },
+        {
+          "entity": "8",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "8",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "webpage_02.png",
+      "category": "webpage",
+      "backend": "rapidocr",
+      "elapsed_ms": 1408.3927500178106,
+      "n_blocks": 19,
+      "full_text": "acme-parser CHANGELOG · 0.4.1\n口\n口\nhttps://docs.demo-acme.io/en/acme-parser/changelog.html\nUpdated 2026-07-09#37 issuesMIT licensed\nacme-parser CHANGELOG\nv0.4.1-2026-07-09\nFixed a tokenizer crash on empty input and added streaming lex mode.Memory footprint reduced by roughly 18%on the dejaview-core capture workload.\n+ Lexer::with_streaming(） for chunked input\n* token table size:64KB -> 52KB\n下载/ Downloads\nhttps://docs.demo-acme.io/dl/acme-parser-0.4.1.tar.gz\nhttps://docs.demo-acme.io/dl/acme-parser-0.4.1.sig\n37\n412\n18%\nopen issues\nstars\nmemoryreduction",
+      "entities": [
+        {
+          "entity": "acme-parser CHANGELOG",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "acme-parser changelog",
+          "note": ""
+        },
+        {
+          "entity": "Lexer::next_token() now returns Eof instead of panicking on empty input",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "lexer::next_token now returns eof instead of panicking on empty input",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/en/acme-parser/changelog.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/en/acme-parser/changelog.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/dl/acme-parser-0.4.1.tar.gz",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/dl/acme-parser-0.4.1.tar.gz",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/dl/acme-parser-0.4.1.sig",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/dl/acme-parser-0.4.1.sig",
+          "note": ""
+        },
+        {
+          "entity": "acme-parser",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "acme-parser",
+          "note": ""
+        },
+        {
+          "entity": "Lexer",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lexer",
+          "note": ""
+        },
+        {
+          "entity": "2026-07-09",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2026-07-09",
+          "note": ""
+        },
+        {
+          "entity": "37",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "37",
+          "note": ""
+        },
+        {
+          "entity": "0.4.1",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "0.4.1",
+          "note": ""
+        },
+        {
+          "entity": "412",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "412",
+          "note": ""
+        },
+        {
+          "entity": "18",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "18",
+          "note": ""
+        },
+        {
+          "entity": "64",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "64",
+          "note": ""
+        },
+        {
+          "entity": "52",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "52",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "webpage_03.png",
+      "category": "webpage",
+      "backend": "rapidocr",
+      "elapsed_ms": 1319.2051670048386,
+      "n_blocks": 28,
+      "full_text": "lumen-rpc · n Benchmarks\n口\nhttps://bench.demo-acme.io/lumen-rpc/2026-07-15.html\nGenerated2026-07-15#9benchmarksmacOSarm64\nlumen-rpc 基准测试 / Benchmarks\nAll numbers are synthetic, collected on the reference arm64 host with lumen-rpc v1.2.0 talking to the local gateway over a unix domain socket.\n吞吐 / Throughput\n42,910\n31,204\n8 ms\nreq/s (call, p50)\nreq/s (call, p99)\np50 latency\n结果表 / Result Tables\ncall\np50=8.00ms\np99=21.40ms\n42910 req/s\nstream\np50=2.10ms\np99=6.80ms\n88210 msg/s\nbatch(n=64)\np50=12.4ms\np99=33.1ms\n5170 batch/s\nhttps://bench.demo-acme.io/lumen-rpc/raw.csv\nhttps://docs.demo-acme.io/en/lumen-rpc/method.html",
+      "entities": [
+        {
+          "entity": "lumen-rpc 基准测试 / Benchmarks",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "lumen-rpc 基准测试 / benchmarks",
+          "note": ""
+        },
+        {
+          "entity": "call            p50=8.00ms   p99=21.40ms   42910 req/s",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "call p50 8.00ms p99 21.40ms 42910 req/s",
+          "note": ""
+        },
+        {
+          "entity": "https://bench.demo-acme.io/lumen-rpc/2026-07-15.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://bench.demo-acme.io/lumen-rpc/2026-07-15.html",
+          "note": ""
+        },
+        {
+          "entity": "https://bench.demo-acme.io/lumen-rpc/raw.csv",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://bench.demo-acme.io/lumen-rpc/raw.csv",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/en/lumen-rpc/method.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/en/lumen-rpc/method.html",
+          "note": ""
+        },
+        {
+          "entity": "lumen-rpc",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lumen-rpc",
+          "note": ""
+        },
+        {
+          "entity": "2026-07-15",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2026-07-15",
+          "note": ""
+        },
+        {
+          "entity": "1.2.0",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "1.2.0",
+          "note": ""
+        },
+        {
+          "entity": "42,910",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "42 910",
+          "note": ""
+        },
+        {
+          "entity": "31,204",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "31 204",
+          "note": ""
+        },
+        {
+          "entity": "8",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "8",
+          "note": ""
+        },
+        {
+          "entity": "88,210",
+          "category": "numbers",
+          "hit": false,
+          "normalized": "88 210",
+          "note": ""
+        },
+        {
+          "entity": "5,170",
+          "category": "numbers",
+          "hit": false,
+          "normalized": "5 170",
+          "note": ""
+        },
+        {
+          "entity": "64",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "64",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "webpage_04.png",
+      "category": "webpage",
+      "backend": "rapidocr",
+      "elapsed_ms": 1528.5567080136389,
+      "n_blocks": 16,
+      "full_text": "zephyr-index FAQ · DO□\nhttps://docs.demo-acme.io/zh/zephyr-index/faq.html\nUpdated 2026-06-30#58replies\nzephyr-index常见问题/FAQ\nQ1:向量维度可以改吗?\n默认1024维（Qwen3-Embedding-0.6B)。升级到4B模型时用MRL截断回1024维,schema不变，但需要全量重嵌。\nDefault is1024dims.Upgrading to the4Bmodel usesMRLtruncationbackto1024so theschema staysthesame,but a full re-embed isrequired.\nQ2:支持多大数据量？\n单机HNSW实测412万向量，召回率98.2%,p50查询12mS。更大规模建议分片。\n参考/ References\nhttps://docs.demo-acme.io/zh/zephyr-index/tuning.html\nhttps://docs.demo-acme.io/zh/zephyr-index/sharding.html\nHNSW\nQwen3-Embedding\nMRL\n1024-dim",
+      "entities": [
+        {
+          "entity": "zephyr-index 常见问题 / FAQ",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "zephyr-index 常见问题 / faq",
+          "note": ""
+        },
+        {
+          "entity": "默认 1024 维 (Qwen3-Embedding-0.6B)。",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "默认 1024 维 qwen3-embedding-0.6b",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/zephyr-index/faq.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/zephyr-index/faq.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/zephyr-index/tuning.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/zephyr-index/tuning.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/zephyr-index/sharding.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/zephyr-index/sharding.html",
+          "note": ""
+        },
+        {
+          "entity": "zephyr-index",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyr-index",
+          "note": ""
+        },
+        {
+          "entity": "Qwen3-Embedding",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "qwen3-embedding",
+          "note": ""
+        },
+        {
+          "entity": "HNSW",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "hnsw",
+          "note": ""
+        },
+        {
+          "entity": "2026-06-30",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2026-06-30",
+          "note": ""
+        },
+        {
+          "entity": "58",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "58",
+          "note": ""
+        },
+        {
+          "entity": "1024",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "1024",
+          "note": ""
+        },
+        {
+          "entity": "4",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "4",
+          "note": ""
+        },
+        {
+          "entity": "412",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "412",
+          "note": ""
+        },
+        {
+          "entity": "98.2",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "98.2",
+          "note": ""
+        },
+        {
+          "entity": "12",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "12",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "webpage_05.png",
+      "category": "webpage",
+      "backend": "rapidocr",
+      "elapsed_ms": 1067.8338329889812,
+      "n_blocks": 19,
+      "full_text": "nova-cipher  · SEC-2026-0142\n口\nhttps://security.demo-acme.io/advisories/SEC-2026-0142.html\nPublished 2026-07-11severity:high CVE-N/A (synthetic)\nnova-cipher 安全公告/ Advisory SEC-2026-0142\nA synthetic advisory for the nova-cipher signing path. Affected versions: nova-cipher >= 0.3.0 and < 0.3.4. The Verify path did not check the issuer field on ed25519 envelopes.\n受影响版本/ Affected\nnova-cipher >= 0.3.0, < 0.3.4\nfix: 0.3.4 (released 2026-07-11)\ncredits: sam_qa (synthetic reporter)\n升级/ Upgrade\n升级到0.3.4或以上，然后运行^zephyrkeysrotate轮换密钥。\nhttps://docs.demo-acme.io/en/nova-cipher/upgrade.html\nhttps://security.demo-acme.io/diffs/nova-0.3.4.patch\n0.3.4\n142\nfixed version\naffected releases\nadvisory id",
+      "entities": [
+        {
+          "entity": "nova-cipher 安全公告 / Advisory SEC-2026-0142",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "nova-cipher 安全公告 / advisory sec-2026-0142",
+          "note": ""
+        },
+        {
+          "entity": "nova-cipher >= 0.3.0, < 0.3.4",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "nova-cipher 0.3.0 0.3.4",
+          "note": ""
+        },
+        {
+          "entity": "https://security.demo-acme.io/advisories/SEC-2026-0142.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://security.demo-acme.io/advisories/sec-2026-0142.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/en/nova-cipher/upgrade.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/en/nova-cipher/upgrade.html",
+          "note": ""
+        },
+        {
+          "entity": "https://security.demo-acme.io/diffs/nova-0.3.4.patch",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://security.demo-acme.io/diffs/nova-0.3.4.patch",
+          "note": ""
+        },
+        {
+          "entity": "SEC-2026-0142",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "sec-2026-0142",
+          "note": ""
+        },
+        {
+          "entity": "nova-cipher",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "nova-cipher",
+          "note": ""
+        },
+        {
+          "entity": "zephyr",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyr",
+          "note": ""
+        },
+        {
+          "entity": "2026-07-11",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2026-07-11",
+          "note": ""
+        },
+        {
+          "entity": "0.3.0",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "0.3.0",
+          "note": ""
+        },
+        {
+          "entity": "0.3.4",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "0.3.4",
+          "note": ""
+        },
+        {
+          "entity": "3",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "3",
+          "note": ""
+        },
+        {
+          "entity": "142",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "142",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "chat_01.png",
+      "category": "chat",
+      "backend": "paddleocr",
+      "elapsed_ms": 8192.166666965932,
+      "n_blocks": 30,
+      "full_text": "dejaview-core\n# dejaview-core\ntimeline parsing + ROCm build\nalex_w · 4 members\nAW\nalex_w 09:14\nChannels\nhey, the release build just blew up on the HIP buffer\n# general\n# dejaview-core\nAW\nalex_w 09:14\n# sentinel\nerror: ROCM-4042: HIP buffer alloc failed, asked for 2048 MiB but only 1024 free\n# errors\nMD\nmorgan_dev 09:16\nDirect\nseen that before, the sentinel is holding the other half of VRAM\ndirect\nMD\nmorgan_dev 09:16\ngate the sentinel to 512 MiB and rebuild, then it fits\nSQ\nsam_qa 09:21\nlogged it as NOVA-9012 in the synthetic tracker, linking https://docs.demo-acme.io/errors/ROCM-4042\nAW\nalex_w 09:23\nthanks, rebuilding now with the cap\nMessage #dejaview-core",
+      "entities": [
+        {
+          "entity": "error: ROCM-4042: HIP buffer alloc failed, asked for 2048 MiB but only 1024 free",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "error: rocm-4042: hip buffer alloc failed asked for 2048 mib but only 1024 free",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ROCM-4042",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/rocm-4042",
+          "note": ""
+        },
+        {
+          "entity": "logged it as NOVA-9012 in the synthetic tracker",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "logged it as nova-9012 in the synthetic tracker",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ROCM-4042",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/rocm-4042",
+          "note": ""
+        },
+        {
+          "entity": "ROCM-4042",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "rocm-4042",
+          "note": ""
+        },
+        {
+          "entity": "NOVA-9012",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "nova-9012",
+          "note": ""
+        },
+        {
+          "entity": "alex_w",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "alex_w",
+          "note": ""
+        },
+        {
+          "entity": "morgan_dev",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "morgan_dev",
+          "note": ""
+        },
+        {
+          "entity": "sam_qa",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "sam_qa",
+          "note": ""
+        },
+        {
+          "entity": "dejaview-core",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "dejaview-core",
+          "note": ""
+        },
+        {
+          "entity": "sentinel",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "sentinel",
+          "note": ""
+        },
+        {
+          "entity": "2048",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2048",
+          "note": ""
+        },
+        {
+          "entity": "1024",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "1024",
+          "note": ""
+        },
+        {
+          "entity": "512",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "512",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "chat_02.png",
+      "category": "chat",
+      "backend": "paddleocr",
+      "elapsed_ms": 8344.54675001325,
+      "n_blocks": 30,
+      "full_text": "acme-parser\n# builds\nCI is red on main\njordan_ops · 6 members\nJO\njordan_ops 11:02\nChannels\nCl red on main again, libacme.so.3 missing in the container image\n# general\n# builds\nJO\njordan_ops 11:02\n# ingest\nImportError: libacme.so.3: cannot open shared object file\n# native\nCE\ncasey_eng 11:05\nDirect\nyep, the bootstrap script did not pin the .so version\ndirect\nCE\ncasey_eng 11:06\nopened ACME-7781, fix is in PR 142\nRM\nriley_ml 11:09\nalso got LUMEN-5563 once the ingest worker started, gateway was down on 8004\nJO\njordan_ops 11:11\nmerging the pin, rebuilding image now\nMessage #builds",
+      "entities": [
+        {
+          "entity": "ImportError: libacme.so.3: cannot open shared object file",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "importerror: libacme.so.3: cannot open shared object file",
+          "note": ""
+        },
+        {
+          "entity": "opened ACME-7781, fix is in PR 142",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "opened acme-7781 fix is in pr 142",
+          "note": ""
+        },
+        {
+          "entity": "also got LUMEN-5563 once the ingest worker started",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "also got lumen-5563 once the ingest worker started",
+          "note": ""
+        },
+        {
+          "entity": "ACME-7781",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "acme-7781",
+          "note": ""
+        },
+        {
+          "entity": "LUMEN-5563",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "lumen-5563",
+          "note": ""
+        },
+        {
+          "entity": "jordan_ops",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "jordan_ops",
+          "note": ""
+        },
+        {
+          "entity": "casey_eng",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "casey_eng",
+          "note": ""
+        },
+        {
+          "entity": "riley_ml",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "riley_ml",
+          "note": ""
+        },
+        {
+          "entity": "acme-parser",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "acme-parser",
+          "note": ""
+        },
+        {
+          "entity": "libacme",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "libacme",
+          "note": ""
+        },
+        {
+          "entity": "3",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "3",
+          "note": ""
+        },
+        {
+          "entity": "142",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "142",
+          "note": ""
+        },
+        {
+          "entity": "8004",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "8004",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "chat_03.png",
+      "category": "chat",
+      "backend": "paddleocr",
+      "elapsed_ms": 7450.727957999334,
+      "n_blocks": 27,
+      "full_text": "nova-cipher\n# signing\nverify panic on main\ntaylor_build·3 members\nChannels\nTB\ntaylor_build 14:40\nTestVerifyEnvelope panics on main, looks like an index bug\n# general\n# signing\nTB\ntaylor_build 14:40\n# security\npanic: runtime error: index out of range [5] with length 3\n# releases\nCE\ncasey_eng 14:43\nDirect\nverifyBatch is iterating past the end of the 3-element slice, off by a couple\ndirect\nCE\ncasey_eng 14:44\nfix in PR 91, also filed NOVA-9012\nAW\nalex_w 14:50\nIgtm, ship 0.3.4 after it merges\nMessage #signing",
+      "entities": [
+        {
+          "entity": "panic: runtime error: index out of range [5] with length 3",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "panic: runtime error: index out of range 5 with length 3",
+          "note": ""
+        },
+        {
+          "entity": "verifyBatch is iterating past the end of the 3-element slice",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "verifybatch is iterating past the end of the 3-element slice",
+          "note": ""
+        },
+        {
+          "entity": "fix in PR 91, also filed NOVA-9012",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "fix in pr 91 also filed nova-9012",
+          "note": ""
+        },
+        {
+          "entity": "NOVA-9012",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "nova-9012",
+          "note": ""
+        },
+        {
+          "entity": "taylor_build",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "taylor_build",
+          "note": ""
+        },
+        {
+          "entity": "casey_eng",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "casey_eng",
+          "note": ""
+        },
+        {
+          "entity": "alex_w",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "alex_w",
+          "note": ""
+        },
+        {
+          "entity": "nova-cipher",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "nova-cipher",
+          "note": ""
+        },
+        {
+          "entity": "verifyBatch",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "verifybatch",
+          "note": ""
+        },
+        {
+          "entity": "TestVerifyEnvelope",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "testverifyenvelope",
+          "note": ""
+        },
+        {
+          "entity": "5",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "5",
+          "note": ""
+        },
+        {
+          "entity": "3",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "3",
+          "note": ""
+        },
+        {
+          "entity": "91",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "91",
+          "note": ""
+        },
+        {
+          "entity": "0.3.4",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "0.3.4",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "chat_04.png",
+      "category": "chat",
+      "backend": "paddleocr",
+      "elapsed_ms": 9053.130082960706,
+      "n_blocks": 27,
+      "full_text": "zephyr-index\n# indexing\nbundle signature mismatch\nriley_ml· 5 members\nChannels\nRM\nriley_ml 10:05\nzephyr verify is rejecting the release bundle\n# general\n# indexing\nRM\nriley_ml 10:05\n# security\nZEPHYR-3300: signature verification failed, issuer mismatch\n# bench\nMD\nmorgan_dev 10:08\nDirect\nthe bundle was signed with the old key, we rotated on 2026-06-30\ndirect\nMD\nmorgan_dev 10:09\nre-sign with release.pub and it should verify\nSQ\nsam_qa 10:12\nadding a rotation note to https://docs.demo-acme.io/zh/zephyr-index/faq.html\nMessage #indexing",
+      "entities": [
+        {
+          "entity": "ZEPHYR-3300: signature verification failed, issuer mismatch",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "zephyr-3300: signature verification failed issuer mismatch",
+          "note": ""
+        },
+        {
+          "entity": "the bundle was signed with the old key",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "the bundle was signed with the old key",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/zephyr-index/faq.html",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/zephyr-index/faq.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/zephyr-index/faq.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/zephyr-index/faq.html",
+          "note": ""
+        },
+        {
+          "entity": "ZEPHYR-3300",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "zephyr-3300",
+          "note": ""
+        },
+        {
+          "entity": "riley_ml",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "riley_ml",
+          "note": ""
+        },
+        {
+          "entity": "morgan_dev",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "morgan_dev",
+          "note": ""
+        },
+        {
+          "entity": "sam_qa",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "sam_qa",
+          "note": ""
+        },
+        {
+          "entity": "zephyr-index",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyr-index",
+          "note": ""
+        },
+        {
+          "entity": "zephyr",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyr",
+          "note": ""
+        },
+        {
+          "entity": "2026-06-30",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2026-06-30",
+          "note": ""
+        },
+        {
+          "entity": "3300",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "3300",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "chat_05.png",
+      "category": "chat",
+      "backend": "paddleocr",
+      "elapsed_ms": 9348.781290987972,
+      "n_blocks": 27,
+      "full_text": "lumen-rpc\n# gateway\ngateway down on 8004\njordan_ops ·4 members\nJO\njordan_ops 16:20\nChannels\nqueries are timing out, gateway not listening on 8004\n# general\n# gateway\nJO\njordan_ops_16:20\n# bench\nLUMEN-5563: connection refused (target 127.0.0.1:8004)\n# incidents\nTB\ntaylor_build 16:23\nDirect\ncompose up gateway was skipped in the deploy, restarting now\ndirect\ntaylor_build 16:25\nTB\nback up, p50 latency back to 8 ms\nCE\ncasey_eng 16:30\npostmortem going in https://docs.demo-acme.io/en/lumen-rpc/method.html\nMessage #gateway",
+      "entities": [
+        {
+          "entity": "LUMEN-5563: connection refused (target 127.0.0.1:8004)",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "lumen-5563: connection refused target 127.0.0.1:8004",
+          "note": ""
+        },
+        {
+          "entity": "compose up gateway was skipped in the deploy",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "compose up gateway was skipped in the deploy",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/en/lumen-rpc/method.html",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/en/lumen-rpc/method.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/en/lumen-rpc/method.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/en/lumen-rpc/method.html",
+          "note": ""
+        },
+        {
+          "entity": "LUMEN-5563",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "lumen-5563",
+          "note": ""
+        },
+        {
+          "entity": "jordan_ops",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "jordan_ops",
+          "note": ""
+        },
+        {
+          "entity": "taylor_build",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "taylor_build",
+          "note": ""
+        },
+        {
+          "entity": "casey_eng",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "casey_eng",
+          "note": ""
+        },
+        {
+          "entity": "lumen-rpc",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lumen-rpc",
+          "note": ""
+        },
+        {
+          "entity": "gateway",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "gateway",
+          "note": ""
+        },
+        {
+          "entity": "8004",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "8004",
+          "note": ""
+        },
+        {
+          "entity": "8",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "8",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "code_01.png",
+      "category": "code",
+      "backend": "paddleocr",
+      "elapsed_ms": 18845.314917038195,
+      "n_blocks": 59,
+      "full_text": "parse.py\ntokenizer.py\ncursor.py\ndejaview-core/timeline/parse.py\nDEJAVIEW-CORE\ndejaview-core\n1\n# dejaview-core / timeline parsing\ntimeline\n2\nfrom acme_parser import Tokenizer, LexerError\nparse.py\n3\nfrom lumen_rpc import RemoteCursor\ntokenizer.py\n4\nrpc\n5\nclass TimelineParser:\ncursor.py\n6\n\"\"\"Turn raw capture events into a flat timeline.\ntests\ndef __init__(self, endpoint: str = \"local://ipc\"):\ntest_parse.py\n8\nself.tokenizer = Tokenizer()\n9\nself.cursor = RemoteCursor(endpoint)\n10\n11\ndef parse_timeline(self, events):\n12\ntokens = self.tokenizer.lex(events)\n13\nif not tokens:\n14\nraise LexerError(\"empty timeline batch\")\n15\nreturn [t.as event() for t in tokens]\n16\n17\ndef window(self, span_ms: int = 5000):\n18\nordered = sorted(self.events, key=lambda e: e.ts)\n19\nreturn ordered[-span ms:]\n20\n21\nif\nname\nmain\n22\nparser = TimelineParser(\"local://ipc\")\n23\nprint(parser.parse_timeline([]))\nmain\no errors 0 warnings\nUTF-8 LF Python Ln 42, Col 18",
+      "entities": [
+        {
+          "entity": "def parse_timeline(self, events):",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "def parse_timeline self events :",
+          "note": ""
+        },
+        {
+          "entity": "from acme_parser import Tokenizer, LexerError",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "from acme_parser import tokenizer lexererror",
+          "note": ""
+        },
+        {
+          "entity": "class TimelineParser:",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "class timelineparser:",
+          "note": ""
+        },
+        {
+          "entity": "from lumen_rpc import RemoteCursor",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "from lumen_rpc import remotecursor",
+          "note": ""
+        },
+        {
+          "entity": "parse_timeline",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "parse_timeline",
+          "note": ""
+        },
+        {
+          "entity": "TimelineParser",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "timelineparser",
+          "note": ""
+        },
+        {
+          "entity": "acme_parser",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "acme_parser",
+          "note": ""
+        },
+        {
+          "entity": "Tokenizer",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "tokenizer",
+          "note": ""
+        },
+        {
+          "entity": "LexerError",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lexererror",
+          "note": ""
+        },
+        {
+          "entity": "lumen_rpc",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lumen_rpc",
+          "note": ""
+        },
+        {
+          "entity": "RemoteCursor",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "remotecursor",
+          "note": ""
+        },
+        {
+          "entity": "5000",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "5000",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "code_02.png",
+      "category": "code",
+      "backend": "paddleocr",
+      "elapsed_ms": 21089.053875009995,
+      "n_blocks": 56,
+      "full_text": "lexer.rs\nast.rs\nerrors.rs\nacme-parser/src/lexer.rs\nACME-PARSER\nacme-parser\n1\n// acme-parser: hand-written lexer\nsrc\n2\nuse crate::ast::{Token, Span};\nlexer.rs\n3\nuse crate::errors::{AcmeError, Result};\nast.rs\n4\nerrors.rs\n5\npub struct Lexer<'a> {\nCargo.toml\n6\nsrc: &'a str,\n7\npos: usize,\n8\n}\n9\n10\nimpl<'a> Lexer<'a> {\n11\npub fn new(src: &'a str) -> Self {\n12\nLexer { src, pos: 0 }\n13\n1\n14\n15\npub fn next_token(&mut self) -> Result<Token> {\n16\nself.skip_whitespace();\n17\nif self.pos >= self.src.len() {\n18\nreturn Ok(Token::Eof);\n19\n}\n20\nlet span = Span::at(self.pos, self.pos + 1);\n21\nErr(AcmeError::UnexpectedChar(span))\n22\n23\n1\nmain\no errors o warnings\nUTF-8 LF Python Ln 42, Col 18",
+      "entities": [
+        {
+          "entity": "pub fn next_token(&mut self) -> Result<Token> {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "pub fn next_token mut self - result token",
+          "note": ""
+        },
+        {
+          "entity": "use crate::ast::{Token, Span};",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "use crate::ast:: token span",
+          "note": ""
+        },
+        {
+          "entity": "pub struct Lexer<'a> {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "pub struct lexer a",
+          "note": ""
+        },
+        {
+          "entity": "use crate::errors::{AcmeError, Result};",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "use crate::errors:: acmeerror result",
+          "note": ""
+        },
+        {
+          "entity": "Lexer",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lexer",
+          "note": ""
+        },
+        {
+          "entity": "next_token",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "next_token",
+          "note": ""
+        },
+        {
+          "entity": "Token",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "token",
+          "note": ""
+        },
+        {
+          "entity": "Span",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "span",
+          "note": ""
+        },
+        {
+          "entity": "AcmeError",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "acmeerror",
+          "note": ""
+        },
+        {
+          "entity": "UnexpectedChar",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "unexpectedchar",
+          "note": ""
+        },
+        {
+          "entity": "acme_parser",
+          "category": "identifiers",
+          "hit": false,
+          "normalized": "acme_parser",
+          "note": ""
+        },
+        {
+          "entity": "Lexer",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lexer",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "code_03.png",
+      "category": "code",
+      "backend": "paddleocr",
+      "elapsed_ms": 27584.851249994244,
+      "n_blocks": 53,
+      "full_text": "client.ts\ntransport.ts\nindex.ts\nLUMEN-RPC\nlumen-rpc/src/client.ts\nlumen-rpc\n1\n// lumen-rpc: typed JSON-RPC client\nsrc\n2\nimport { Transport } from \"./transport\"\nclient.ts\n3\nimport type { RpcRequest, RpcResponse } from \"./types\";\ntransport.ts\n4\nindex.ts\n5\nexport class LumenClient {\npackage.json\n6\nprivate nextId = 1;\nconstructor(private transport: Transport) {}\n8\n9\nasync call<T>(method: string, params: unknown): Promise<T> {\n10\nconst req: RpcRequest = {\n11\nid: this.nextId++,\n12\nmethod,\n13\nparams,\n14\n};\n15\nconst res: RpcResponse = await this.transport.send(req);\n16\nif (res.error) {\n17\nthrow new Error(`lumen-rpc: ${res.error.message}`);\n18\n1\n19\nreturn res.result as T;\n20\n1\n21\n1\nmain\no errors o warnings\nUTF-8 LF Python Ln 42, Col 18",
+      "entities": [
+        {
+          "entity": "export class LumenClient {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "export class lumenclient",
+          "note": ""
+        },
+        {
+          "entity": "async call<T>(method: string, params: unknown): Promise<T> {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "async call t method: string params: unknown : promise t",
+          "note": ""
+        },
+        {
+          "entity": "import { Transport } from \"./transport\";",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "import transport from ./transport",
+          "note": ""
+        },
+        {
+          "entity": "import type { RpcRequest, RpcResponse } from \"./types\";",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "import type rpcrequest rpcresponse from ./types",
+          "note": ""
+        },
+        {
+          "entity": "LumenClient",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lumenclient",
+          "note": ""
+        },
+        {
+          "entity": "Transport",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "transport",
+          "note": ""
+        },
+        {
+          "entity": "RpcRequest",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "rpcrequest",
+          "note": ""
+        },
+        {
+          "entity": "RpcResponse",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "rpcresponse",
+          "note": ""
+        },
+        {
+          "entity": "lumen_rpc",
+          "category": "identifiers",
+          "hit": false,
+          "normalized": "lumen_rpc",
+          "note": ""
+        },
+        {
+          "entity": "call",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "call",
+          "note": ""
+        },
+        {
+          "entity": "1",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "1",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "code_04.png",
+      "category": "code",
+      "backend": "paddleocr",
+      "elapsed_ms": 17852.874709002208,
+      "n_blocks": 54,
+      "full_text": "index.py\nstore.py\nquery.py\nzephyr-index/src/index.py\nZEPHYR-INDEX\nzephyr-index\n1\n# zephyr-index: HNSW-ish vector index\nsrc\n2\nfrom dataclasses import dataclass\nindex.py\n3\nimport numpy as np\nstore.py\n4\nquery.py\n5\n@dataclass\n6\nclass VectorEntry:\neid: int\n8\nvec: np.ndarray\n9\n10\nclass ZephyrIndex:\n11\ndef __init__(self, dim: int = 1024):\n12\nself.dim = dim\n13\nself.entries: list[VectorEntry] = []\n14\n15\ndef add(self, eid: int, vec: np.ndarray):\n16\nassert vec.shape == (self.dim,)\n17\nself.entries.append(VectorEntry(eid, vec))\n18\n19\ndef search(self, query: np.ndarray, k: int = 10):\n20\nscores = [(e.eid, float(np.dot(e.vec, query)))\n21\nfor e in self.entries]\n22\nscores.sort(key=lambda t: t[1], reverse=True)\n23\nreturn scores[:k]\nmain\no errors o warnings\nUTF-8 LF Python Ln 42, Col 18",
+      "entities": [
+        {
+          "entity": "class ZephyrIndex:",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "class zephyrindex:",
+          "note": ""
+        },
+        {
+          "entity": "def add(self, eid: int, vec: np.ndarray):",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "def add self eid: int vec: np.ndarray :",
+          "note": ""
+        },
+        {
+          "entity": "def search(self, query: np.ndarray, k: int = 10):",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "def search self query: np.ndarray k: int 10 :",
+          "note": ""
+        },
+        {
+          "entity": "class VectorEntry:",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "class vectorentry:",
+          "note": ""
+        },
+        {
+          "entity": "ZephyrIndex",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyrindex",
+          "note": ""
+        },
+        {
+          "entity": "VectorEntry",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "vectorentry",
+          "note": ""
+        },
+        {
+          "entity": "zephyr_index",
+          "category": "identifiers",
+          "hit": false,
+          "normalized": "zephyr_index",
+          "note": ""
+        },
+        {
+          "entity": "add",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "add",
+          "note": ""
+        },
+        {
+          "entity": "search",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "search",
+          "note": ""
+        },
+        {
+          "entity": "1024",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "1024",
+          "note": ""
+        },
+        {
+          "entity": "10",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "10",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "code_05.png",
+      "category": "code",
+      "backend": "paddleocr",
+      "elapsed_ms": 21991.386334004346,
+      "n_blocks": 54,
+      "full_text": "signing.go\nkeys.go\ngo.mod\nnova-cipher/signing/signing.go\nNOVA-CIPHER\nnova-cipher\n1\n// nova-cipher: ed25519 envelope signing\nsigning\n2\npackage signing\nsigning.go\n3\nkeys.go\n4\nimport (\ngo.mod\n5\n\"crypto/ed25519\"\n6\n\"nova-cipher/keys\"\n7\n8\n9\ntype Signer struct {\n10\npriv ed25519.PrivateKey\n11\n1\n12\n13\nfunc NewSigner(km *keys.KeyManager) (*Signer, error) {\n14\npriv, err := km.Primary()\n15\nif err != nil {\n16\nreturn nil, err\n17\n1\n18\nreturn &Signer{priv: priv}, nil\n19\n1\n20\n21\nfunc (s *Signer) Sign(payload []byte) []byte {\n22\nreturn ed25519.Sign(s.priv, payload)\n23\n}\nmain\no errors o warnings\nUTF-8 LF Python Ln 42, Col 18",
+      "entities": [
+        {
+          "entity": "func NewSigner(km *keys.KeyManager) (*Signer, error) {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "func newsigner km keys.keymanager signer error",
+          "note": ""
+        },
+        {
+          "entity": "func (s *Signer) Sign(payload []byte) []byte {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "func s signer sign payload byte byte",
+          "note": ""
+        },
+        {
+          "entity": "type Signer struct {",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "type signer struct",
+          "note": ""
+        },
+        {
+          "entity": "package signing",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "package signing",
+          "note": ""
+        },
+        {
+          "entity": "Signer",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "signer",
+          "note": ""
+        },
+        {
+          "entity": "NewSigner",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "newsigner",
+          "note": ""
+        },
+        {
+          "entity": "Sign",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "sign",
+          "note": ""
+        },
+        {
+          "entity": "KeyManager",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "keymanager",
+          "note": ""
+        },
+        {
+          "entity": "nova_cipher",
+          "category": "identifiers",
+          "hit": false,
+          "normalized": "nova_cipher",
+          "note": ""
+        },
+        {
+          "entity": "signing",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "signing",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "terminal_01.png",
+      "category": "terminal",
+      "backend": "paddleocr",
+      "elapsed_ms": 13054.832875030115,
+      "n_blocks": 12,
+      "full_text": "dejaview@macbook: cargo\ndejaview@macbook ~/dev/dejaview-core cargo run --release --bin dejaview-core\nCompiling dejaview-core v0.8.2\nCompiling acme-parser v0.4.1\nerror: R0CM-4042: HIP buffer alloc failed (requested 2048 MiB, available 1024 MiB)\n--> src/gpu/hip_alloc.rs:142:17\n142\nlet buf = device.alloc(bytes)?;\n^^^^^^^^^^^^^^^^ HIP runtime out of memory\n= note: see https://docs.demo-acme.io/errors/RoCM-4042\nerror: could not compile `dejaview-core` due to previous error\ndejaview@macbook ~/dev/dejaview-core $",
+      "entities": [
+        {
+          "entity": "error: ROCM-4042: HIP buffer alloc failed (requested 2048 MiB, available 1024 MiB)",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "error: rocm-4042: hip buffer alloc failed requested 2048 mib available 1024 mib",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ROCM-4042",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/rocm-4042",
+          "note": ""
+        },
+        {
+          "entity": "let buf = device.alloc(bytes)?;",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "let buf device.alloc bytes",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ROCM-4042",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/rocm-4042",
+          "note": ""
+        },
+        {
+          "entity": "ROCM-4042",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "rocm-4042",
+          "note": ""
+        },
+        {
+          "entity": "dejaview-core",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "dejaview-core",
+          "note": ""
+        },
+        {
+          "entity": "acme-parser",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "acme-parser",
+          "note": ""
+        },
+        {
+          "entity": "hip_alloc",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "hip_alloc",
+          "note": ""
+        },
+        {
+          "entity": "2048",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2048",
+          "note": ""
+        },
+        {
+          "entity": "1024",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "1024",
+          "note": ""
+        },
+        {
+          "entity": "142",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "142",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "terminal_02.png",
+      "category": "terminal",
+      "backend": "paddleocr",
+      "elapsed_ms": 15995.632791949902,
+      "n_blocks": 12,
+      "full_text": "dejaview@macbook: python\ndejaview@macbook ~/dev/acme-parser python -m acme parser.cli ingest ./fixtures\nTraceback (most recent call last):\nFile \"/Users/dev/acme-parser/src/cli.py\", line 58, in <module>\nfrom acme_parser import ingest_pipeline\nFile \"/Users/dev/acme-parser/src/acme_parser/__init__.py\", line 12, in <module>\nfrom ._native import NativeLex\nImportError: libacme.so.3: cannot open shared object file: No such file or directory\nDuring handling of the above exception, another exception occurred:\nImportError: ACME-7781: native backend missing (expected libacme.so.3)\nhint: run `scripts/bootstrap.sh or see https://docs.demo-acme.io/errors/ACME-7781\ndejaview@macbook ~/dev/acme-parser $",
+      "entities": [
+        {
+          "entity": "ImportError: libacme.so.3: cannot open shared object file: No such file or directory",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "importerror: libacme.so.3: cannot open shared object file: no such file or directory",
+          "note": ""
+        },
+        {
+          "entity": "ImportError: ACME-7781: native backend missing (expected libacme.so.3)",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "importerror: acme-7781: native backend missing expected libacme.so.3",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ACME-7781",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/acme-7781",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ACME-7781",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/acme-7781",
+          "note": ""
+        },
+        {
+          "entity": "ACME-7781",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "acme-7781",
+          "note": ""
+        },
+        {
+          "entity": "acme_parser",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "acme_parser",
+          "note": ""
+        },
+        {
+          "entity": "ingest_pipeline",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "ingest_pipeline",
+          "note": ""
+        },
+        {
+          "entity": "NativeLex",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "nativelex",
+          "note": ""
+        },
+        {
+          "entity": "libacme",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "libacme",
+          "note": ""
+        },
+        {
+          "entity": "58",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "58",
+          "note": ""
+        },
+        {
+          "entity": "12",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "12",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "terminal_03.png",
+      "category": "terminal",
+      "backend": "paddleocr",
+      "elapsed_ms": 11831.900875025894,
+      "n_blocks": 14,
+      "full_text": "dejaview@macbook: go\ndejaview@macbook ~/dev/nova-cipher go test ./signing/... -run TestVerify\nRUNTestVerifyEnvelope\nsigning_test.go:91: verifying payload #7\npanic: runtime error: index out of range [5] with length 3\ngoroutine 1 [running]:\nnova-cipher/signing.verifyBatch({0xc000200000?, 0x3,0x3})\n/Users/dev/nova-cipher/signing/verify.go:44 +0x1a2\nnova-cipher/signing.TestVerifyEnvelope(0xc00010e680)\n/Users/dev/nova-cipher/signing/signing_test.go:91 +0x2f1\nexit status 2\nFAIL\nnova-cipher/signing 0.412s (N0VA-9012: panicking test)\nsee https://docs.demo-acme.io/errors/NOVA-9012",
+      "entities": [
+        {
+          "entity": "panic: runtime error: index out of range [5] with length 3",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "panic: runtime error: index out of range 5 with length 3",
+          "note": ""
+        },
+        {
+          "entity": "NOVA-9012: panicking test",
+          "category": "text_snippets",
+          "hit": false,
+          "normalized": "nova-9012: panicking test",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/NOVA-9012",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/nova-9012",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/NOVA-9012",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/nova-9012",
+          "note": ""
+        },
+        {
+          "entity": "NOVA-9012",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "nova-9012",
+          "note": ""
+        },
+        {
+          "entity": "nova-cipher",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "nova-cipher",
+          "note": ""
+        },
+        {
+          "entity": "verifyBatch",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "verifybatch",
+          "note": ""
+        },
+        {
+          "entity": "TestVerifyEnvelope",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "testverifyenvelope",
+          "note": ""
+        },
+        {
+          "entity": "verify",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "verify",
+          "note": ""
+        },
+        {
+          "entity": "44",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "44",
+          "note": ""
+        },
+        {
+          "entity": "91",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "91",
+          "note": ""
+        },
+        {
+          "entity": "0.412",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "0.412",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "terminal_04.png",
+      "category": "terminal",
+      "backend": "paddleocr",
+      "elapsed_ms": 10467.757083009928,
+      "n_blocks": 11,
+      "full_text": "dejaview@macbook: grpcurl\ndejaview@macbook ~/dev/lumen-rpc grpcurl -plaintext -d '{\"q\":\"hi\"}' 127.0.0.1:8004 lumen.Query/Search\nError invoking RPC: LUMEN-5563: connection refused (target 127.0.0.1:8004)\ndebug: dial tcp 127.0.0.1:8004: connect: connection refused\ncontext: deadline exceeded after 3.000s\nLUMEN-5563: no lumen-rpc gateway listening on 8004\nremediation:\n1) start the gateway: compose up gateway\n2) check the firewall rules for 8004\ndocs: https://docs.demo-acme.io/errors/LUMEN-5563\ndejaview@macbook ~/dev/lumen-rpc $",
+      "entities": [
+        {
+          "entity": "LUMEN-5563: connection refused (target 127.0.0.1:8004)",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "lumen-5563: connection refused target 127.0.0.1:8004",
+          "note": ""
+        },
+        {
+          "entity": "LUMEN-5563: no lumen-rpc gateway listening on 8004",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "lumen-5563: no lumen-rpc gateway listening on 8004",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/LUMEN-5563",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/lumen-5563",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/LUMEN-5563",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/lumen-5563",
+          "note": ""
+        },
+        {
+          "entity": "LUMEN-5563",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "lumen-5563",
+          "note": ""
+        },
+        {
+          "entity": "lumen-rpc",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lumen-rpc",
+          "note": ""
+        },
+        {
+          "entity": "lumen",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lumen",
+          "note": ""
+        },
+        {
+          "entity": "gateway",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "gateway",
+          "note": ""
+        },
+        {
+          "entity": "grpcurl",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "grpcurl",
+          "note": ""
+        },
+        {
+          "entity": "8004",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "8004",
+          "note": ""
+        },
+        {
+          "entity": "3.000",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "3.000",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "terminal_05.png",
+      "category": "terminal",
+      "backend": "paddleocr",
+      "elapsed_ms": 11207.509915984701,
+      "n_blocks": 16,
+      "full_text": "dejaview@macbook: openssl\ndejaview@macbook ~/dev/zephyr-index zephyr verify --key release.pub bundle.zf\nloading bundle.zf ... 412 chunks\nverifying signature.\nerror: ZEPHYR-3300: signature verification failed\nexpected issuer: zephyr-index/release\nfound issuer:\nunknown/3f2a1c0b\npubkey alg:\ned25519\nsig bytes:\n9c 4f 22 10 7a 88 ... 0e\nZEPHYR-3300: bundle rejected (signature mismatch)\nreference: https://docs.demo-acme.io/errors/ZEPHYR-3300\nhint: rotate keys via `zephyr keys rotate` then re-sign the bundle\nexit code 1",
+      "entities": [
+        {
+          "entity": "error: ZEPHYR-3300: signature verification failed",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "error: zephyr-3300: signature verification failed",
+          "note": ""
+        },
+        {
+          "entity": "ZEPHYR-3300: bundle rejected (signature mismatch)",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "zephyr-3300: bundle rejected signature mismatch",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ZEPHYR-3300",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/zephyr-3300",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/errors/ZEPHYR-3300",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/errors/zephyr-3300",
+          "note": ""
+        },
+        {
+          "entity": "ZEPHYR-3300",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "zephyr-3300",
+          "note": ""
+        },
+        {
+          "entity": "zephyr",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyr",
+          "note": ""
+        },
+        {
+          "entity": "zephyr-index",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyr-index",
+          "note": ""
+        },
+        {
+          "entity": "verify",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "verify",
+          "note": ""
+        },
+        {
+          "entity": "412",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "412",
+          "note": ""
+        },
+        {
+          "entity": "3300",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "3300",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "webpage_01.png",
+      "category": "webpage",
+      "backend": "paddleocr",
+      "elapsed_ms": 20055.989374988712,
+      "n_blocks": 21,
+      "full_text": "DeiaView ·docs.demo-acme.jo\n□\nhttps://docs.demo-acme.io/zh/design/timeline.html\nUpdated 2026-07-15 #142 replies v0.8.2\nDejaView 时间线设计 / Timeline Design Notes\nDejaView 把屏幕活动建模为一条单调递增的事件流(timeline)。每张截图经过 OCR 与语义理解后产出一条原子事件，事件按时间戳排序写入 Postgres。\nTimeline is modeled as a strictly monotonic event stream. Each screenshot becomes one atomic event after OCR + perception, persisted to Postgres with an HNSW embedding index.\n关键指标 / Key Metrics\n412\n98.2%\n8 ms\nevents captured today\nOCR block confidence (avg)\nembedding latency p50\n相关链接 / See Also\nhttps://docs.demo-acme.io/zh/design/sentinel.html\nhttps://docs.demo-acme.io/en/api/memoryd.html\nPostgres\nHNSW\nPaddleOCR\nQwen3-Embedding",
+      "entities": [
+        {
+          "entity": "DejaView 时间线设计 / Timeline Design Notes",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "dejaview 时间线设计 / timeline design notes",
+          "note": ""
+        },
+        {
+          "entity": "DejaView 把屏幕活动建模为一条单调递增的事件流 (timeline)。",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "dejaview 把屏幕活动建模为一条单调递增的事件流 timeline",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/design/timeline.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/design/timeline.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/design/sentinel.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/design/sentinel.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/en/api/memoryd.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/en/api/memoryd.html",
+          "note": ""
+        },
+        {
+          "entity": "2026-07-15",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2026-07-15",
+          "note": ""
+        },
+        {
+          "entity": "142",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "142",
+          "note": ""
+        },
+        {
+          "entity": "v0.8.2",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "v0.8.2",
+          "note": ""
+        },
+        {
+          "entity": "412",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "412",
+          "note": ""
+        },
+        {
+          "entity": "98.2",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "98.2",
+          "note": ""
+        },
+        {
+          "entity": "8",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "8",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "webpage_02.png",
+      "category": "webpage",
+      "backend": "paddleocr",
+      "elapsed_ms": 11897.981624992099,
+      "n_blocks": 22,
+      "full_text": "acme-parser CHANGELOG · 0.4.1\n□\n□\nhttps://docs.demo-acme.io/en/acme-parser/changelog.html\nUpdated 2026-07-09\n#37 issues\nMIT licensed\nacme-parser CHANGELOG\nv0.4.1 - 2026-07-09\nFixed a tokenizer crash on empty input and added streaming lex mode. Memory footprint reduced by roughly 18% on the dejaview-core capture workload.\n- Lexer::next_token() now returns Eof instead of panicking on empty input\n+ Lexer::with_streaming() for chunked input\n* token table size: 64KB -> 52KB\n下载/Downloads\nhttps://docs.demo-acme.io/dl/acme-parser-0.4.1.tar.gz\nhttps://docs.demo-acme.io/dl/acme-parser-0.4.1.sig\n37\n412\n18%\nopen issues\nstars\nmemory reduction",
+      "entities": [
+        {
+          "entity": "acme-parser CHANGELOG",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "acme-parser changelog",
+          "note": ""
+        },
+        {
+          "entity": "Lexer::next_token() now returns Eof instead of panicking on empty input",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "lexer::next_token now returns eof instead of panicking on empty input",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/en/acme-parser/changelog.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/en/acme-parser/changelog.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/dl/acme-parser-0.4.1.tar.gz",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/dl/acme-parser-0.4.1.tar.gz",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/dl/acme-parser-0.4.1.sig",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/dl/acme-parser-0.4.1.sig",
+          "note": ""
+        },
+        {
+          "entity": "acme-parser",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "acme-parser",
+          "note": ""
+        },
+        {
+          "entity": "Lexer",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lexer",
+          "note": ""
+        },
+        {
+          "entity": "2026-07-09",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2026-07-09",
+          "note": ""
+        },
+        {
+          "entity": "37",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "37",
+          "note": ""
+        },
+        {
+          "entity": "0.4.1",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "0.4.1",
+          "note": ""
+        },
+        {
+          "entity": "412",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "412",
+          "note": ""
+        },
+        {
+          "entity": "18",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "18",
+          "note": ""
+        },
+        {
+          "entity": "64",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "64",
+          "note": ""
+        },
+        {
+          "entity": "52",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "52",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "webpage_03.png",
+      "category": "webpage",
+      "backend": "paddleocr",
+      "elapsed_ms": 11456.56954095466,
+      "n_blocks": 29,
+      "full_text": "lumen-rpc·Benchmarks\n7\nhttps://bench.demo-acme.io/lumen-rpc/2026-07-15.html\nGenerated 2026-07-15#9 benchmarks\nmacOS arm64\nlumen-rpc 基准测试 / Benchmarks\nAll numbers are synthetic, collected on the reference arm64 host with lumen-rpc v1.2.0 talking to the local gateway over a unix domain socket.\n吞吐/Throughput\n42,910\n31,204\n8 ms\nreq/s (call, p50)\nreq/s (call, p99)\np50 latency\n结果表/Result Tables\ncall\np50=8.00ms\np99=21.40ms\n42910 req/s\nstream\np50=2.10ms\np99=6.80ms\n88210 msg/s\nbatch(n=64)\np50=12.4ms\np99=33.1ms\n5170 batch/s\nhttps://bench.demo-acme.io/lumen-rpc/raw.csv\nhttps://docs.demo-acme.io/en/lumen-rpc/method.html",
+      "entities": [
+        {
+          "entity": "lumen-rpc 基准测试 / Benchmarks",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "lumen-rpc 基准测试 / benchmarks",
+          "note": ""
+        },
+        {
+          "entity": "call            p50=8.00ms   p99=21.40ms   42910 req/s",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "call p50 8.00ms p99 21.40ms 42910 req/s",
+          "note": ""
+        },
+        {
+          "entity": "https://bench.demo-acme.io/lumen-rpc/2026-07-15.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://bench.demo-acme.io/lumen-rpc/2026-07-15.html",
+          "note": ""
+        },
+        {
+          "entity": "https://bench.demo-acme.io/lumen-rpc/raw.csv",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://bench.demo-acme.io/lumen-rpc/raw.csv",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/en/lumen-rpc/method.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/en/lumen-rpc/method.html",
+          "note": ""
+        },
+        {
+          "entity": "lumen-rpc",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "lumen-rpc",
+          "note": ""
+        },
+        {
+          "entity": "2026-07-15",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2026-07-15",
+          "note": ""
+        },
+        {
+          "entity": "1.2.0",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "1.2.0",
+          "note": ""
+        },
+        {
+          "entity": "42,910",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "42 910",
+          "note": ""
+        },
+        {
+          "entity": "31,204",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "31 204",
+          "note": ""
+        },
+        {
+          "entity": "8",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "8",
+          "note": ""
+        },
+        {
+          "entity": "88,210",
+          "category": "numbers",
+          "hit": false,
+          "normalized": "88 210",
+          "note": ""
+        },
+        {
+          "entity": "5,170",
+          "category": "numbers",
+          "hit": false,
+          "normalized": "5 170",
+          "note": ""
+        },
+        {
+          "entity": "64",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "64",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "webpage_04.png",
+      "category": "webpage",
+      "backend": "paddleocr",
+      "elapsed_ms": 12514.546791964676,
+      "n_blocks": 17,
+      "full_text": "zephyr-index FAQ·\n□\nhttps://docs.demo-acme.io/zh/zephyr-index/faq.html\nUpdated 2026-06-30 #58 replies\nzephyr-index 常见问题 / FAQ\nQ1：向量维度可以改吗?\n默认 1024 维(Qwen3-Embedding-0.6B)。升级到 4B 模型时用 MRL 截断回 1024 维，schema 不变，但需要全量重嵌。\nDefault is 1024 dims. Upgrading to the 4B model uses MRL truncation back to 1024 so the schema stays the same, but a full re-embed is required.\nQ2:支持多大数据量?\n单机 HNSW 实测 412 万向量，召回率98.2%,p50 查询 12 ms。更大规模建议分片。\n参考/References\nhttps://docs.demo-acme.io/zh/zephyr-index/tuning.html\nhttps://docs.demo-acme.io/zh/zephyr-index/sharding.html\nHNSW\nQwen3-Embedding\nMRL\n1024-dim",
+      "entities": [
+        {
+          "entity": "zephyr-index 常见问题 / FAQ",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "zephyr-index 常见问题 / faq",
+          "note": ""
+        },
+        {
+          "entity": "默认 1024 维 (Qwen3-Embedding-0.6B)。",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "默认 1024 维 qwen3-embedding-0.6b",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/zephyr-index/faq.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/zephyr-index/faq.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/zephyr-index/tuning.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/zephyr-index/tuning.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/zh/zephyr-index/sharding.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/zh/zephyr-index/sharding.html",
+          "note": ""
+        },
+        {
+          "entity": "zephyr-index",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyr-index",
+          "note": ""
+        },
+        {
+          "entity": "Qwen3-Embedding",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "qwen3-embedding",
+          "note": ""
+        },
+        {
+          "entity": "HNSW",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "hnsw",
+          "note": ""
+        },
+        {
+          "entity": "2026-06-30",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2026-06-30",
+          "note": ""
+        },
+        {
+          "entity": "58",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "58",
+          "note": ""
+        },
+        {
+          "entity": "1024",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "1024",
+          "note": ""
+        },
+        {
+          "entity": "4",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "4",
+          "note": ""
+        },
+        {
+          "entity": "412",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "412",
+          "note": ""
+        },
+        {
+          "entity": "98.2",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "98.2",
+          "note": ""
+        },
+        {
+          "entity": "12",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "12",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "image": "webpage_05.png",
+      "category": "webpage",
+      "backend": "paddleocr",
+      "elapsed_ms": 11704.199791012798,
+      "n_blocks": 20,
+      "full_text": "nova-cipher ·SEC-2026-0142\n7\nhttps://security.demo-acme.io/advisories/SEC-2026-0142.html\nPublished 2026-07-11 severity: high CVE-N/A (synthetic)\nnova-cipher 安全公告 / Advisory SEC-2026-0142\nA synthetic advisory for the nova-cipher signing path. Affected versions: nova-cipher >= 0.3.0 and < 0.3.4. The Verify path did not check the issuer field on ed25519 envelopes.\n受影响版本/Affected\nnova-cipher >= 0.3.0, < 0.3.4\nfix: 0.3.4(released 2026-07-11)\ncredits: sam_qa (synthetic reporter)\n升级/Upgrade\n升级到 0.3.4 或以上，然后运行`zephyr keys rotate轮换密钥。\nhttps://docs.demo-acme.io/en/nova-cipher/upgrade.html\nhttps://security.demo-acme.io/diffs/nova-0.3.4.patch\n0.3.4\n3\n142\nfixed version\naffected releases\nadvisory id",
+      "entities": [
+        {
+          "entity": "nova-cipher 安全公告 / Advisory SEC-2026-0142",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "nova-cipher 安全公告 / advisory sec-2026-0142",
+          "note": ""
+        },
+        {
+          "entity": "nova-cipher >= 0.3.0, < 0.3.4",
+          "category": "text_snippets",
+          "hit": true,
+          "normalized": "nova-cipher 0.3.0 0.3.4",
+          "note": ""
+        },
+        {
+          "entity": "https://security.demo-acme.io/advisories/SEC-2026-0142.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://security.demo-acme.io/advisories/sec-2026-0142.html",
+          "note": ""
+        },
+        {
+          "entity": "https://docs.demo-acme.io/en/nova-cipher/upgrade.html",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://docs.demo-acme.io/en/nova-cipher/upgrade.html",
+          "note": ""
+        },
+        {
+          "entity": "https://security.demo-acme.io/diffs/nova-0.3.4.patch",
+          "category": "urls",
+          "hit": true,
+          "normalized": "https://security.demo-acme.io/diffs/nova-0.3.4.patch",
+          "note": ""
+        },
+        {
+          "entity": "SEC-2026-0142",
+          "category": "error_codes",
+          "hit": true,
+          "normalized": "sec-2026-0142",
+          "note": ""
+        },
+        {
+          "entity": "nova-cipher",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "nova-cipher",
+          "note": ""
+        },
+        {
+          "entity": "zephyr",
+          "category": "identifiers",
+          "hit": true,
+          "normalized": "zephyr",
+          "note": ""
+        },
+        {
+          "entity": "2026-07-11",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "2026-07-11",
+          "note": ""
+        },
+        {
+          "entity": "0.3.0",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "0.3.0",
+          "note": ""
+        },
+        {
+          "entity": "0.3.4",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "0.3.4",
+          "note": ""
+        },
+        {
+          "entity": "3",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "3",
+          "note": ""
+        },
+        {
+          "entity": "142",
+          "category": "numbers",
+          "hit": true,
+          "normalized": "142",
+          "note": ""
+        }
+      ]
+    }
+  ]
+}

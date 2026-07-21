@@ -259,8 +259,8 @@
         "M5.1",
         "M6.1"
       ],
-      "status": "false",
-      "note": ""
+      "status": "accept",
+      "note": "2026-07-21 完成:services/ocrd/bench/accuracy_ab.py 全 20 张 M6.1 截图 × 两后端(rapidocr PP-OCRv4 + paddleocr PP-OCRv6_medium)实测,无子采样。结果:rapidocr overall recall 0.877(1145ms/图),paddleocr 0.967(14s/图)——paddleocr +9 点但 Mac 上慢 12×。增益集中在 snippet(0.68→0.97)+terminal(报错码密集)+url;identifier/number 两者持平(0.95);code 类完全持平(0.93)。弱项:① rapidocr O/0 混淆(ROCM→R0cM);② rapidocr CJK/拉丁边界丢空格;③ rapidocr 整行漏检。档位建议:Mac dev 用 rapidocr(快+code 饱和+CJK 缺陷由 pg_trgm 吸收),EPYC 生产用 paddleocr v6_medium(T0.5 在 EPYC 上若 P95>1s 降 small)。small vs medium 延后到 T0.5/T1.8 EPYC 测(Mac 上无意义)。产物:docs/benchmarks.md(8 小节:测法/总体/按类型/按类别/弱项/small-medium/建议/复现)+ bench/{accuracy_ab.py,accuracy_ab_full.json(132KB 全审计),accuracy_rapidocr_only.json}。复现:cd services/ocrd && uv run python -m bench.accuracy_ab [--paddle-all|--no-paddle]。"
     },
     {
       "id": "M6.1",
