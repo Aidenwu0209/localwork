@@ -169,8 +169,8 @@
         "M3.2",
         "M2.5"
       ],
-      "status": "false",
-      "note": ""
+      "status": "accept",
+      "note": "2026-07-21 完成:① stages.py 加 GatewayEmbed(Qwen3-Embedding-0.6B 经网关,1024 维;embed() 入库用纯文本,embed_query() 查询侧加 'Instruct: 检索用户活动时间线\\nQuery: ' 前缀,instruction-aware)。② search.py 实现 search_timeline 三模式:semantic(HNSW cosine,score=1-dist/2)/exact(pg_trgm similarity,SET threshold=0.05 兼容短查询报错码)/hybrid(双路 union 去重按平均分排序),三模式都支持 time_from/time_to ISO-8601 时间过滤。③ server.py 加 POST /v1/search 端点,gateway 不可达时降级 503。④ scripts/seed_fixtures.py 灌 51 条合成事件(dejaview-core/acme-api/报错码 ROCM-4042/ERR-4101/docs.demo-acme.io URL,device_id='fixture' 便于清理)。验证(全绿):EXACT 'ROCM-4042' 命中含报错码行;SEMANTIC 'database connection problem'→psycopg pool(0.78)、'GPU out of memory'→ROCM OOM(0.79);HYBRID 'ROCM error' 双路合并;时间过滤生效。embedding 51 条 2 秒。psycopg 坑:dict/list 需 Jsonb() 包。清理 51 条 + 停服务。"
     },
     {
       "id": "M3.4",

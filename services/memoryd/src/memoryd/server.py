@@ -11,6 +11,7 @@ grounds). Health check at /health for docker/orchestration.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Annotated
 
@@ -20,7 +21,9 @@ from fastapi.responses import JSONResponse
 from memoryd.config import Settings
 from memoryd.models import AudioMeta, DocMeta, FrameMeta, IngestAck
 from memoryd.pipeline import Pipeline
+from memoryd.search import SearchMode, SearchHit, search_timeline
 from memoryd.stages import (
+    GatewayEmbed,
     StubEmbed,
     StubNovelty,
     StubOcr,
@@ -30,15 +33,30 @@ from memoryd.stages import (
 from memoryd.storage import TimelineStore
 
 
+def _make_embed(settings: Settings):
+    """Use the real gateway-backed embed when a gateway is configured; fall back
+    to the stub when the gateway isn't reachable (so dev without a GPU still
+    works for the ingest path)."""
+    try:
+        import httpx
+        base = settings.gateway_url.rstrip("/").removesuffix("/v1")
+        with httpx.Client(timeout=3.0) as c:
+            c.get(f"{base}/v1/models")
+        return GatewayEmbed(settings.gateway_url)
+    except Exception:
+        return StubEmbed()
+
+
 def _default_pipeline(settings: Settings) -> Pipeline:
-    """M3.2 default: all-stub pipeline + real Postgres store. M3.4 replaces the
-    stubs with gateway-backed stages by constructing Pipeline explicitly."""
+    """M3.2 default: stub pipeline + real Postgres store, BUT with a real
+    gateway-backed embed when the gateway is reachable (M3.3). M3.4 replaces the
+    rest of the stubs with gateway-backed stages."""
     return Pipeline(
         sentinel=StubSentinel(),
         ocr=StubOcr(),
         novelty=StubNovelty(),
         perceive=StubPerceive(),
-        embed=StubEmbed(),
+        embed=_make_embed(settings),
         store=TimelineStore(
             dsn=settings.timeline_db_url, data_root=settings.data_root
         ),
@@ -101,5 +119,46 @@ def create_app(
             raise HTTPException(status_code=422, detail=f"invalid meta JSON: {exc}") from exc
         await file.read()
         return IngestAck(accepted=True, note="doc stubbed: accepted, not chunked")
+
+    @app.post("/v1/search")
+    async def search(body: dict) -> dict:
+        """Three-mode timeline search (handbook §6.5): semantic / exact / hybrid.
+
+        Body: {query, mode=hybrid, k=5, time_from?, time_to?}. The query is
+        embedded with the Qwen3 instruction prefix on the semantic side.
+        """
+        query = (body.get("query") or "").strip()
+        if not query:
+            raise HTTPException(status_code=422, detail="`query` is required")
+        mode = body.get("mode", "hybrid")
+        if mode not in ("hybrid", "semantic", "exact"):
+            raise HTTPException(status_code=422, detail=f"mode must be hybrid|semantic|exact, got {mode}")
+        k = int(body.get("k", 5))
+        time_from = body.get("time_from")
+        time_to = body.get("time_to")
+
+        # Embed the query (instruction-prefixed) for semantic/hybrid. exact-only
+        # skips embedding.
+        query_vec = None
+        if mode in ("hybrid", "semantic"):
+            if not isinstance(pipeline.embed, GatewayEmbed):
+                raise HTTPException(
+                    status_code=503,
+                    detail="semantic/hybrid search requires the gateway-backed embed; "
+                           "gateway not reachable (start dev-stack.sh up embed)",
+                )
+            query_vec = await pipeline.embed.embed_query(query)
+
+        hits = await asyncio.to_thread(
+            search_timeline,
+            dsn=settings.timeline_db_url,
+            query=query,
+            mode=mode,
+            k=k,
+            time_from=time_from,
+            time_to=time_to,
+            query_vec=query_vec,
+        )
+        return {"query": query, "mode": mode, "k": k, "hits": [h.to_dict() for h in hits]}
 
     return app

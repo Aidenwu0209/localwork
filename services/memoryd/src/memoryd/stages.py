@@ -126,3 +126,43 @@ class StubEmbed:
         # index has something to store. Real embed (Qwen3-Embedding-0.6B, 1024
         # dims) is wired in M3.3/M3.4.
         return [0.0] * 1024
+
+
+class GatewayEmbed:
+    """Real embed stage backed by the LiteLLM gateway (Qwen3-Embedding-0.6B,
+    1024-dim). Handbook §6.5: the QUERY side adds an instruction prefix
+    (`Instruct: 检索用户活动时间线\\nQuery: …`) because Qwen3-Embedding is
+    instruction-aware; the INGEST side embeds plain text. So callers must pass
+    `instruct=True` for queries and leave it False when embedding events to
+    store. The EmbedStage Protocol only has `embed(text)`, so this class also
+    exposes `embed_query` for the asymmetric case; ingest uses `embed(text)`
+    without prefix.
+    """
+
+    def __init__(self, gateway_url: str, *, timeout: float = 30.0) -> None:
+        # Drop trailing /v1 if present so we control the path below.
+        self._base = gateway_url.rstrip("/")
+        if self._base.endswith("/v1"):
+            self._base = self._base[:-3]
+        self._timeout = timeout
+
+    def _embed_sync(self, text: str) -> list[float]:
+        import httpx
+        url = f"{self._base}/v1/embeddings"
+        with httpx.Client(timeout=self._timeout) as client:
+            r = client.post(url, json={"model": "embed", "input": text})
+            r.raise_for_status()
+            data = r.json()
+        return data["data"][0]["embedding"]
+
+    async def embed(self, text: str) -> list[float]:
+        # Ingest path: plain text, no instruction prefix (handbook §6.5).
+        import asyncio
+        return await asyncio.to_thread(self._embed_sync, text)
+
+    async def embed_query(self, query: str) -> list[float]:
+        # Query path: instruction-aware prefix (handbook §6.5). This is what
+        # search.semantic / search.hybrid must use on the user query.
+        import asyncio
+        prefixed = f"Instruct: 检索用户活动时间线\nQuery: {query}"
+        return await asyncio.to_thread(self._embed_sync, prefixed)
