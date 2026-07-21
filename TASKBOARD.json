@@ -319,8 +319,8 @@
       "depends": [
         "M7.1"
       ],
-      "status": "false",
-      "note": "全本地;开发期验链路正确性,回答质量待 S2 换 27B 后复验。"
+      "status": "accept",
+      "note": "2026-07-21 完成:services/agentd/server.py OpenAI 兼容 /v1/chat/completions(model=dejaview)+ /v1/models + /health。tool-calling 循环:用户消息+system prompt 发给 brain(logical name,经网关),brain 返回 tool_calls 则本地 dispatch 执行 4 工具,结果喂回 brain,循环(上限 6 轮)直到 brain 给最终回答。系统提示词强制答案纪律:每个记忆引用必须 [event#<id> <HH:MM> <app>] 格式,只引用工具真实返回的 id,不准编造。__main__.py uvicorn 起服 127.0.0.1:8101。端到端实测(经 SSH 隧道用服务器 brain Q6_K + embed,fixture 灌的时间线):问'What GPU errors have I hit recently?'→brain 自主调 search_timeline→返回 ROCM-4042/HIP buffer 事件→带正确引用 [event#120 00:45 Terminal] 回答,引用可回溯到真实 timeline 行。手册 §6.5 验收达标。非流式优先(stream:true 确认但单 JSON 返回,SSE 留 Phase 2)。brain Q6_K 一轮 tool-calling ~30-60s,优化留 T3.1。"
     },
     {
       "id": "D1",
