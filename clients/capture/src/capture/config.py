@@ -23,6 +23,10 @@ import yaml
 MAX_UPLOAD_WIDTH = 2560
 # WebP encode quality.
 WEBP_QUALITY = 80
+# dhash Hamming distance below which two consecutive frames are treated as
+# duplicates and the second is dropped (handbook §5.2: "dhash ... 距离 < 10
+# 则丢弃"). Set <= 0 to disable dedup entirely.
+DEDUP_DISTANCE = 10
 
 
 def _default_device_id() -> str:
@@ -60,6 +64,9 @@ class CaptureConfig:
     # Image processing.
     max_upload_width: int = MAX_UPLOAD_WIDTH
     webp_quality: int = WEBP_QUALITY
+    # Dedup: drop a frame whose dhash distance from the previous uploaded frame
+    # is below this threshold (handbook §5.2). <= 0 disables dedup.
+    dedup_distance: int = DEDUP_DISTANCE
 
     # Whether to attempt browser URL probing (best effort, osascript).
     probe_url: bool = True
@@ -111,6 +118,7 @@ class CaptureConfig:
             periodic_interval=float(data.get("periodic_interval", cls.periodic_interval)),
             max_upload_width=int(data.get("max_upload_width", cls.max_upload_width)),
             webp_quality=int(data.get("webp_quality", cls.webp_quality)),
+            dedup_distance=int(data.get("dedup_distance", cls.dedup_distance)),
             probe_url=bool(data.get("probe_url", cls.probe_url)),
             source=source,
         )

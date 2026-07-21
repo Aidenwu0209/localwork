@@ -157,6 +157,9 @@ async def run_agent(config: "CaptureConfig") -> None:
     last_title: str | None = None
     last_upload_ts: float = 0.0
     last_periodic_ts: float = time.monotonic()
+    # dhash of the last UPLOADED frame, for near-duplicate suppression
+    # (handbook §5.2). None until the first frame goes through.
+    last_uploaded_hash = None
 
     async with httpx.AsyncClient(timeout=httpx.Timeout(8.0, connect=3.0)) as client:
         while True:
@@ -195,11 +198,34 @@ async def run_agent(config: "CaptureConfig") -> None:
                 url = probe_browser_url(app) if config.probe_url else None
 
                 try:
-                    webp_bytes, w, h = capture_webp(config)
+                    webp_bytes, w, h, frame_hash = capture_webp(config)
                 except Exception as exc:
                     log.warning("screenshot failed (skipped): %s", exc)
                     await asyncio.sleep(config.poll_interval)
                     continue
+
+                # Dedup against the last uploaded frame (handbook §5.2:
+                # dhash distance < threshold -> drop). We still advance the
+                # change-tracking state (last_app/last_title) so a duplicate
+                # frame doesn't re-fire on every poll; only the upload is
+                # suppressed. Disabled when dedup_distance <= 0.
+                if (
+                    last_uploaded_hash is not None
+                    and config.dedup_distance > 0
+                ):
+                    dist = frame_hash - last_uploaded_hash
+                    if dist < config.dedup_distance:
+                        log.info(
+                            "dedup: dropping frame (dhash distance %d < %d) "
+                            "trigger=%s app=%s",
+                            dist, config.dedup_distance, trigger, app,
+                        )
+                        last_app, last_title = app, title
+                        last_upload_ts = time.monotonic()
+                        if trigger == "periodic":
+                            last_periodic_ts = last_upload_ts
+                        await asyncio.sleep(config.poll_interval)
+                        continue
 
                 log.info(
                     "capturing: trigger=%s app=%s title=%r url=%s size=%dx%d "
@@ -219,6 +245,7 @@ async def run_agent(config: "CaptureConfig") -> None:
 
                 last_upload_ts = time.monotonic()
                 last_app, last_title = app, title
+                last_uploaded_hash = frame_hash
                 if trigger == "periodic":
                     last_periodic_ts = last_upload_ts
 

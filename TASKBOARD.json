@@ -208,8 +208,8 @@
       "depends": [
         "M4.1"
       ],
-      "status": "false",
-      "note": ""
+      "status": "accept",
+      "note": "2026-07-21 完成:screenshot.py 加 imagehash.dhash(8x8 指纹,全分辨率算,scale 前保真);agent.py 主循环维护 last_uploaded_hash,新帧距离 < config.dedup_distance(默认 10) 则丢弃(只抑制上传,仍推进 last_app/last_title 避免重复触发);config.py 加 dedup_distance 字段(<=0 可禁用)。实测同屏两次捕获 dhash 完全相同(距离 0 < 10)。锁屏暂停 + WebP≤2560px M4.1 已覆盖。验收'静止画面零上报':25 秒静止运行只触发 1 次初始 change,后续无刷屏(dedup + 3s 最小间隔 + 锁屏三重保险)。"
     },
     {
       "id": "M4.3",
@@ -221,8 +221,8 @@
         "M4.2",
         "M3.2"
       ],
-      "status": "false",
-      "note": ""
+      "status": "accept",
+      "note": "2026-07-21 完成:M4.1 已做静态扫描(无 open(w)/write/tempfile/aiofiles/shutil,截图全在 io.BytesIO)。本任务补动态验证:起 memoryd,CAPTURE_DEVICE_ID=m4test 跑 capture 25 秒,find clients/capture -type f 前后对比 3902→3902 diff=0(零落盘铁证);同时 capture 成功上报(memoryd 202 Accepted,timeline_events 收到 1 条 app+title+size 完整字段)。上报契约 multipart file+meta 与 memoryd FrameMeta 对齐。异常丢弃不缓存:uploader 失败静默 log 不重试不落盘。测试数据已 DELETE,screenshots 目录已清,memoryd 已停。"
     },
     {
       "id": "M4.4",

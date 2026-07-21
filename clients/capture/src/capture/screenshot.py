@@ -19,6 +19,7 @@ from __future__ import annotations
 import io
 from typing import TYPE_CHECKING
 
+import imagehash
 import mss
 from PIL import Image
 
@@ -30,12 +31,15 @@ def capture_webp(
     config: "CaptureConfig",
     *,
     monitor_index: int = 1,
-) -> tuple[bytes, int, int]:
-    """Capture the screen and return (webp_bytes, scaled_width, scaled_height).
+) -> tuple[bytes, int, int, imagehash.ImageHash]:
+    """Capture the screen and return (webp_bytes, scaled_width, scaled_height,
+    dhash).
 
     `monitor_index=1` is the primary display in mss's numbering (0 is the
-    "all monitors combined" virtual display). Returns the encoded WebP bytes
-    plus the post-scale dimensions so the caller can log/inspect them.
+    "all monitors combined" virtual display). Returns the encoded WebP bytes,
+    the post-scale dimensions, and a dhash of the captured frame so the caller
+    can deduplicate near-identical consecutive frames (handbook §5.2: distance
+    < threshold -> drop).
     """
     with mss.mss() as sct:
         mon = sct.monitors[monitor_index]
@@ -47,11 +51,16 @@ def capture_webp(
     img = Image.frombytes("RGBA", raw.size, raw.bgra, "raw", "BGRA")
     img = img.convert("RGB")
 
+    # Compute the dhash on the full-resolution capture (before scaling) — dhash
+    # is already a coarse 8x8 thumbnail fingerprint, so scaling doesn't help and
+    # would only lose fidelity for the dedup decision.
+    frame_hash = imagehash.dhash(img)
+
     scaled = _scale_to_max_width(img, config.max_upload_width)
 
     buf = io.BytesIO()
     scaled.save(buf, format="WEBP", quality=config.webp_quality, method=4)
-    return buf.getvalue(), scaled.width, scaled.height
+    return buf.getvalue(), scaled.width, scaled.height, frame_hash
 
 
 def _scale_to_max_width(img: Image.Image, max_width: int) -> Image.Image:
