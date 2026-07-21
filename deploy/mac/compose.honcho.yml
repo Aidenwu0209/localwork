@@ -4,15 +4,36 @@
 # Host port 8100 avoids clashing with any pre-existing local Honcho on 8000.
 name: dejaview-honcho
 
+# Build via our wrapper Dockerfile (deploy/mac/honcho.Dockerfile), which injects
+# a Tsinghua PyPI mirror because the Docker Desktop VM cannot reliably reach
+# files.pythonhosted.org from CN. Context = repo root so the Dockerfile can COPY
+# both its own patches and the honcho sources under third_party/honcho/. The
+# submodule's own Dockerfile stays pristine.
+x-uv-mirror: &uv-mirror
+  context: ../..
+  dockerfile: deploy/mac/honcho.Dockerfile
+
+# The host shell exports HTTP(S)_PROXY=http://127.0.0.1:7897 (a local
+# Clash/Mihomo). Docker Desktop passes these through to containers, but inside a
+# container 127.0.0.1 is the container itself -> every proxied request is
+# refused. The proxy binds to 127.0.0.1 only (no LAN), so containers cannot use
+# it anyway. We explicitly blank the proxy vars at runtime so Honcho talks to the
+# gateway/database directly via host.docker.internal.
+x-no-proxy: &no-proxy
+  - TZ=Asia/Shanghai
+  - HTTP_PROXY=
+  - HTTPS_PROXY=
+  - http_proxy=
+  - https_proxy=
+  - ALL_PROXY=
+  - all_proxy=
+
 services:
   honcho-api:
-    build:
-      context: ../../third_party/honcho
-      dockerfile: Dockerfile
+    build: *uv-mirror
     entrypoint: ["sh", "docker/entrypoint.sh"]
     env_file: honcho.env
-    environment:
-      - TZ=Asia/Shanghai
+    environment: *no-proxy
     ports:
       - "127.0.0.1:8100:8000"
     extra_hosts:
@@ -28,17 +49,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-      start_period: 15s
+      start_period: 30s
     restart: unless-stopped
 
   honcho-deriver:
-    build:
-      context: ../../third_party/honcho
-      dockerfile: Dockerfile
+    build: *uv-mirror
     entrypoint: ["/app/.venv/bin/python", "-m", "src.deriver"]
     env_file: honcho.env
-    environment:
-      - TZ=Asia/Shanghai
+    environment: *no-proxy
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

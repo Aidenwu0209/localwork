@@ -1,7 +1,7 @@
 {
   "project": "DejaView",
   "board_version": 1,
-  "updated": "2026-07-20",
+  "updated": "2026-07-21",
   "authoritative_location": "/Users/wu/Projects/Aidenwu0209/localwork/TASKBOARD.json(仓库根,唯一权威;随每次 push 备份到 github.com/Aidenwu0209/localwork)",
   "instructions": [
     "状态机:false(未开始) -> doing(进行中) -> accept(完成且验收通过)。特殊态 blocked(被外部依赖卡住,note 必须写清缺什么)。",
@@ -53,8 +53,8 @@
       "steps": "deploy/mac/compose.data.yml 起 pgvector/pg15 与 redis;.env.example 含 GATEWAY_URL/OCR_URL/DATA_ROOT/逻辑模型名;Makefile 提供 data-up/data-down。",
       "verify": "make data-up 后 postgres 与 redis 健康;psql 可连。",
       "depends": ["M1.1"],
-      "status": "doing",
-      "note": "2026-07-20 文件全部就位(compose.data.yml/.env.example/Makefile),docker compose config 校验通过;runtime 验证被 Docker Desktop 首次启动卡住(需用户在 GUI 打开一次 Docker.app 完成初始化),daemon 起来后跑 make data-up 即可收尾。端口避让:pg=5433,redis=6380。"
+      "status": "accept",
+      "note": "2026-07-21 完成:make data-up 起服,docker ps 显示 database(5433)+redis(6380)均 healthy;psql -d dejaview 可连,timeline_events/sentinel_audit/kb_chunks 三表 + honcho 库均已建;pgvector 0.8.5 + pg_trgm 1.6 扩展就位。"
     },
     {
       "id": "M2.1",
@@ -93,8 +93,8 @@
       "steps": "删除或注释 cadvisor 的 platform: linux/arm64 问题项(监控主战场在服务器侧);SearXNG 保持 disabled;确认 api/deriver/database/redis 四服务可起。",
       "verify": "docker compose config 通过;honcho 栈 up 后 /health 返回 200。",
       "depends": ["M2.2"],
-      "status": "doing",
-      "note": "2026-07-20 自建 compose.honcho.yml(api+deriver,库/redis 复用 data 层,无 cadvisor/searxng/监控,端口 8100)+ honcho.env.example(网关逻辑名路由:deriver=perceive,dialectic 五档=brain,embedding=embed 1024 维,dream 关闭,telemetry 关闭);config 校验通过;build+/health 验证等 Docker daemon。"
+      "status": "accept",
+      "note": "2026-07-21 完成:compose.honcho.yml(api+deriver,端口 8100,无 cadvisor/searxng/监控)up 成功,curl /health=200,deriver 连上 redis 并启动 reconciler。三个坑已解并落 verification-log:① 容器内 files.pythonhosted.org 不可达 → 自写 deploy/mac/honcho.Dockerfile(submodule 保持 pristine),sed 把 uv.lock 内 2623 个 URL 重写到清华镜像(同路径,hash 不变,--frozen 仍过);② host 代理 HTTP(S)_PROXY=127.0.0.1:7897(Clash)被 Docker 透传进容器,容器内 127.0.0.1 指向自己 → build 阶段 inline unset、compose environment 置空;③ Honcho 默认 vector(1536) 与 EMBEDDING_VECTOR_DIMENSIONS=1024 冲突 → docker compose run --entrypoint python scripts/configure_embeddings.py --yes ALTER 两列+重建 HNSW 索引。"
     },
     {
       "id": "M2.5",
@@ -123,8 +123,8 @@
       "steps": "deploy/mac/timeline-init.sql 按手册 §6.3;在 M1.3 的 postgres 里建独立 schema/db。",
       "verify": "\\d timeline_events 结构与手册一致;两个扩展 created;三个索引存在。",
       "depends": ["M1.3"],
-      "status": "doing",
-      "note": "2026-07-20 DDL 已写入 deploy/mac/timeline-init.sql(随 postgres 首次启动自动执行,含 honcho 库创建、vector+pg_trgm、hnsw/trgm/ts 索引、end_ts 合并字段);验证同样等 Docker daemon。"
+      "status": "accept",
+      "note": "2026-07-21 完成:与 M1.3 同批验收。\\d timeline_events 结构与手册 §6.3 一致(含 end_ts 合并字段);vector 0.8.5 + pg_trgm 1.6 扩展 created;实际建成 5 索引(pkey/hnsw embedding/ts btree/ocr_text gin_trgm/app+ts btree,含 pkey 共 5 个,业务索引 4 个)。honcho 库已建。"
     },
     {
       "id": "M3.2",

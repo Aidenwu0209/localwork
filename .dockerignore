@@ -1,0 +1,20 @@
+# Keep the Honcho build context (context = repo root, see compose.honcho.yml)
+# lean: the image only needs third_party/honcho sources. Drop git weight and
+# unrelated project dirs to speed up context upload.
+.git
+.gitmodules
+.gitignore
+**/.git
+docs
+tests
+clients
+services
+deploy
+Makefile
+README.md
+README.zh.md
+TASKBOARD.json
+.env.example
+# OS noise
+.DS_Store
+**/.DS_Store

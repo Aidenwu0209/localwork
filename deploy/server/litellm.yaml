@@ -1,0 +1,86 @@
+# DejaView LiteLLM gateway config — single source of physical routing.
+# Handbook §3: app code speaks ONLY logical names (brain/perceive/sentinel/fast/embed).
+# This file is the ONLY place physical backends are mapped. Swapping providers
+# (local <-> cloud) means editing one block here, nothing else.
+#
+# Default = all-local (race/demo MUST be 100% local). Cloud stand-ins are commented
+# out and used only during dev to decouple from GPU availability.
+
+model_list:
+  # ============================================================================
+  # LOCAL BACKENDS (default; race demo must stay on this block)
+  # Each llama-server exposes an OpenAI-compatible /v1 on its own port; LiteLLM
+  # routes by logical name. api_key "none" — llama-server does not validate it.
+  # ============================================================================
+
+  # DEV-MODE NOTE (Apple M5 / 16GB): `brain` is mapped to the SAME E4B instance
+  # as `perceive` (port 8002) until the S2 server window swaps in ThinkingCap-27B.
+  # Both names hit one model — logical separation preserved, quality re-verified
+  # on S2. On the AMD server, point brain at port 8001 (dedicated 27B instance).
+  - model_name: brain
+    litellm_params:
+      model: openai/perceive      # dev: E4B dual-maps brain+perceive; server: openai/brain @ :8001
+      api_base: http://127.0.0.1:8002/v1
+      api_key: "none"
+
+  - model_name: perceive
+    litellm_params:
+      model: openai/perceive
+      api_base: http://127.0.0.1:8002/v1
+      api_key: "none"
+
+  - model_name: sentinel
+    litellm_params:
+      model: openai/sentinel
+      api_base: http://127.0.0.1:8003/v1
+      api_key: "none"
+
+  - model_name: fast
+    litellm_params:
+      model: openai/fast
+      api_base: http://127.0.0.1:8005/v1
+      api_key: "none"
+
+  # Embedding: Qwen3-Embedding-0.6B, 1024-dim. Marked as embedding route so LiteLLM
+  # uses /v1/embeddings instead of /v1/chat/completions.
+  - model_name: embed
+    litellm_params:
+      model: openai/embed
+      api_base: http://127.0.0.1:8004/v1
+      api_key: "none"
+
+  # ============================================================================
+  # OPTIONAL (Phase 2): rerank — enable only when retrieval needs it.
+  # - model_name: rerank
+  #   litellm_params:
+  #     model: openai/rerank
+  #     api_base: http://127.0.0.1:8007/v1
+  #     api_key: "none"
+  # ============================================================================
+
+  # ============================================================================
+  # CLOUD STAND-INS (dev-only; uncomment to decouple from local GPU).
+  # Three disciplines (Handbook §3.3), enforced by narrative, not code:
+  #   1. sentinel NEVER goes cloud — it sees unfiltered sensitive screens.
+  #   2. embed switch requires full re-index (different vector spaces).
+  #   3. Race demo + submission video MUST be all-local.
+  # ============================================================================
+  # - model_name: brain
+  #   litellm_params:
+  #     model: openrouter/qwen/qwen3.6-27b
+  #     api_key: os.environ/OPENROUTER_API_KEY
+
+# ----------------------------------------------------------------------------
+# Gateway behavior. Privacy: drop request content from LiteLLM's own logs so
+# prompts are never persisted at the gateway layer (Handbook §2.2).
+# ----------------------------------------------------------------------------
+litellm_settings:
+  # Don't log prompt/response bodies at the gateway (defense in depth; the
+  # upstream llama-server instances are also launched with --log-disable).
+  drop_params: true
+  request_timeout: 120
+
+general_settings:
+  master_key: sk-dejaview-local   # local-only dummy; no real secrets in repo
+  disable_spend_logs: true
+  disable_reset_budget: true
