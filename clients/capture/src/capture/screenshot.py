@@ -30,16 +30,21 @@ if TYPE_CHECKING:
 def capture_webp(
     config: "CaptureConfig",
     *,
-    monitor_index: int = 1,
+    monitor_index: int = 0,
 ) -> tuple[bytes, int, int, imagehash.ImageHash]:
     """Capture the screen and return (webp_bytes, scaled_width, scaled_height,
     dhash).
 
-    `monitor_index=1` is the primary display in mss's numbering (0 is the
-    "all monitors combined" virtual display). Returns the encoded WebP bytes,
-    the post-scale dimensions, and a dhash of the captured frame so the caller
-    can deduplicate near-identical consecutive frames (handbook §5.2: distance
-    < threshold -> drop).
+    `monitor_index=0` (default) is mss's "all monitors combined" virtual
+    display — this captures EVERY display as one wide frame, so the memory
+    system sees the user's full desktop layout (all windows across all screens),
+    not just the foreground app on the primary monitor. This matters because a
+    user's "progress" is often spread across multiple windows side-by-side
+    (code + browser + terminal + chat); foreground-only capture would miss most
+    of it. Pass monitor_index=1 for primary-only behaviour.
+
+    Returns the encoded WebP bytes (<=2560px wide for OCR fidelity), the
+    post-scale dimensions, and a dhash for near-duplicate dedup (handbook §5.2).
     """
     with mss.mss() as sct:
         mon = sct.monitors[monitor_index]

@@ -67,6 +67,9 @@ class CaptureConfig:
     # Dedup: drop a frame whose dhash distance from the previous uploaded frame
     # is below this threshold (handbook §5.2). <= 0 disables dedup.
     dedup_distance: int = DEDUP_DISTANCE
+    # Which display to capture: 0 = all monitors combined (default; sees the
+    # full desktop layout across every screen), 1 = primary monitor only.
+    monitor_index: int = 0
 
     # Whether to attempt browser URL probing (best effort, osascript).
     probe_url: bool = True
@@ -119,6 +122,7 @@ class CaptureConfig:
             max_upload_width=int(data.get("max_upload_width", cls.max_upload_width)),
             webp_quality=int(data.get("webp_quality", cls.webp_quality)),
             dedup_distance=int(data.get("dedup_distance", cls.dedup_distance)),
+            monitor_index=int(data.get("monitor_index", cls.monitor_index)),
             probe_url=bool(data.get("probe_url", cls.probe_url)),
             source=source,
         )

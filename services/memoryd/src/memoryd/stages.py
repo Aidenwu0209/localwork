@@ -189,6 +189,27 @@ _SENTINEL_CATS = {"password_prompt", "banking_finance", "private_chat",
                   "id_document", "adult", "normal"}
 
 
+def _to_png_if_needed(image_bytes: bytes) -> tuple[bytes, str]:
+    """llama.cpp's vision backend only accepts PNG/JPEG. Capture encodes frames
+    as WebP (handbook §5.2), so re-encode to PNG before sending to sentinel /
+    perceive. Returns (png_bytes, mime)."""
+    is_webp = image_bytes[:4] == b"RIFF" and image_bytes[8:12] == b"WEBP"
+    if not is_webp:
+        # Already png/jpeg/other -> sniff a mime, pass through.
+        if image_bytes[:8] == b"\x89PNG\r\n\x1a\n":
+            return image_bytes, "image/png"
+        if image_bytes[:3] == b"\xff\xd8\xff":
+            return image_bytes, "image/jpeg"
+        return image_bytes, "image/png"  # default assumption
+    from PIL import Image
+    from io import BytesIO
+    with Image.open(BytesIO(image_bytes)) as img:
+        img = img.convert("RGB")
+        buf = BytesIO()
+        img.save(buf, format="PNG")
+        return buf.getvalue(), "image/png"
+
+
 class GatewaySentinel:
     """Privacy gate backed by the `sentinel` model (MiniCPM-V 4.6) via the
     gateway. Sends the image with a strict-JSON classification prompt;
@@ -200,15 +221,10 @@ class GatewaySentinel:
         self._timeout = timeout
 
     async def classify(self, image_bytes: bytes) -> SentinelVerdict:
+        # llama.cpp's vision backend only accepts PNG/JPEG — capture sends
+        # WebP (handbook §5.2), so re-encode to PNG before base64-embedding.
+        image_bytes, mime = _to_png_if_needed(image_bytes)
         b64 = base64.b64encode(image_bytes).decode("ascii")
-        # Sniff a plausible mime from the magic bytes; default png.
-        mime = "image/png"
-        if image_bytes[:8] == b"\x89PNG\r\n\x1a\n":
-            mime = "image/png"
-        elif image_bytes[:4] == b"RIFF" and image_bytes[8:12] == b"WEBP":
-            mime = "image/webp"
-        elif image_bytes[:3] == b"\xff\xd8\xff":
-            mime = "image/jpeg"
         prompt = (
             "You are a privacy sentinel. Classify this screenshot for whether it "
             "should be remembered. Reply ONLY with compact JSON, no prose, exactly "
@@ -391,6 +407,8 @@ class GatewayPerceive:
         self._timeout = timeout
 
     async def understand(self, image_bytes, ocr_full_text, app, window_title) -> PerceiveEvent:
+        # Re-encode WebP -> PNG (llama.cpp vision only accepts PNG/JPEG).
+        image_bytes, _mime = _to_png_if_needed(image_bytes)
         b64 = base64.b64encode(image_bytes).decode("ascii")
         prompt = (
             "You are summarising what the user is doing in this screenshot. The "

@@ -24,20 +24,33 @@ gone — no disk cache (handbook §5.2 privacy invariant).
 from __future__ import annotations
 
 import asyncio
+import io
 import logging
 import time
 from typing import TYPE_CHECKING
 
 import httpx
+import imagehash
+from PIL import Image
 
 from capture.permissions import check_screen_recording_permission
-from capture.screenshot import capture_webp
+from capture.screenshot import _scale_to_max_width
 from capture.uploader import upload_frame
 from capture.url_probe import probe_browser_url
-from capture.windows import get_active_window
+from capture.windows import capture_window_png, get_active_window, list_windows
 
 if TYPE_CHECKING:
     from capture.config import CaptureConfig
+
+
+def _png_to_scaled_webp(png_bytes: bytes, config: "CaptureConfig") -> tuple[bytes, int, int]:
+    """PNG bytes -> WebP (<=max_upload_width, quality=webp_quality). In memory."""
+    with Image.open(io.BytesIO(png_bytes)) as img:
+        img = img.convert("RGB")
+        scaled = _scale_to_max_width(img, config.max_upload_width)
+        buf = io.BytesIO()
+        scaled.save(buf, format="WEBP", quality=config.webp_quality, method=4)
+        return buf.getvalue(), scaled.width, scaled.height
 
 
 log = logging.getLogger("capture.agent")
@@ -153,15 +166,18 @@ async def run_agent(config: "CaptureConfig") -> None:
     lock_state = _LockState()
     _install_lock_observer(lock_state)
 
-    last_app: str | None = None
-    last_title: str | None = None
-    last_upload_ts: float = 0.0
+    last_fg: tuple[str | None, str | None] = (None, None)  # foreground (app,title)
     last_periodic_ts: float = time.monotonic()
-    # dhash of the last UPLOADED frame, for near-duplicate suppression
-    # (handbook §5.2). None until the first frame goes through.
-    last_uploaded_hash = None
+    last_upload_ts: float = 0.0
+    # Per-window dhash for dedup: keyed by "<owner>::<title>" so the same window
+    # across cycles dedups against itself, but different windows never suppress
+    # each other.
+    window_hashes: dict[str, "imagehash.ImageHash"] = {}
+    # Cap windows captured per cycle so a window-heavy desktop doesn't flood
+    # memoryd (each frame runs the full sentinel/ocrd/perceive pipeline).
+    MAX_WINDOWS_PER_CYCLE = 8
 
-    async with httpx.AsyncClient(timeout=httpx.Timeout(8.0, connect=3.0)) as client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(30.0, connect=5.0)) as client:
         while True:
             try:
                 _pump_runloop(0.05)
@@ -171,83 +187,78 @@ async def run_agent(config: "CaptureConfig") -> None:
                     continue
 
                 now = time.monotonic()
-                app, title = get_active_window()
 
-                # Change trigger: app or title differs from the last captured
-                # state. Ignore transient (None, None) reads from a locked or
-                # switching session — don't fire on noise.
-                changed = (
-                    app != last_app or title != last_title
-                ) and (app is not None or title is not None)
-
-                # Periodic trigger: enough wall-time since the last periodic
-                # frame, regardless of change.
+                # Trigger: foreground change OR periodic timer. The window LIST
+                # is re-enumerated every cycle regardless, but we only capture
+                # when one of these fires (so a static desktop doesn't spin).
+                fg = get_active_window()
+                fg_changed = (
+                    (fg[0] != last_fg[0] or fg[1] != last_fg[1])
+                    and (fg[0] is not None or fg[1] is not None)
+                )
                 periodic_due = (now - last_periodic_ts) >= config.periodic_interval
-
-                if not changed and not periodic_due:
+                if not fg_changed and not periodic_due:
                     await asyncio.sleep(config.poll_interval)
                     continue
-
-                trigger = "change" if changed else "periodic"
-
-                # Enforce the minimum gap between uploads (handbook §5.2).
                 if (now - last_upload_ts) < config.min_capture_interval:
                     await asyncio.sleep(config.poll_interval)
                     continue
 
-                url = probe_browser_url(app) if config.probe_url else None
+                trigger = "change" if fg_changed else "periodic"
+                last_fg = fg
+                if trigger == "periodic":
+                    last_periodic_ts = now
 
-                try:
-                    webp_bytes, w, h, frame_hash = capture_webp(config)
-                except Exception as exc:
-                    log.warning("screenshot failed (skipped): %s", exc)
+                # Enumerate all on-screen windows; capture each as its own frame.
+                windows = list_windows()
+                if not windows:
+                    log.info("no capturable windows this cycle (trigger=%s)", trigger)
                     await asyncio.sleep(config.poll_interval)
                     continue
 
-                # Dedup against the last uploaded frame (handbook §5.2:
-                # dhash distance < threshold -> drop). We still advance the
-                # change-tracking state (last_app/last_title) so a duplicate
-                # frame doesn't re-fire on every poll; only the upload is
-                # suppressed. Disabled when dedup_distance <= 0.
-                if (
-                    last_uploaded_hash is not None
-                    and config.dedup_distance > 0
-                ):
-                    dist = frame_hash - last_uploaded_hash
-                    if dist < config.dedup_distance:
-                        log.info(
-                            "dedup: dropping frame (dhash distance %d < %d) "
-                            "trigger=%s app=%s",
-                            dist, config.dedup_distance, trigger, app,
-                        )
-                        last_app, last_title = app, title
-                        last_upload_ts = time.monotonic()
-                        if trigger == "periodic":
-                            last_periodic_ts = last_upload_ts
-                        await asyncio.sleep(config.poll_interval)
+                captured = 0
+                for wi in windows[:MAX_WINDOWS_PER_CYCLE]:
+                    png_bytes = capture_window_png(wi.window_id)
+                    if not png_bytes:
                         continue
-
-                log.info(
-                    "capturing: trigger=%s app=%s title=%r url=%s size=%dx%d "
-                    "bytes=%d",
-                    trigger, app, title, url, w, h, len(webp_bytes),
-                )
-
-                await upload_frame(
-                    config,
-                    webp_bytes=webp_bytes,
-                    app=app,
-                    window_title=title,
-                    url=url,
-                    trigger=trigger,
-                    client=client,
-                )
-
-                last_upload_ts = time.monotonic()
-                last_app, last_title = app, title
-                last_uploaded_hash = frame_hash
-                if trigger == "periodic":
-                    last_periodic_ts = last_upload_ts
+                    # Re-encode to WebP for upload (handbook §5.2: <=2560px, q80).
+                    try:
+                        webp_bytes, w, h = _png_to_scaled_webp(png_bytes, config)
+                    except Exception as exc:
+                        log.warning("encode failed for %s/%s: %s", wi.owner, wi.title, exc)
+                        continue
+                    frame_hash = imagehash.dhash(
+                        Image.open(io.BytesIO(png_bytes)).convert("RGB")
+                    )
+                    # Per-window dedup.
+                    key = f"{wi.owner}::{wi.title}"
+                    if config.dedup_distance > 0 and key in window_hashes:
+                        dist = frame_hash - window_hashes[key]
+                        if dist < config.dedup_distance:
+                            log.info(
+                                "dedup: %s/%s distance %d < %d (skipped)",
+                                wi.owner, wi.title, dist, config.dedup_distance,
+                            )
+                            continue
+                    url = probe_browser_url(wi.owner) if (config.probe_url and wi.is_foreground) else None
+                    log.info(
+                        "capturing window: %s/%s fg=%s size=%dx%d bytes=%d trigger=%s",
+                        wi.owner, wi.title, wi.is_foreground, w, h, len(webp_bytes), trigger,
+                    )
+                    await upload_frame(
+                        config,
+                        webp_bytes=webp_bytes,
+                        app=wi.owner,
+                        window_title=wi.title,
+                        url=url,
+                        trigger=trigger,
+                        client=client,
+                    )
+                    window_hashes[key] = frame_hash
+                    last_upload_ts = time.monotonic()
+                    captured += 1
+                log.info("cycle done: %d/%d windows captured (trigger=%s)",
+                         captured, len(windows), trigger)
 
             except asyncio.CancelledError:
                 log.info("capture cancelled, exiting")
