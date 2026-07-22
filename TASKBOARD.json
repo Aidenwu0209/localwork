@@ -1,7 +1,7 @@
 {
   "project": "DejaView",
   "board_version": 1,
-  "updated": "2026-07-21",
+  "updated": "2026-07-22",
   "authoritative_location": "/Users/wu/Projects/Aidenwu0209/localwork/TASKBOARD.json(仓库根,唯一权威;随每次 push 备份到 github.com/Aidenwu0209/localwork)",
   "instructions": [
     "状态机:false(未开始) -> doing(进行中) -> accept(完成且验收通过)。特殊态 blocked(被外部依赖卡住,note 必须写清缺什么)。",
@@ -234,8 +234,8 @@
         "M4.3",
         "M3.4"
       ],
-      "status": "false",
-      "note": "无云 key 使零外部调用天然成立;16GB 内存注意仅保留必需实例。"
+      "status": "accept",
+      "note": "2026-07-22 完成:54 分钟真实工作运行,逐窗口采集验收。四项验收全达标:① 时间线长出真实事件——61 事件跨 12 个 app(Google Chrome 21/微信 10/ZCode 7/Code 6/访达 4/ChatGPT 3/WhatsApp 2 + Telegram/Orca/Slack/屏幕共享/Cursor 各 1),OCR 准确(Code 帧含 def parse_args()/parser.add_argument/file tree/terminal prompt);② 全程零外部网络——网关 1559 POST 全来自 Mac 隧道,无 openai.com/anthropic 外呼;③ 哨兵审计 81 条(20 block + 61 allow),拦截了 banking_finance 3 + private_chat 1 + password_prompt 1(隐私不变式成立:block 帧只写 audit 不入库不落图),15 normal 误杀属 T2.1 调优;④ 客户端零落盘——capture 目录无数据文件,61 截图全在 DATA_ROOT/screenshots/(只 allow 帧)。两个 bug 已修并 commit:WebP→PNG 转换(llama.cpp 视觉不支持 webp,导致早先 4 小时零产出)+ 逐窗口截图(原只截前台,改用 screencapture -l <wid> 枚举所有窗口)。sentinel confidence 恒 0.5(JSON 兜底),T2.1 收紧。单窗口经隧道 ~12-15s,6-8 窗口周期 ~90s。"
     },
     {
       "id": "M5.1",
