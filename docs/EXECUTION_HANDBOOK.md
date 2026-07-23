@@ -522,3 +522,54 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 - PaddleOCR(PP-OCRv6,需 ≥v3.7.0,2026-06-11 发布):https://github.com/PaddlePaddle/PaddleOCR(Apache-2.0);模型集合在 HF/ModelScope 的 PP-OCRv6 collection
 - Qwen3-Embedding-0.6B(官方 GGUF,Apache-2.0):https://huggingface.co/Qwen/Qwen3-Embedding-0.6B-GGUF · 配套 Qwen3-Reranker 系列见 Qwen 官方博客
 - 先例参考(只读思路,勿抄代码,AGPL):OpenRecall
+
+---
+
+## 12. 工作交接(2026-07-22,TASKBOARD 33/33 accept 后)
+
+> 本节是执行阶段的交接记录,叙述版快照见 `STATUS.md`。状态机以 `TASKBOARD.json` 为准;踩坑细节以 `docs/verification-log.md` 为准;服务器操作以 `deploy/server/DEPLOY.md` 为准。
+
+### 12.1 已完成(TASKBOARD 全绿,33/33)
+
+第 0-4 节定义的 WBS 已全部执行到 accept。关键产物:
+- **数据层 + Honcho**(M1.3/M3.1/M2.1-2.4):pgvector+redis 起服,timeline 三表四索引,Honcho fork 钉 340175ad + 补丁栈 + 向量维度 ALTER 到 1024。
+- **Mac 推理栈**(M2.5):5 逻辑名经 LiteLLM 网关冒烟通过,dev brain 由 E4B 兼任。
+- **AMD 服务器栈**(S1):llama.cpp HIP 编译(gfx1100/ROCm7.2),4 小模型常驻 ~12GB,brain Q6_K 按需 21GB;**与 Dolphin 共存任务全程无冲突**。T0.2(编译/加载/推理)与 T0.4(五实例冒烟)通过。
+- **三个服务**(memoryd/ocrd/agentd):摄取编排(可插拔 pipeline + 三模式检索)、OCR 双后端(rapidocr+paddleocr)、brain 出口(tool-calling + 引用格式)。
+- **采集客户端**(M4.1-4.3):逐窗口截图 + dhash 去重 + 锁屏暂停 + 零落盘。
+- **Honcho 记忆链路**(M2.6):合成消息 → deriver 事实 → dialectic 带依据回答。
+- **测试资产**(M6.1/6.2/6.3):90 张合成截图/消息/帧对/哨兵集,零真实 PII。
+- **M3.4 全本地流水线**:sentinel→ocrd→novelty→perceive→store 端到端验证(block/merge/ingest 三路径)。
+- **M4.4 真实运行验收**:54 分钟真实工作,61 事件跨 12 app,零外网,哨兵审计 81 条(含 banking/private_chat/password 拦截),客户端零落盘。
+
+### 12.2 已知问题 / 技术债
+
+| 优先级 | 问题 | 归属 | 说明 |
+|---|---|---|---|
+| 高 | sentinel confidence 恒 0.5,normal 误杀率偏高(15/81) | T2.1 | 直测时 banking 能 block,经 pipeline 提示词未严格出 JSON;收紧 prompt + 解析 |
+| 高 | perceive activity 偏泛("working in X") | T1.6 | JSON 解析兜底过激,提示词迭代 |
+| 中 | 网关偶发 `model=None` 400(2%) | 调试 | 某调用方漏 model 字段(Honcho health check?) |
+| 中 | 单帧经隧道 ~12-15s | 决赛 | 现场用 LAN 直连降到 ~5s |
+| 低 | ocrd 在 Mac(rapidocr),生产该在 EPYC(paddleocr) | T1.8 | 后端切换一行配置 |
+
+架构约束:**brain Q8(28GB)不能与 Dolphin 共存** → 共享 GPU 用 Q6_K(21GB)+ 起 brain 时停 perceive。详见 `deploy/server/DEPLOY.md` 的 VRAM 预算表。
+
+### 12.3 下一步(Phase 3,未进 TASKBOARD,按评分权重排序)
+
+1. **T3.1 ROCm 消融报告**(40 分主证据,最高优先级):量化×MTP×并发基准,写进 `docs/benchmarks.md`,附 rocm-smi 截图。服务器栈已就绪,可立即跑。
+2. **T3.4 README 双语 + 双拓扑图 + 一键复现**:当前 README 有基础,缺架构图/评分对照/复现步骤。
+3. **T3.5 演示视频**:六幕分镜(第 9 节),含拔网线镜头。
+4. **T3.2 Grafana 大屏**:四实例指标 + 事件率。
+5. **T3.6 Rules 核对**:AMD AI Developer Program 注册、提交格式、licenses.md。
+6. **T2.1 哨兵调优**:提升拦截率/降误杀(验收基线见 M6.3 测试集)。
+7. 可砍:T3.3 MCP、T0.6 音频、T0.7 MTP(若时间紧按第 1.5 节顺序砍)。
+
+### 12.4 接手须知(避免重踩的坑)
+
+详见 `docs/verification-log.md`(每条都标了 resolved)。最常踩的:
+- MiniCPM5/MiniCPM-V/Gemma-E4B 是**思考型模型**:fast-track 任务(哨兵/新颖度)必须 `chat_template_kwargs.enable_thinking=false`,深度任务给足 max_tokens。
+- llama.cpp 视觉**不支持 WebP**:memoryd 已加 `_to_png_if_needed()` 转换;若改 capture 编码格式注意这点。
+- Docker `host.docker.internal` **IPv6 优先**:psycopg 连 honcho DB 会 Network unreachable → honcho.env 用 IPv4 字面量 192.168.65.254(详见 verification-log M2.6 + honcho.env.example 注释)。
+- Honcho v3 API 需**客户端提供 workspace/peer/session id**(不是自动生成)。
+- 改 Honcho 源码:**submodule 保持 pristine**,改 `deploy/mac/honcho-patches/` 的 diff,`setup-honcho.sh` 重建。
+- Mac Python 环境分裂(anaconda/mise/uv):每个服务用独立 `uv` 项目,不碰系统 Python。litellm proxy 用 `uvx --from 'litellm[proxy]'`(Mac)或 `/root/llamavenv/bin/litellm`(服务器)。
