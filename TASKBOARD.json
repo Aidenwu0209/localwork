@@ -1,7 +1,7 @@
 {
   "project": "DejaView",
   "board_version": 1,
-  "updated": "2026-07-22",
+  "updated": "2026-07-23",
   "authoritative_location": "/Users/wu/Projects/Aidenwu0209/localwork/TASKBOARD.json(仓库根,唯一权威;随每次 push 备份到 github.com/Aidenwu0209/localwork)",
   "instructions": [
     "状态机:false(未开始) -> doing(进行中) -> accept(完成且验收通过)。特殊态 blocked(被外部依赖卡住,note 必须写清缺什么)。",
@@ -13,7 +13,8 @@
     "存储策略:能进 GitHub 的一律进 GitHub(代码/脚本/文档/manifest/合成测试资产);模型不进 GitHub——靠 manifest+sha256+引导脚本重建,服务器模型在 overlay /root/dejaview-models/,引导脚本与清单持久化于 /workspace/dejaview-models/(唯一持久卷,仅 10GB);用户真实记忆数据永不进 GitHub。",
     "硬件事实(已实测):Mac = Apple M5 / 16GB 统一内存 → 本地模型按需起停,禁止全员常驻;服务器 /workspace 仅 10GB,大文件放 overlay(2.0T 可用)。无云 API key:开发推理全部本地(Metal)。",
     "服务器纪律(当前):仅允许 下载 + 只读检查(df/ls/echo);禁止查询或占用 GPU、禁止编译、禁止加载模型、禁止触碰任何在跑进程。S1 剩余(引擎+冒烟)与 S2(全量基准/联调)等用户开放。",
-    "隐私纪律:云端替身只喂合成数据;真实个人数据一律等全本地链路后再接入;密钥/真实个人信息禁止入库。"
+    "隐私纪律:云端替身只喂合成数据;真实个人数据一律等全本地链路后再接入;密钥/真实个人信息禁止入库。",
+    "Phase 3 交接(2026-07-23):G0+M+D 33/33 已 accept。下一批任务 ID 为 P3.1–P3.10,规格见 docs/EXECUTION_HANDBOOK.md §12.3;开工指令见 docs/AGENT_KICKOFF_PROMPT.md。最高优先 P3.1 ROCm 消融报告。"
   ],
   "tasks": [
     {
@@ -58,7 +59,7 @@
         "M1.1"
       ],
       "status": "accept",
-      "note": "2026-07-21 完成:make data-up 起服,docker ps 显示 database(5433)+redis(6380)均 healthy;psql -d dejaview 可连,timeline_events/sentinel_audit/kb_chunks 三表 + honcho 库均已建;pgvector 0.8.5 + pg_trgm 1.6 扩展就位。"
+      "note": "2026-07-21 完成:make data-up 起服,docker ps 显示 database(5433)+redis(6380)均 healthy;psql -d dejaview 可连,timeline_events/sentinel_audit/kb_chunks 三表 + honcho 库均已建;pgvector 0.8.5 + pg_trgm 1.6 扩展就位。 | 2026-07-23 再验:data-up healthy;psql DDL/ext/idx OK;honcho compose config OK + /health 200."
     },
     {
       "id": "M2.1",
@@ -106,7 +107,7 @@
         "M2.2"
       ],
       "status": "accept",
-      "note": "2026-07-21 完成:compose.honcho.yml(api+deriver,端口 8100,无 cadvisor/searxng/监控)up 成功,curl /health=200,deriver 连上 redis 并启动 reconciler。三个坑已解并落 verification-log:① 容器内 files.pythonhosted.org 不可达 → 自写 deploy/mac/honcho.Dockerfile(submodule 保持 pristine),sed 把 uv.lock 内 2623 个 URL 重写到清华镜像(同路径,hash 不变,--frozen 仍过);② host 代理 HTTP(S)_PROXY=127.0.0.1:7897(Clash)被 Docker 透传进容器,容器内 127.0.0.1 指向自己 → build 阶段 inline unset、compose environment 置空;③ Honcho 默认 vector(1536) 与 EMBEDDING_VECTOR_DIMENSIONS=1024 冲突 → docker compose run --entrypoint python scripts/configure_embeddings.py --yes ALTER 两列+重建 HNSW 索引。"
+      "note": "2026-07-21 完成:compose.honcho.yml(api+deriver,端口 8100,无 cadvisor/searxng/监控)up 成功,curl /health=200,deriver 连上 redis 并启动 reconciler。三个坑已解并落 verification-log:① 容器内 files.pythonhosted.org 不可达 → 自写 deploy/mac/honcho.Dockerfile(submodule 保持 pristine),sed 把 uv.lock 内 2623 个 URL 重写到清华镜像(同路径,hash 不变,--frozen 仍过);② host 代理 HTTP(S)_PROXY=127.0.0.1:7897(Clash)被 Docker 透传进容器,容器内 127.0.0.1 指向自己 → build 阶段 inline unset、compose environment 置空;③ Honcho 默认 vector(1536) 与 EMBEDDING_VECTOR_DIMENSIONS=1024 冲突 → docker compose run --entrypoint python scripts/configure_embeddings.py --yes ALTER 两列+重建 HNSW 索引。 | 2026-07-23 再验:data-up healthy;psql DDL/ext/idx OK;honcho compose config OK + /health 200."
     },
     {
       "id": "M2.5",
@@ -144,7 +145,7 @@
         "M1.3"
       ],
       "status": "accept",
-      "note": "2026-07-21 完成:与 M1.3 同批验收。\\d timeline_events 结构与手册 §6.3 一致(含 end_ts 合并字段);vector 0.8.5 + pg_trgm 1.6 扩展 created;实际建成 5 索引(pkey/hnsw embedding/ts btree/ocr_text gin_trgm/app+ts btree,含 pkey 共 5 个,业务索引 4 个)。honcho 库已建。"
+      "note": "2026-07-21 完成:与 M1.3 同批验收。\\d timeline_events 结构与手册 §6.3 一致(含 end_ts 合并字段);vector 0.8.5 + pg_trgm 1.6 扩展 created;实际建成 5 索引(pkey/hnsw embedding/ts btree/ocr_text gin_trgm/app+ts btree,含 pkey 共 5 个,业务索引 4 个)。honcho 库已建。 | 2026-07-23 再验:data-up healthy;psql DDL/ext/idx OK;honcho compose config OK + /health 200."
     },
     {
       "id": "M3.2",
@@ -420,6 +421,82 @@
       ],
       "status": "accept",
       "note": "2026-07-20 完成:docs/model-manifest.md(10 文件×sha256×License)+ deploy/server/{download-models.sh,sha256.txt} 入仓。"
+    },
+    {
+      "id": "P3.1",
+      "group": "phase3",
+      "title": "ROCm 消融报告:量化×MTP×并发 → docs/benchmarks.md",
+      "steps": "按手册 §8 规格在 AMD 服务器跑 brain/perceive/快车道基准;附 rocm-smi 截图到 docs/assets/;起 brain 前 rocm-smi 检查 Dolphin,用 Q6_K 并先停 perceive。详见 deploy/server/DEPLOY.md。",
+      "verify": "docs/benchmarks.md 含环境表、VRAM 分配、量化/MTP/并发表、测法≥3次中位;截图路径记入 note。",
+      "depends": [],
+      "status": "doing",
+      "note": "40分主证据,最高优先。2026-07-23 写入任务板。 | agent-rocm · 认领 2026-07-23"
+    },
+    {
+      "id": "P3.2",
+      "group": "phase3",
+      "title": "Grafana 大屏:模型指标+事件率一屏",
+      "steps": "接 Prometheus/rocm-smi exporter;面板覆盖 tokens/s、VRAM、GPU util、memoryd 事件率。",
+      "verify": "演示时一屏可见四实例+事件率;截图入 docs/assets/。",
+      "depends": [
+        "P3.1"
+      ],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "P3.3",
+      "group": "phase3",
+      "title": "README 双语打磨:双拓扑图+评分对照+一键复现",
+      "steps": "完善 README.md / README.zh.md;形态 A/B 拓扑;评分 60+40 对照;干净机器复现步骤。",
+      "verify": "陌生人按 README 能起形态 A 冒烟;中英一致。",
+      "depends": [],
+      "status": "accept",
+      "note": "2026-07-23 accept:README.md+README.zh.md 对齐——获奖叙事、形态A(Mac主权+AMD算力)/形态B(单机)、评分60+40→benchmarks.md、形态A冒烟命令、逻辑模型名表、隐私声明、licenses入口;无真实密钥/PII。"
+    },
+    {
+      "id": "P3.4",
+      "group": "phase3",
+      "title": "演示视频≤5分钟(手册§9六幕,含拔网线)",
+      "steps": "按手册 §9 分镜录制;存 docs/assets/ 或外部链接写入 README。",
+      "verify": "成片≤5min;六幕齐全;拔网线镜头可见。",
+      "depends": [
+        "P3.1"
+      ],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "P3.5",
+      "group": "phase3",
+      "title": "Rules核对+licenses.md+提交清单§10",
+      "steps": "确认 AMD AI Developer Program 注册;写 docs/licenses.md(Gemma 单独标);勾选手册 §10。",
+      "verify": "licenses.md 合仓;§10 checklist 全勾或 note 标明缺口。",
+      "depends": [
+        "P3.3"
+      ],
+      "status": "false",
+      "note": ""
+    },
+    {
+      "id": "P3.6",
+      "group": "phase3",
+      "title": "哨兵调优:降 normal 误杀、严 JSON",
+      "steps": "用 tests/assets/sentinel 回归;收紧 memoryd sentinel prompt+解析;记录拦截率/误杀率到 verification-log。",
+      "verify": "相对 M4.4 基线(15/81 normal 误杀)有明确数字改善;banking/password/private_chat 仍能 block。",
+      "depends": [],
+      "status": "doing",
+      "note": "agent-quality · 认领 2026-07-23(与 P3.7 同 agent,避 stages.py 冲突)"
+    },
+    {
+      "id": "P3.7",
+      "group": "phase3",
+      "title": "perceive 提示词迭代:具体 activity + verbatim 溯源 OCR",
+      "steps": "抽查 20 事件;改 prompt/解析兜底;保证 verbatim 可在 ocr_text 中找到。",
+      "verify": "20 事件抽查报告写入 verification-log;空泛 activity 比例显著下降。",
+      "depends": [],
+      "status": "doing",
+      "note": "agent-quality · 认领 2026-07-23(与 P3.6 同 agent)"
     }
   ]
 }
