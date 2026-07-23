@@ -152,11 +152,11 @@ Application code may only use these names (via `GATEWAY_URL`). Physical routing 
 
 ## License
 
-Third-party licenses will be collected in [`docs/licenses.md`](docs/licenses.md) (P3.5). Preview:
+Third-party licenses, Gemma callout, user-data-never-uploaded statement, and §10 readiness notes: [`docs/licenses.md`](docs/licenses.md).
 
-- **Apache-2.0:** ThinkingCap · MiniCPM · Honcho · llama.cpp · PaddleOCR · Qwen3-Embedding  
-- **Gemma License:** Gemma 4 E4B — **called out separately**  
-- **MIT:** LiteLLM · MarkItDown · Open WebUI  
+- **Apache-2.0:** ThinkingCap · MiniCPM · Honcho · PaddleOCR · Qwen3-Embedding · Gemma 4 (see callout)  
+- **Gemma (separate callout):** Gemma 4 E4B perceive — details in `docs/licenses.md`  
+- **MIT:** llama.cpp · LiteLLM · MarkItDown · Open WebUI  
 
 Do not copy AGPL code (OpenRecall is reference-only).
 

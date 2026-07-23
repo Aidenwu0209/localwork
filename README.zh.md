@@ -152,11 +152,11 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 
 ## 许可证
 
-第三方许可证将汇总于 [`docs/licenses.md`](docs/licenses.md)(P3.5)。预览:
+第三方许可证、Gemma 单独标注、用户数据不上云声明、以及手册 §10 就绪说明见 [`docs/licenses.md`](docs/licenses.md)。
 
-- **Apache-2.0:** ThinkingCap · MiniCPM · Honcho · llama.cpp · PaddleOCR · Qwen3-Embedding  
-- **Gemma License:** Gemma 4 E4B — **单独标注**  
-- **MIT:** LiteLLM · MarkItDown · Open WebUI  
+- **Apache-2.0:** ThinkingCap · MiniCPM · Honcho · PaddleOCR · Qwen3-Embedding · Gemma 4(详见单独标注)  
+- **Gemma(单独标注):** Gemma 4 E4B perceive — 见 `docs/licenses.md`  
+- **MIT:** llama.cpp · LiteLLM · MarkItDown · Open WebUI  
 
 禁止引入 AGPL 代码(OpenRecall 只作思路参考)。
 

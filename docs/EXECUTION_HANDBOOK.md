@@ -482,14 +482,16 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 
 ## 10. 提交清单
 
-- [ ] 全员注册 AMD AI Developer Program(大陆:AMD Developer Program China)
-- [ ] Rules & Conditions 通读,按要求的格式/平台提交
-- [ ] 仓库公开、README 双语、两张拓扑图、快速开始可复现
-- [ ] `docs/benchmarks.md` + Grafana 截图
-- [ ] 演示视频(≤5 分钟)
-- [ ] `docs/licenses.md`:Apache-2.0(ThinkingCap/MiniCPM/Honcho/llama.cpp/bge-m3)+ **Gemma License 单独标注** + 各 Python 依赖
-- [ ] 全部提示词/示例已去个人信息;仓库无任何真实隐私数据、无 API key
-- [ ] 比赛服务器上只有演示数据,赛后可一键销毁重建
+> **P3.5 旁注(2026-07-23):** 诚实状态见 [`docs/licenses.md`](licenses.md)「Handbook §10 readiness」。**未完成项勿勾。** 队员须自行确认 AMD / Rules(agent 无法代注册)。
+
+- [ ] 全员注册 AMD AI Developer Program(大陆:AMD Developer Program China) — **待·队员自检**(见 licenses.md AMD checklist)
+- [ ] Rules & Conditions 通读,按要求的格式/平台提交 — **待·队员自检**
+- [ ] 仓库公开、README 双语、两张拓扑图、快速开始可复现 — **部分具备**(P3.3 README/拓扑/冒烟已成;`63b10d3`;仓库仍 private)
+- [ ] `docs/benchmarks.md` + Grafana 截图 — **待**(OCR A/B 已有;ROCm 消融=P3.1;Grafana=P3.2)
+- [ ] 演示视频(≤5 分钟) — **待**(P3.4,depends P3.1)
+- [x] `docs/licenses.md`:Apache-2.0(ThinkingCap/MiniCPM/Honcho/Qwen3-Embedding;手册旧称 bge-m3 已替换)+ MIT(llama.cpp 等)+ **Gemma 单独标注** + 各 Python 依赖 — **已具备**(P3.5)
+- [x] 全部提示词/示例已去个人信息;仓库无任何真实隐私数据、无 API key — **基本具备**(演示前若真实采集须清库)
+- [ ] 比赛服务器上只有演示数据,赛后可一键销毁重建 — **部分具备**(无状态算力+模型引导脚本;提交前再确认演示数据)
 
 ---
 

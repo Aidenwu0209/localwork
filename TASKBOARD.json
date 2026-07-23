@@ -475,8 +475,8 @@
       "depends": [
         "P3.3"
       ],
-      "status": "false",
-      "note": ""
+      "status": "accept",
+      "note": "2026-07-23 accept:docs/licenses.md(模型/库要点+Gemma单独标注+用户数据不上传+AMD自检清单+§10诚实就绪表);手册§10旁注;README许可证入口已指向licenses.md。未勾:AMD注册/Rules/仓库公开/P3.1消融+Grafana/P3.4视频/服务器演示数据确认。"
     },
     {
       "id": "P3.6",
