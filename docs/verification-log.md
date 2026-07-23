@@ -147,3 +147,11 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   - Examples: `defining parse_timeline method in TimelineParser class`, `displaying error ROCM-4042 in terminal`, `reading security advisory SEC-2026-0142 for nova-cipher in webpage`
 - **Scripts**: `services/memoryd/scripts/eval_perceive.py` (`--ocr-from-gt` or live ocrd).
 - **Note**: AMD ROCm gateway was down (`Connection refused` on :30147); Mac Metal vision + mmproj often segfaults after 1 request — use `--no-mmproj-offload` / text-only for local regression; production path remains gateway→ROCm when server is up.
+
+## 2026-07-23 (handoff re-verify M1.3 / M2.4 / M3.1)
+
+- **Trigger**: an older UI snapshot still showed these three as `doing` (半成品 @ `e5ade0c`). TASKBOARD already had them `accept` since 2026-07-21; ran live verify before freezing the Phase-3 handoff.
+- **M1.3 PASS**: `make data-up` → `dejaview-data-database-1` + `dejaview-data-redis-1` both healthy; `psql -h 127.0.0.1 -p 5433 -U dejaview -d dejaview` connects; redis `PONG`.
+- **M3.1 PASS**: extensions `vector 0.8.5` + `pg_trgm 1.6`; tables `timeline_events` / `sentinel_audit` / `kb_chunks`; `timeline_events` columns match handbook §6.3 (incl. `end_ts`); indexes pkey + hnsw embedding + ts + gin_trgm ocr_text + (app,ts); `honcho` database present.
+- **M2.4 PASS**: `docker compose -f deploy/mac/compose.honcho.yml config` OK; stack already up; `curl http://127.0.0.1:8100/health` → HTTP 200 `{"status":"ok"}`.
+- **Conclusion**: no leftover `doing`; all 33 G0+M+D tasks remain `accept`.
