@@ -108,3 +108,16 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   - **Client zero-disk**: capture dir has no data files; all 61 screenshots live under DATA_ROOT/screenshots/YYYY/MM/DD/ as webp (only for ALLOWED frames). per-window `screencapture` writes to a NamedTemporaryFile that is unlinked immediately after the in-memory PIL encode.
 - **Sentinel confidence always 0.5**: every audit row shows confidence 0.5, which means the JSON-parse fallback fired (`_parse_sentinel_json` default). The classification itself is sometimes correct (banking/private_chat/password hit) but the model isn't returning the strict-JSON schema — T2.1 will tighten the prompt and parse.
 - **Latency under SSH tunnel**: ~12-15s per window through the full pipeline (sentinel+ocrd+perceive+embed); a full 6-8 window cycle ≈ 90s. Acceptable for the tunnel; will drop sharply when the gateway is on LAN (sentinel ~0.5s locally).
+
+
+## 2026-07-23 (P3.1 ROCm ablation — partial / blocked)
+
+- **Partial pass on W7900D / ROCm 7.2 / llama.cpp 76f46ad29**: with `embed+fast+sentinel+perceive` up, measured n=3 medians via `/v1/chat/completions` `timings` (thinking disabled):
+  - **fast** Q8_0: decode **366.7 tok/s**, wall **13.4 ms**
+  - **sentinel** vision classify: decode **221.1 tok/s**, wall **108.1 ms**
+  - **perceive** text: decode **80.7 tok/s**, wall **243 ms**; vision: decode **79.9 tok/s**, wall **416 ms**
+  - **VRAM** 4-model residency: **13.71 / 47.98 GiB** used (`docs/assets/rocm-smi-vram-4model.png`)
+- **Dolphin co-tenant**: historical PID 20527 **absent** at capture (VRAM matches 4-model stack only).
+- **MTP flag surface**: `llama-server --help` lists `--spec-type ... draft-mtp ...` on this build → flag exists. On/off tok/s A/B for ThinkingCap-27B **not run** (SSH dropped before brain up) — still `[VERIFY]`.
+- **Blocked**: after perceive single-request benches, `ssh radeon-cloud` (`36.150.116.200:30147`) returned **Connection refused** for >10 min (host still ICMP-reachable). Missing brain Q8/Q6/Q4 × MTP × concurrency and perceive `-np` 1/2/4 sweep. Q4_K_M download had reached ~18% (~2.9 GB of 16 GB) — resume with `wget -c` when SSH returns.
+- Tables live in `docs/benchmarks.md` §2; TASKBOARD P3.1 → `blocked`.
