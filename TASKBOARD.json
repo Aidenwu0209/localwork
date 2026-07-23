@@ -485,8 +485,8 @@
       "steps": "用 tests/assets/sentinel 回归;收紧 memoryd sentinel prompt+解析;记录拦截率/误杀率到 verification-log。",
       "verify": "相对 M4.4 基线(15/81 normal 误杀)有明确数字改善;banking/password/private_chat 仍能 block。",
       "depends": [],
-      "status": "doing",
-      "note": "agent-quality · 认领 2026-07-23(与 P3.7 同 agent,避 stages.py 冲突)"
+      "status": "accept",
+      "note": "2026-07-23 · category→decision; fixture 6/6 recall 0/4 FP; M4.4 normal-block class 15/81→0 by parser"
     },
     {
       "id": "P3.7",
@@ -495,8 +495,8 @@
       "steps": "抽查 20 事件;改 prompt/解析兜底;保证 verbatim 可在 ocr_text 中找到。",
       "verify": "20 事件抽查报告写入 verification-log;空泛 activity 比例显著下降。",
       "depends": [],
-      "status": "doing",
-      "note": "agent-quality · 认领 2026-07-23(与 P3.6 同 agent)"
+      "status": "accept",
+      "note": "2026-07-23 · 20/20 specific activity; verbatim⊆ocr 0 violations; thinking off for JSON"
     }
   ]
 }

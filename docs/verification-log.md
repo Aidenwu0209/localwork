@@ -121,3 +121,29 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
 - **MTP flag surface**: `llama-server --help` lists `--spec-type ... draft-mtp ...` on this build → flag exists. On/off tok/s A/B for ThinkingCap-27B **not run** (SSH dropped before brain up) — still `[VERIFY]`.
 - **Blocked**: after perceive single-request benches, `ssh radeon-cloud` (`36.150.116.200:30147`) returned **Connection refused** for >10 min (host still ICMP-reachable). Missing brain Q8/Q6/Q4 × MTP × concurrency and perceive `-np` 1/2/4 sweep. Q4_K_M download had reached ~18% (~2.9 GB of 16 GB) — resume with `wget -c` when SSH returns.
 - Tables live in `docs/benchmarks.md` §2; TASKBOARD P3.1 → `blocked`.
+
+## 2026-07-23 (P3.6 sentinel tune + P3.7 perceive prompts)
+
+### P3.6 — sentinel (accept)
+
+- **Root cause (M4.4)**: MiniCPM-V often returned partial / inconsistent JSON (`{"decision":"allow"}` only, or `decision=block` with `category=normal`). Parser defaulted confidence to 0.5 on missing fields; 15/81 real-run blocks were `category=normal` (false kills).
+- **Fix** (`services/memoryd/src/memoryd/stages.py`):
+  1. Category-first prompt (ask only `category` + `confidence`).
+  2. **Derive decision from category** (sensitive→block, `normal`→allow) — eliminates decision↔category disagreement.
+  3. Stricter JSON extraction (fences, trailing commas, aliases); missing confidence with a known category defaults to **0.75** (no longer looks like parse-fallback 0.5).
+- **Offline parse proofs**: `uv run python scripts/test_parse_offline.py` — covers `block+normal→allow`, `allow+banking→block`, category-only JSON, fences.
+- **Live fixture subset** (Mac Metal MiniCPM-V Q4, CPU mmproj; AMD `radeon-cloud` SSH refused during this window): 10 images from `tests/assets/sentinel/`
+  - **block recall 6/6**; **normal FP 0/4**
+  - banking_finance 2/2, password_prompt 2/2, private_chat 2/2 all `block`
+- **vs M4.4 baseline**: normal false-kill class `category=normal & decision=block` was **15/81 (~18.5%)** → parser now forces those to **allow** (that failure mode → **0**). Fixture spot-check FP **0/4** under the new prompt.
+- **Scripts**: `services/memoryd/scripts/eval_sentinel.py`, `test_parse_offline.py`.
+
+### P3.7 — perceive (accept)
+
+- **Fix** (`stages.py`): concrete-activity prompt (forbid `working in X` / `using X`); `enable_thinking=false` for structured JSON; OCR-grounded activity fallback; **verbatim filtered to substrings of `ocr_text`**.
+- **20-event spot-check** (`tests/assets/screenshots/`, text-only OCR→perceive on Mac Gemma-E4B Q4; vision path flaky on this Metal build so OCR-only isolates prompt/parse):
+  - **generic activity 0/20** (was typically `working in {app}` via old fallback)
+  - **verbatim ⊆ ocr_text violations 0/20** (parser drops hallucinations)
+  - Examples: `defining parse_timeline method in TimelineParser class`, `displaying error ROCM-4042 in terminal`, `reading security advisory SEC-2026-0142 for nova-cipher in webpage`
+- **Scripts**: `services/memoryd/scripts/eval_perceive.py` (`--ocr-from-gt` or live ocrd).
+- **Note**: AMD ROCm gateway was down (`Connection refused` on :30147); Mac Metal vision + mmproj often segfaults after 1 request — use `--no-mmproj-offload` / text-only for local regression; production path remains gateway→ROCm when server is up.

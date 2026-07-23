@@ -210,11 +210,35 @@ def _to_png_if_needed(image_bytes: bytes) -> tuple[bytes, str]:
         return buf.getvalue(), "image/png"
 
 
+# Category-first prompt: MiniCPM-V often returns incomplete
+# {"decision":"allow"} or disagrees decision↔category. We ask only for
+# category (+ confidence) and derive decision in code (P3.6).
+_SENTINEL_PROMPT = """Look at this screenshot. What privacy category is it?
+Choose ONE label only from:
+password_prompt, banking_finance, private_chat, id_document, adult, normal
+
+Definitions:
+- password_prompt: screen shows a password, PIN, or credentials entry field
+- banking_finance: bank or finance app/page showing money balances, account numbers, cards, or transfers
+- private_chat: private one-to-one messenger / DM conversation content
+- id_document: passport, driver license, or government ID card
+- adult: adult sexual imagery
+- normal: everything else (code, terminal, documents, public websites, email lists, settings)
+
+Answer with JSON only:
+{"category":"<label>","confidence":0.0-1.0}
+"""
+
+_SENTINEL_SENSITIVE = frozenset(
+    {"password_prompt", "banking_finance", "private_chat", "id_document", "adult"}
+)
+
+
 class GatewaySentinel:
     """Privacy gate backed by the `sentinel` model (MiniCPM-V 4.6) via the
-    gateway. Sends the image with a strict-JSON classification prompt;
-    enable_thinking=false because classification is a fast-track judgment
-    (handbook §6.2 step 1)."""
+    gateway. Category-first JSON prompt; enable_thinking=false (fast-track,
+    handbook §6.2 step 1). Decision is derived from category so the model
+    cannot block `normal` or allow a sensitive label."""
 
     def __init__(self, gateway_url: str, *, timeout: float = 180.0) -> None:
         self._base = gateway_url.rstrip("/").removesuffix("/v1")
@@ -225,20 +249,10 @@ class GatewaySentinel:
         # WebP (handbook §5.2), so re-encode to PNG before base64-embedding.
         image_bytes, mime = _to_png_if_needed(image_bytes)
         b64 = base64.b64encode(image_bytes).decode("ascii")
-        prompt = (
-            "You are a privacy sentinel. Classify this screenshot for whether it "
-            "should be remembered. Reply ONLY with compact JSON, no prose, exactly "
-            "this schema: "
-            '{"decision":"allow|block","category":"password_prompt|banking_finance'
-            '|private_chat|id_document|adult|normal","confidence":0.0-1.0}. '
-            "Block password fields, banking/finance pages with account numbers or "
-            "balances, private DMs, ID documents, adult content. Allow normal "
-            "code/docs/terminal/public webpages."
-        )
         body = {
             "model": "sentinel",
             "messages": [{"role": "user", "content": [
-                {"type": "text", "text": prompt},
+                {"type": "text", "text": _SENTINEL_PROMPT},
                 {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}},
             ]}],
             "max_tokens": 80,
@@ -262,31 +276,111 @@ class GatewaySentinel:
         return _parse_sentinel_json(content)
 
 
+def _normalize_sentinel_category(raw: object) -> str:
+    """Map model category strings onto the closed taxonomy."""
+    if not isinstance(raw, str):
+        return "normal"
+    cat = raw.strip().lower().replace(" ", "_").replace("-", "_")
+    if cat in _SENTINEL_CATS:
+        return cat
+    # Common near-misses from small VLMs.
+    aliases = {
+        "password": "password_prompt",
+        "passwords": "password_prompt",
+        "login": "password_prompt",
+        "banking": "banking_finance",
+        "finance": "banking_finance",
+        "bank": "banking_finance",
+        "chat": "private_chat",
+        "dm": "private_chat",
+        "message": "private_chat",
+        "messenger": "private_chat",
+        "id": "id_document",
+        "passport": "id_document",
+        "license": "id_document",
+        "nsfw": "adult",
+    }
+    if cat in aliases:
+        return aliases[cat]
+    for known in _SENTINEL_CATS:
+        if known in cat or cat in known:
+            return known
+    return "normal"
+
+
+def _extract_json_objects(content: str) -> list[str]:
+    """Pull JSON object candidates out of prose / markdown fences."""
+    text = (content or "").strip()
+    if not text:
+        return []
+    # Strip ```json ... ``` fences if present.
+    fenced = re.sub(r"```(?:json)?\s*", "", text, flags=re.I)
+    fenced = fenced.replace("```", "")
+    candidates: list[str] = []
+    for blob in (text, fenced):
+        candidates.append(blob)
+        for m in re.finditer(r"\{[^{}]*\}", blob, re.S):
+            candidates.append(m.group(0))
+    # De-dupe while preserving order.
+    seen: set[str] = set()
+    out: list[str] = []
+    for c in candidates:
+        c = c.strip()
+        if c and c not in seen:
+            seen.add(c)
+            out.append(c)
+    return out
+
+
 def _parse_sentinel_json(content: str) -> SentinelVerdict:
-    """Tolerant JSON extraction: models sometimes wrap JSON in prose or fences.
-    Defaults to allow/normal/0.5 on any parse failure so a malformed reply never
-    silently blocks everything (fail-open for usability; the audit log still
-    records the decision)."""
-    # Try a direct parse first, then a fenced {...} extraction.
-    candidates = [content]
-    m = re.search(r"\{[^{}]*\}", content, re.S)
-    if m:
-        candidates.append(m.group(0))
-    for cand in candidates:
+    """Strict-ish JSON extraction with category→decision consistency (P3.6).
+
+    MiniCPM-V often returns partial JSON (e.g. only ``decision``) or sets
+    ``decision=block`` with ``category=normal``. We:
+      1. parse whatever fields are present;
+      2. normalise category onto the closed taxonomy;
+      3. DERIVE decision from category (sensitive→block, normal→allow).
+
+    Fail-open (allow/normal) only when nothing usable is found.
+    """
+    parsed: dict | None = None
+    for cand in _extract_json_objects(content):
         try:
-            d = _json.loads(cand)
-            decision = d.get("decision", "allow")
-            category = d.get("category", "normal")
-            confidence = float(d.get("confidence", 0.5))
-            if decision not in ("allow", "block"):
-                decision = "allow"
-            if category not in _SENTINEL_CATS:
-                category = "normal"
-            confidence = max(0.0, min(1.0, confidence))
-            return SentinelVerdict(decision=decision, category=category, confidence=confidence)
+            # Tolerate trailing commas common in small-model JSON.
+            cleaned = re.sub(r",\s*([}\]])", r"\1", cand)
+            d = _json.loads(cleaned)
+            if isinstance(d, dict):
+                parsed = d
+                break
         except (ValueError, TypeError):
             continue
-    return SentinelVerdict(decision="allow", category="normal", confidence=0.5)
+
+    if parsed is None:
+        # Last-resort: scan free text for a known category token.
+        lowered = (content or "").lower()
+        category = "normal"
+        for cat in ("password_prompt", "banking_finance", "private_chat",
+                    "id_document", "adult", "normal"):
+            if cat in lowered:
+                category = cat
+                break
+        decision = "block" if category in _SENTINEL_SENSITIVE else "allow"
+        return SentinelVerdict(decision=decision, category=category, confidence=0.5)
+
+    category = _normalize_sentinel_category(parsed.get("category", "normal"))
+    if "confidence" in parsed:
+        try:
+            confidence = float(parsed.get("confidence"))
+        except (TypeError, ValueError):
+            confidence = 0.75
+    else:
+        # Category present without confidence — prefer a mid-high prior over the
+        # old hard-coded 0.5 that made every audit row look like a parse fallback.
+        confidence = 0.75
+    confidence = max(0.0, min(1.0, confidence))
+    # Category wins: never block normal, never allow a sensitive label.
+    decision = "block" if category in _SENTINEL_SENSITIVE else "allow"
+    return SentinelVerdict(decision=decision, category=category, confidence=confidence)
 
 
 class OcrdClient:
@@ -395,12 +489,40 @@ class RealNovelty:
         return 0.5, "fast parse failed; defaulting to new"
 
 
+# Perceive prompt (P3.7): demand concrete activity; verbatim ⊆ OCR only.
+_PERCEIVE_PROMPT = """Summarise what the user is doing in this screenshot.
+
+Rules:
+1. APP and WINDOW TITLE are system-provided — do NOT rewrite them.
+2. OCR TEXT is the ONLY allowed source for verbatim entities — copy substrings
+   exactly; never invent or retype text from the image pixels.
+3. activity MUST be specific: verb + object + short context (e.g. "editing
+   TimelineParser.parse_timeline in VS Code", "reading ROCM-4042 docs in
+   Chrome"). FORBIDDEN vague lines: "working in X", "using X", "looking at
+   the screen", "browsing".
+4. Reply with ONLY compact JSON (no markdown, no prose):
+{"activity":"<specific one line>",
+ "app_context":"ide|browser|terminal|chat|docs|other",
+ "topics":["..."],
+ "verbatim":{"errors":[],"urls":[],"identifiers":[],"numbers":[],"quotes":[]}}
+5. Leave a verbatim list empty when OCR has nothing for that bucket.
+Image is for layout/visual context only.
+"""
+
+# Vague one-liners we refuse to store (P3.7). Keep this narrow — the OCR
+# fallback itself uses "inspecting «…»" and must NOT match.
+_GENERIC_ACTIVITY_RE = re.compile(
+    r"^\s*(working in|using|looking at the screen|browsing)\b[\w ._-]*$",
+    re.I,
+)
+
+
 class GatewayPerceive:
     """Semantic understanding backed by `perceive` (Gemma 4 E4B). Handbook §6.2
-    step 4: the prompt MUST source verbatim entities from OCR text only (never
-    transcribe the image), and MUST NOT rewrite the app/title metadata (system-
-    injected). Thinking is left ON because activity synthesis benefits from it;
-    we budget enough tokens."""
+    step 4: verbatim entities MUST come from OCR text only; app/title are
+    system-injected. Thinking stays ON for activity synthesis; we budget
+    tokens. Post-parse filters drop any verbatim string not found in OCR and
+    replace empty/generic activity with an OCR-grounded fallback (P3.7)."""
 
     def __init__(self, gateway_url: str, *, timeout: float = 240.0) -> None:
         self._base = gateway_url.rstrip("/").removesuffix("/v1")
@@ -410,30 +532,20 @@ class GatewayPerceive:
         # Re-encode WebP -> PNG (llama.cpp vision only accepts PNG/JPEG).
         image_bytes, _mime = _to_png_if_needed(image_bytes)
         b64 = base64.b64encode(image_bytes).decode("ascii")
-        prompt = (
-            "You are summarising what the user is doing in this screenshot. The "
-            "window metadata (app, title) is system-provided — do NOT change it. "
-            "The OCR text below is the ground truth for any verbatim entities; do "
-            "NOT transcribe text from the image yourself. Reply ONLY with compact "
-            "JSON, no prose: "
-            '{"activity":"one line: what the user is doing",'
-            '"app_context":"ide|browser|terminal|chat|docs|other",'
-            '"topics":["..."],"verbatim":{"errors":[],"urls":[],'
-            '"identifiers":[],"numbers":[],"quotes":[]}}. '
-            "Populate verbatim ONLY from the OCR text. image is for layout/visual "
-            "context only."
-        )
         body = {
             "model": "perceive",
             "messages": [{"role": "user", "content": [
                 {"type": "text", "text": (
-                    f"{prompt}\n\nAPP: {app}\nWINDOW TITLE: {window_title}\n"
+                    f"{_PERCEIVE_PROMPT}\n\nAPP: {app}\nWINDOW TITLE: {window_title}\n"
                     f"OCR TEXT:\n{ocr_full_text[:3000]}"
                 )},
                 {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
             ]}],
-            "max_tokens": 600,
+            "max_tokens": 500,
             "temperature": 0.1,
+            # Structured JSON is more reliable with thinking off (P3.7); activity
+            # specificity is enforced by the prompt + non-generic fallback.
+            "chat_template_kwargs": {"enable_thinking": False},
         }
         def _call():
             last = None
@@ -442,41 +554,107 @@ class GatewayPerceive:
                     with httpx.Client(timeout=self._timeout) as c:
                         r = c.post(f"{self._base}/v1/chat/completions", json=body)
                         r.raise_for_status()
-                        return r.json()["choices"][0]["message"].get("content", "") or ""
+                        msg = r.json()["choices"][0]["message"]
+                        content = msg.get("content", "") or ""
+                        if not content.strip():
+                            # Some builds still park the answer in reasoning_content.
+                            content = msg.get("reasoning_content", "") or ""
+                        return content
                 except (httpx.ReadTimeout, httpx.ConnectError) as exc:
                     last = exc
                     continue
             raise last
         content = await asyncio.to_thread(_call)
-        return _parse_perceive_json(content, app, window_title)
+        return _parse_perceive_json(content, app, window_title, ocr_full_text)
 
 
-def _parse_perceive_json(content: str, app: str, window_title: str) -> PerceiveEvent:
-    m = re.search(r"\{.*\}", content, re.S)
+def _activity_fallback(app: str, window_title: str, ocr_full_text: str) -> str:
+    """Concrete-ish fallback when the model returns empty/generic activity."""
+    app_l = (app or "").strip() or "unknown app"
+    title = (window_title or "").strip()
+    # Prefer a short OCR line that looks informative.
+    for line in (ocr_full_text or "").splitlines():
+        s = line.strip()
+        if len(s) >= 12 and not s.startswith("http"):
+            snippet = s[:120]
+            if title:
+                return f"inspecting «{snippet}» in {app_l} ({title[:60]})"
+            return f"inspecting «{snippet}» in {app_l}"
+    if title:
+        return f"active in {app_l}: {title[:120]}"
+    return f"active in {app_l}"
+
+
+def _filter_verbatim_to_ocr(items: list, ocr_full_text: str) -> list[str]:
+    """Keep only strings that appear as substrings of OCR (case-sensitive first,
+    then case-insensitive). Drops hallucinations (handbook §6.2 step 4)."""
+    if not ocr_full_text:
+        return []
+    ocr_lower = ocr_full_text.lower()
+    out: list[str] = []
+    seen: set[str] = set()
+    for raw in items or []:
+        s = str(raw).strip()
+        if not s or s in seen:
+            continue
+        if s in ocr_full_text or s.lower() in ocr_lower:
+            out.append(s)
+            seen.add(s)
+    return out[:20]
+
+
+def _parse_perceive_json(
+    content: str,
+    app: str,
+    window_title: str,
+    ocr_full_text: str = "",
+) -> PerceiveEvent:
+    """Parse perceive JSON; enforce verbatim ⊆ OCR and non-generic activity."""
+    data: dict | None = None
+    # Prefer the largest {...} blob (verbatim object is nested).
+    candidates: list[str] = []
+    m = re.search(r"\{.*\}", content or "", re.S)
     if m:
+        candidates.append(m.group(0))
+    candidates.extend(_extract_json_objects(content or ""))
+    for cand in candidates:
         try:
-            d = _json.loads(m.group(0))
-            ctx = d.get("app_context", "other")
-            if ctx not in ("ide", "browser", "terminal", "chat", "docs", "other"):
-                ctx = "other"
-            vb = d.get("verbatim", {}) or {}
-            return PerceiveEvent(
-                activity=str(d.get("activity", ""))[:300] or f"working in {app or 'unknown'}",
-                app_context=ctx,
-                topics=[str(t) for t in d.get("topics", [])][:10],
-                verbatim=Verbatim(
-                    errors=[str(x) for x in vb.get("errors", [])],
-                    urls=[str(x) for x in vb.get("urls", [])],
-                    identifiers=[str(x) for x in vb.get("identifiers", [])],
-                    numbers=[str(x) for x in vb.get("numbers", [])],
-                    quotes=[str(x) for x in vb.get("quotes", [])],
-                ),
-            )
+            cleaned = re.sub(r",\s*([}\]])", r"\1", cand)
+            d = _json.loads(cleaned)
+            if isinstance(d, dict) and (
+                "activity" in d or "verbatim" in d or "app_context" in d
+            ):
+                data = d
+                break
         except (ValueError, TypeError):
-            pass
-    # Fallback: minimal valid event derived from metadata (no hallucinated text).
+            continue
+
+    if data is None:
+        return PerceiveEvent(
+            activity=_activity_fallback(app, window_title, ocr_full_text),
+            app_context="other",
+            topics=[],
+        )
+
+    ctx = data.get("app_context", "other")
+    if ctx not in ("ide", "browser", "terminal", "chat", "docs", "other"):
+        ctx = "other"
+    vb = data.get("verbatim", {}) or {}
+    if not isinstance(vb, dict):
+        vb = {}
+    activity = str(data.get("activity", "") or "").strip()[:300]
+    if not activity or _GENERIC_ACTIVITY_RE.match(activity):
+        activity = _activity_fallback(app, window_title, ocr_full_text)
+
     return PerceiveEvent(
-        activity=f"working in {app or 'unknown'}",
-        app_context="other",
-        topics=[],
+        activity=activity,
+        app_context=ctx,
+        topics=[str(t) for t in (data.get("topics") or []) if str(t).strip()][:10],
+        verbatim=Verbatim(
+            errors=_filter_verbatim_to_ocr(vb.get("errors", []), ocr_full_text),
+            urls=_filter_verbatim_to_ocr(vb.get("urls", []), ocr_full_text),
+            identifiers=_filter_verbatim_to_ocr(vb.get("identifiers", []), ocr_full_text),
+            numbers=_filter_verbatim_to_ocr(vb.get("numbers", []), ocr_full_text),
+            quotes=_filter_verbatim_to_ocr(vb.get("quotes", []), ocr_full_text),
+        ),
     )
