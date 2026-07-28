@@ -1,7 +1,7 @@
 {
   "project": "DejaView",
   "board_version": 1,
-  "updated": "2026-07-23",
+  "updated": "2026-07-28",
   "authoritative_location": "/Users/wu/Projects/Aidenwu0209/localwork/TASKBOARD.json(仓库根,唯一权威;随每次 push 备份到 github.com/Aidenwu0209/localwork)",
   "instructions": [
     "状态机:false(未开始) -> doing(进行中) -> accept(完成且验收通过)。特殊态 blocked(被外部依赖卡住,note 必须写清缺什么)。",
@@ -14,7 +14,8 @@
     "硬件事实(已实测):Mac = Apple M5 / 16GB 统一内存 → 本地模型按需起停,禁止全员常驻;服务器 /workspace 仅 10GB,大文件放 overlay(2.0T 可用)。无云 API key:开发推理全部本地(Metal)。",
     "服务器纪律(当前):仅允许 下载 + 只读检查(df/ls/echo);禁止查询或占用 GPU、禁止编译、禁止加载模型、禁止触碰任何在跑进程。S1 剩余(引擎+冒烟)与 S2(全量基准/联调)等用户开放。",
     "隐私纪律:云端替身只喂合成数据;真实个人数据一律等全本地链路后再接入;密钥/真实个人信息禁止入库。",
-    "Phase 3 交接(2026-07-23):G0+M+D 33/33 已 accept。下一批任务 ID 为 P3.1–P3.10,规格见 docs/EXECUTION_HANDBOOK.md §12.3;开工指令见 docs/AGENT_KICKOFF_PROMPT.md。最高优先 P3.1 ROCm 消融报告。"
+    "Phase 3 交接(2026-07-23):G0+M+D 33/33 已 accept。下一批任务 ID 为 P3.1–P3.10,规格见 docs/EXECUTION_HANDBOOK.md §12.3;开工指令见 docs/AGENT_KICKOFF_PROMPT.md。最高优先 P3.1 ROCm 消融报告。",
+    "2026-07-28 交接刷新:完整决策写入 docs/EXECUTION_HANDBOOK.md §12 + STATUS.md + AGENT_KICKOFF_PROMPT.md。接手只领 P3.1/P3.2/P3.4。"
   ],
   "tasks": [
     {
