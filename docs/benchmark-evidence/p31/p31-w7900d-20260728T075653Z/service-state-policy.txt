@@ -1,0 +1,3 @@
+entry_perceive_was_up=0
+exit_policy=leave brain and perceive stopped
+reason=avoid an unmonitored GPU restore load after the benchmark

@@ -430,8 +430,8 @@
       "steps": "按手册 §8 规格在 AMD 服务器跑 brain/perceive/快车道基准;附 rocm-smi 截图到 docs/assets/;起 brain 前 rocm-smi 检查 Dolphin,用 Q6_K 并先停 perceive。详见 deploy/server/DEPLOY.md。",
       "verify": "docs/benchmarks.md 含环境表、VRAM 分配、量化/MTP/并发表、测法≥3次中位;截图路径记入 note。",
       "depends": [],
-      "status": "blocked",
-      "note": "2026-07-23 partial ROCm ablation then SSH :30147 Connection refused. Measured (n=3 med): fast decode 366.7 tok/s wall 13.4ms; sentinel vision wall 108ms decode 221 tok/s; perceive text decode 80.7 tok/s wall 243ms; perceive vision decode 79.9 tok/s wall 416ms; 4-model VRAM 13.71/47.98 GiB. Screenshot docs/assets/rocm-smi-vram-4model.png. Missing: brain Q8/Q6/Q4×MTP×conc, perceive -np 1/2/4 sweep. Dolphin PID absent at capture. Q4_K_M wget ~18% when drop. Resume when ssh radeon-cloud works."
+      "status": "accept",
+      "note": "2026-07-28 accept: run_id=p31-w7900d-20260728T075653Z; fail-closed summary PASS: brain 18/18 (Q8_0/Q6_K/Q4_K_M × MTP off/on × c1/4/8) + perceive 3/3 (-np/client c1/2/4), one warm-up + n=3 measured batches; cache_n=0, thinking=false, deterministic content/parity gates, exclusive assigned-GPU KFD, gfx1100 ROCm and full layer offload PASS; no watchdog failure/OOM. Production brain remains Q6_K + MTP on: aggregate ratios c1/c4/c8=1.738×/1.261×/1.292×; Q8 MTP helps c1 but not c4/c8. Evidence=docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/; screenshots=docs/assets/p31/p31-w7900d-20260728T075653Z/; report=docs/benchmarks.md §2; VERIFY=docs/verification-log.md."
     },
     {
       "id": "P3.2",

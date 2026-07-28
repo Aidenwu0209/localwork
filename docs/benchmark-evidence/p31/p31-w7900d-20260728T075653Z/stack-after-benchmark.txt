@@ -1,0 +1,8 @@
+gateway: down
+sentinel   down
+fast       down
+embed      down
+perceive   down
+brain      down
+  VRAM:
+GPU[0]		: VRAM Total Used Memory (B): 28016640

@@ -1,9 +1,16 @@
 # screenshots — synthetic OCR/perceive test set (M6.1)
 
-20 fully-synthetic screenshots for validating the OCR layer (ocrd / PP-OCRv6)
+20 fully-synthetic source screenshots for validating the OCR layer (ocrd / PP-OCRv6)
 and the perceive semantic stage. Each PNG is paired with a ground-truth JSON
 listing the entities a correct pipeline should extract — used by M5.2's
 medium-vs-small OCR accuracy A/B and by M3.4's end-to-end frame test.
+
+`code_01_p31_focus.png` is one additional P3.1 benchmark view derived only
+from the synthetic `code_01.png`: crop `(left=0, top=0, right=960,
+bottom=540)`, then nearest-neighbor resize to 1920×1080. It preserves the
+active `parse.py` tab and visible code while keeping the filename legible after
+VLM image resizing. P3.1 pins the derived PNG by SHA256; it contains no new
+content or personal data.
 
 ## Contents
 

@@ -490,8 +490,9 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 - [ ] 全员注册 AMD AI Developer Program(大陆:AMD Developer Program China) — **待·队员自检**(见 licenses.md AMD checklist)
 - [ ] Rules & Conditions 通读,按要求的格式/平台提交 — **待·队员自检**
 - [ ] 仓库公开、README 双语、两张拓扑图、快速开始可复现 — **部分具备**(P3.3 README/拓扑/冒烟已成;`63b10d3`;仓库仍 private)
-- [ ] `docs/benchmarks.md` + Grafana 截图 — **待**(OCR A/B 已有;ROCm 消融=P3.1;Grafana=P3.2)
-- [ ] 演示视频(≤5 分钟) — **待**(P3.4,depends P3.1)
+- [ ] `docs/benchmarks.md` + Grafana 截图 — **部分具备**(OCR A/B +
+  P3.1 ROCm 正式消融已落仓;仅 Grafana=P3.2 待完成)
+- [ ] 演示视频(≤5 分钟) — **待**(P3.4;P3.1 前置已完成)
 - [x] `docs/licenses.md`:Apache-2.0(ThinkingCap/MiniCPM/Honcho/Qwen3-Embedding;手册旧称 bge-m3 已替换)+ MIT(llama.cpp 等)+ **Gemma 单独标注** + 各 Python 依赖 — **已具备**(P3.5)
 - [x] 全部提示词/示例已去个人信息;仓库无任何真实隐私数据、无 API key — **基本具备**(演示前若真实采集须清库)
 - [ ] 比赛服务器上只有演示数据,赛后可一键销毁重建 — **部分具备**(无状态算力+模型引导脚本;提交前再确认演示数据)
@@ -538,7 +539,8 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 ### 12.0 接手三步(不可跳过)
 
 1. 通读本节 §12 全文 + `STATUS.md`。
-2. 打开 `TASKBOARD.json`,只做 `false` / `blocked` 任务(当前只剩 **P3.1 / P3.2 / P3.4**)。
+2. 打开 `TASKBOARD.json`,只做 `false` / `blocked` 任务(当前只剩
+   **P3.4 / P3.2**;P3.1 已 `accept`,勿重跑)。
 3. 把 `docs/AGENT_KICKOFF_PROMPT.md` 整段丢给执行 agent 作为系统指令。
 
 | 顺序 | 文件 | 用途 |
@@ -547,16 +549,22 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 | 2 | `STATUS.md` | 一键起服 + 已知问题(叙述版) |
 | 3 | `TASKBOARD.json` | 领取任务前的状态机 |
 | 4 | `docs/verification-log.md` | 已解 `[VERIFY]` 与踩坑 |
-| 5 | `docs/benchmarks.md` | OCR A/B(§1)+ ROCm 消融(§2,待收尾) |
+| 5 | `docs/benchmarks.md` | OCR A/B(§1)+ 已完成 ROCm 消融(§2) |
 | 6 | `deploy/server/DEPLOY.md` | 服务器起停 / VRAM / Dolphin |
-| 7 | 本手册 §0–§11 | 架构规格(未变) |
-| 8 | `docs/AGENT_KICKOFF_PROMPT.md` | 可直接粘贴的开工指令 |
+| 7 | `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/` | P3.1 原始 JSON、日志、rocm-smi、hash、派生 summary |
+| 8 | 本手册 §0–§11 | 架构规格(未变) |
+| 9 | `docs/AGENT_KICKOFF_PROMPT.md` | 可直接粘贴的开工指令 |
 
 ### 12.1 一句话现状(2026-07-28)
 
 **产品代号 DejaView**(déjà vu + view / 全本地数字记忆体)。赛道:AMD AI DevMaster Hackathon Track 2 · Agentic AI。评分 60(功能)+40(ROCm)。截止 **2026-08-06 23:59 UTC+8**(约剩 **9 天**)。
 
-**全链路已跑通并验收**(Mac 采集 → memoryd → AMD ROCm → Postgres/Honcho → agentd 带证据引用)。`TASKBOARD`:**G0+M+D 33/33 accept**;Phase3 中 **P3.3/P3.5/P3.6/P3.7 accept**;**仅剩 P3.1 blocked + P3.2/P3.4 false**。无遗留 `doing`。
+**全链路已跑通并验收**(Mac 采集 → memoryd → AMD ROCm →
+Postgres/Honcho → agentd 带证据引用)。`TASKBOARD`:**G0+M+D 33/33
+accept**;Phase3 中 **P3.1/P3.3/P3.5/P3.6/P3.7 accept**;仅剩
+**P3.4/P3.2 false**。无遗留 `doing`。P3.1 正式 run:
+`p31-w7900d-20260728T075653Z`,证据目录
+`docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`。
 
 仓库:`github.com/Aidenwu0209/localwork`(private) · 本地:`/Users/wu/Projects/Aidenwu0209/localwork/` · tip 附近:`d54260a` 及之后的 handoff/docs commits。
 
@@ -594,9 +602,19 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必要时 fast) → **perceive**(activity/topics;verbatim 必须来自 OCR) → embed → timeline + Honcho → **agentd**(tools + `[event#id HH:MM app]` 引用)。
 
 #### 部署与服务器铁律
-- SSH:`ssh root@36.150.116.200 -p 30147`(别名 `radeon-cloud`)。硬件:Radeon PRO W7900D 48GB(gfx1100)、ROCm 7.2、双 EPYC、Ubuntu 24.04。
-- **只有 `/workspace` 持久(~10GB)**;模型权重在 overlay `/root/dejaview-models/`(~41GB),重建靠 `/workspace/dejaview-models/download-models.sh`(wget + hf-mirror;**hf CLI Xet 经镜像会 401**)。
-- 早期约束:服务器上有别人的 **Dolphin** 任务时**只下载/只读**,勿 OOM;起任何模型前 `rocm-smi`。与 Dolphin 共存用 **brain Q6_K**,起 brain 前停 perceive。
+- 当前 SSH:`ssh root@36.150.116.200 -p 30189`(别名
+  `radeon-cloud`),实例 `u-4695-e6d1476b`。硬件:Radeon PRO W7900D
+  48GB(gfx1100)、ROCm 7.2.1、双 EPYC、Ubuntu 24.04。旧 `:30147`
+  是 2026-07-23～28 历史故障实例,仅保留作故障记录。
+- **只有 `/workspace` 持久(~10GB)**;模型权重在 overlay
+  `/root/dejaview-models/`(生产基线约 41GB;含 P3.1 Q8/Q6/Q4 benchmark
+  quants 的完整集合约 81GB),重建靠
+  `/workspace/dejaview-models/download-models.sh`(wget + hf-mirror;
+  **hf CLI Xet 经镜像会 401**)。
+- 早期 `:30147` 共享实例有别人的 **Dolphin** 任务;P3.1 正式 run
+  所在当前实例在容器分配 GPU 上无 KFD 共租进程。规则不变:起任何模型前
+  `rocm-smi` + KFD 清点;若再次共租,勿 OOM,brain 用 **Q6_K** 并先停
+  perceive;MTP 默认关,只有加载后仍保留 ≥6 GiB 余量才可开。
 - Honcho:**钉死 commit `340175ad`**,补丁在 `deploy/mac/honcho-patches/`;**禁止追上游 main**;submodule 保持 pristine(apply 后会 dirty——**不要 git add**)。
 
 #### Git / 协作纪律(用户硬性要求)
@@ -621,19 +639,25 @@ capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必�
 | 合规 | **P3.5** | `docs/licenses.md` + §10 旁注(`3b7a0c7`) |
 | 哨兵 | **P3.6** | category→decision;normal 误杀类 15/81→0;fixture 6/6 拦 / 0/4 误杀 |
 | 理解 | **P3.7** | 20/20 具体 activity;verbatim⊆ocr;脚本 `eval_*.py` |
-| ROCm 部分 | **P3.1 半成品** | `benchmarks.md §2`:fast 366.7 / sentinel 221 / perceive ~80 tok/s;VRAM 13.71/47.98 GiB + 截图;brain×MTP×并发 **未测**(SSH 断) |
+| ROCm 消融 | **P3.1** | **accept**:run `p31-w7900d-20260728T075653Z`;18 个 brain Q8/Q6/Q4×MTP×并发 cell + 3 个 perceive `-np` cell;每 cell 1 warm-up + 3 实测;MTP 确定性输出 parity PASS;原始证据与 `SHA256SUMS` 在 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/` |
 
 > 历史插曲:UI 曾显示 M1.3/M2.4/M3.1 为 `doing` 半成品(`e5ade0c`),TASKBOARD 实已 `accept`;2026-07-23 live verify 再次确认。不要重做。
+>
+> **P3.1 历史阻塞记录(保留):** 2026-07-23 在旧 `:30147` 实例先得到
+> fast 366.7 / sentinel 221 / perceive ~80 tok/s 与 4-model VRAM 截图,
+> 随后 SSH 中断,brain×MTP×并发当时未测。2026-07-28 换到 `:30189`
+> 实例后从持久 bootstrap 重建并完成上述正式 run,历史 `blocked` 已解除。
 
 ### 12.4 未完成(接手主队列)
 
-执行优先级:**P3.1 收尾 → P3.4 视频 → P3.2 Grafana**。其余可砍见 §1.5。
+执行优先级:**P3.4 视频 → P3.2 Grafana**。P3.1 已完成,不要因旧
+`blocked` 文案或旧端口重跑。其余可砍见 §1.5。
 
 | ID | 状态 | 做什么 | 阻塞 |
 |---|---|---|---|
-| **P3.1** | **blocked** | 填 `benchmarks.md §2` 的 brain Q8/Q6/Q4 × MTP on/off × 并发 1/4/8;perceive `-np` 1/2/4;≥3 次中位;补截图;通过后 `blocked→accept` | 服务器 SSH `:30147` 曾 Connection refused / timeout(2026-07-23～28 多次确认)。**恢复后先 `rocm-smi`,勿碰 Dolphin** |
-| **P3.4** | false | ≤5min 演示视频,手册 §9 六幕,**含拔网线** | 建议 P3.1 有数后再拍 |
-| **P3.2** | false | Grafana 一屏:tokens/s、VRAM、GPU util、事件率 | depends P3.1 |
+| **P3.1** | **accept** | 正式 run、§2 表格、`[VERIFY]` 与 checksummed 原始证据已齐 | 历史 `:30147` SSH 阻塞已在 `:30189` replacement instance 解除 |
+| **P3.4** | false | ≤5min 演示视频,手册 §9 六幕,**含拔网线** | 无;P3.1 数字已齐,现在最高优先 |
+| **P3.2** | false | Grafana 一屏:tokens/s、VRAM、GPU util、事件率 | P3.1 前置已满足 |
 | — | 可砍 | P3.8 MarkItDown / P3.9 日报多 Agent UI / P3.10 Open WebUI / MCP / 音频 | 时间不够按 §1.5 砍 |
 
 **§10 提交清单仍待人工**:全员 AMD Developer Program 注册、Rules 通读、仓库是否公开、演示视频、服务器仅演示数据确认。`licenses.md` 已有。
@@ -644,14 +668,27 @@ capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必�
 |---|---|---|
 | — | sentinel normal 误杀 | P3.6 已缓解(可再查 confidence 恒 0.5 语义) |
 | — | perceive 空泛 activity | P3.7 已缓解 |
-| 高 | P3.1 brain 消融未完成 | 等 SSH |
+| — | P3.1 brain 消融曾未完成 | 已由 run `p31-w7900d-20260728T075653Z` 解除;勿重跑 |
+| 高 | P3.4 六幕视频尚未录成 | 先按 §9 完成≤5min成片,必须有物理拔网线镜头 |
+| 中 | P3.2 Grafana 尚未验收 | 复用已存在监控资产,做 tokens/s、VRAM、GPU util、事件率一屏 |
+| 中 | 服务器端口可能随 replacement instance 漂移 | 当前 `:30189`;每次先核对 `radeon-cloud` alias,旧 `:30147` 仅历史 |
 | 中 | 网关偶发 `model=None` 400(~2%) | 待查(疑 Honcho health) |
 | 中 | 隧道单帧 ~12–15s | 决赛 LAN |
 | 低 | Mac ocrd=rapidocr vs 生产 paddleocr | 一行配置 |
 
-**VRAM**:Q8 brain(28GB)+Dolphin(10.6)+4 小模型(12) > 48GB → 共享时用 **Q6_K**,起 brain 前停 perceive。
+**VRAM**:P3.1 正式 run 是当前无容器内 KFD 共租的 replacement
+instance,Q8 MTP-on 实测峰值 34.43 GiB。历史共享场景仍是 Q8
+brain(28GB)+Dolphin(10.6)+4 小模型(12) > 48GB → 共租时用
+**Q6_K**,起 brain 前停 perceive。MTP 会额外占 4.95 GiB;共租默认
+关闭,只有实测加载后仍保留 ≥6 GiB 才开启。
 
 ### 12.6 起服冒烟
+
+当前 alias 应指向 `root@36.150.116.200 -p 30189`。P3.1 harness 按安全
+策略退出后 gateway、sentinel、fast、embed、perceive、brain 全为
+`down`,VRAM 回到 28,016,640 B;后续 P3.4/P3.2 起服前先运行
+`rocm-smi --showmeminfo vram --showuse`、`rocm-smi --showpids verbose`
+和 `./server-stack.sh status`,再只起需要的角色。
 
 ```bash
 cd /Users/wu/Projects/Aidenwu0209/localwork
@@ -678,8 +715,11 @@ GATEWAY_URL=http://127.0.0.1:14000/v1 uv run --project services/agentd python -m
 7. llama.cpp 视觉不支持 WebP → memoryd 已转 PNG。
 8. Docker `host.docker.internal` IPv6 → Honcho 用 IPv4 字面量。
 9. 模型在 overlay → `download-models.sh` 重建(wget+hf-mirror)。
-10. **下一最高优先:P3.1**(SSH 恢复后立即做)。
+10. **下一最高优先:P3.4**,随后 P3.2;P3.1 正式矩阵勿重跑。
 
 ### 12.8 给后续 Agent 的一句话开工
 
-> 读完 §12 与 `STATUS.md` → 领 `TASKBOARD` 里 P3.1(若 SSH 通)或先写 P3.4 分镜脚本 → 严格遵守 git 作者与无 AI trailer → 完成即 accept+push。不要重做 33 项已 accept 的工作,不要改产品叙事与五模型分层。
+> 读完 §12 与 `STATUS.md` → 领 `TASKBOARD` 里的 P3.4,按 §9 录六幕
+> ≤5min 成片且必须拔网线 → 再完成 P3.2 一屏 → 严格遵守 git 作者与无
+> AI trailer → 完成即 accept+push。不要重做 33+5 项已 accept 的工作,
+> 尤其不要重跑 P3.1;不要改产品叙事与五模型分层。

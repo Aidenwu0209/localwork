@@ -1,0 +1,26 @@
+pid=276042
+pid_starttime=1229699635
+alias=brain-bench
+local_process_holds_dev_kfd=true
+bound_kfd_pid=3950834
+kfd_binding=exclusive_assigned_kfd_delta
+assigned_kfd_process=3950834	unknown	60148
+executable=/root/llama.cpp/build/bin/llama-server
+executable_sha256=90d82cee630d8340b0f1f629e4675a23b7189b49f2d9869ed6efb424cfdeb55f
+llama_cpp_commit=76f46ad29d61fd8c1401e8221842934bf62a6064
+llama_bin_sha256=90d82cee630d8340b0f1f629e4675a23b7189b49f2d9869ed6efb424cfdeb55f
+0.00.132.802 I cmn  common_param:   - ROCm0   : AMD Radeon Graphics (49136 MiB, 49022 MiB free)
+0.00.132.969 I cmn  common_param: system_info: n_threads = 64 (n_threads_batch = 64) / 128 | ROCm : NO_VMM = 1 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | AVX512 = 1 | AVX512_VBMI = 1 | AVX512_VNNI = 1 | AVX512_BF16 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | 
+0.01.353.257 I common_memory_breakdown_print: |   - ROCm0 (Graphics)   | 49136 = 47676 + (28747 = 26402 +    2221 +     124) +      -27287 |
+0.01.841.165 I llama_prepare_model_devices: using device ROCm0 (AMD Radeon Graphics) (0000:43:00.0) - 48874 MiB free
+0.08.346.967 I load_tensors: offloading output layer to GPU
+0.08.346.975 I load_tensors: offloading 64 repeating layers to GPU
+0.08.346.978 I load_tensors: offloaded 66/66 layers to GPU
+0.08.346.986 I load_tensors:        ROCm0 model buffer size = 26402.70 MiB
+1.29.441.202 I llama_context:  ROCm_Host  output buffer size =     7.58 MiB
+1.29.441.998 I llama_kv_cache:      ROCm0 KV buffer size =  1024.00 MiB
+1.29.450.044 I llama_memory_recurrent:      ROCm0 RS buffer size =  1197.00 MiB
+1.29.507.654 I sched_reserve:      ROCm0 compute buffer size =   124.02 MiB
+1.29.507.664 I sched_reserve:  ROCm_Host compute buffer size =    22.02 MiB
+1.29.691.215 I clip_ctx: CLIP using ROCm0 backend
+1.30.521.384 I reserve_compute_meta:      ROCm0 compute buffer size =   248.10 MiB

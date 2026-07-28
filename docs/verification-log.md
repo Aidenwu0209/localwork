@@ -110,7 +110,7 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
 - **Latency under SSH tunnel**: ~12-15s per window through the full pipeline (sentinel+ocrd+perceive+embed); a full 6-8 window cycle ≈ 90s. Acceptable for the tunnel; will drop sharply when the gateway is on LAN (sentinel ~0.5s locally).
 
 
-## 2026-07-23 (P3.1 ROCm ablation — partial / blocked)
+## 2026-07-23 (P3.1 ROCm ablation — historical partial / blocked; superseded 2026-07-28)
 
 - **Partial pass on W7900D / ROCm 7.2 / llama.cpp 76f46ad29**: with `embed+fast+sentinel+perceive` up, measured n=3 medians via `/v1/chat/completions` `timings` (thinking disabled):
   - **fast** Q8_0: decode **366.7 tok/s**, wall **13.4 ms**
@@ -155,3 +155,72 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
 - **M3.1 PASS**: extensions `vector 0.8.5` + `pg_trgm 1.6`; tables `timeline_events` / `sentinel_audit` / `kb_chunks`; `timeline_events` columns match handbook §6.3 (incl. `end_ts`); indexes pkey + hnsw embedding + ts + gin_trgm ocr_text + (app,ts); `honcho` database present.
 - **M2.4 PASS**: `docker compose -f deploy/mac/compose.honcho.yml config` OK; stack already up; `curl http://127.0.0.1:8100/health` → HTTP 200 `{"status":"ok"}`.
 - **Conclusion**: no leftover `doing`; all 33 G0+M+D tasks remain `accept`.
+
+## 2026-07-28 ([VERIFY] P3.1 ROCm ablation — accept)
+
+- **Authoritative evidence**: successful `mode=all` run
+  `p31-w7900d-20260728T075653Z`; raw directory
+  `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`; formal tables in
+  `docs/benchmarks.md` §2. `shasum -a 256 -c SHA256SUMS` passed for every
+  archived artifact.
+- **Environment identity**: replacement instance `u-4695-e6d1476b`, 2× AMD
+  EPYC 9334 / 128 logical CPUs / 1007.56 GiB RAM; W7900D-class gfx1100,
+  51,522,830,336 B (47.98 GiB) VRAM; ROCm 7.2.1; driver 6.14.14.
+  llama.cpp is clean source commit
+  `76f46ad29d61fd8c1401e8221842934bf62a6064`, Release/HIP/gfx1100; the
+  running binary SHA256 is
+  `90d82cee630d8340b0f1f629e4675a23b7189b49f2d9869ed6efb424cfdeb55f`.
+  The run manifest binds the runner, benchmark client, summarizer, six exact
+  model/mmproj files, prompts, and perceive fixture by SHA256.
+- **Safety preflight**: the first live-host capture was `rocm-smi`: GPU 0%,
+  28,016,640 B used, assigned KFD GPU ID `60148`, and no KFD process scoped to
+  that assigned GPU. All DejaView roles were down. No Dolphin/co-tenant process
+  was present on the assigned GPU, so the harness did not touch or coexist with
+  an unrecognized workload.
+- **Complete matrix**: brain **18/18** =
+  Q8_0/Q6_K/Q4_K_M × MTP off/on × c1/c4/c8; perceive **3/3** =
+  Q8_0 with paired `(-np, client concurrency)` of (1,1)/(2,2)/(4,4).
+  Every cell used one excluded warm-up plus **n=3 measured batches**; successful
+  requests equalled `3×concurrency`.
+- **Timing hygiene**: all 21 records used synthetic inputs,
+  `temperature=0`, `enable_thinking=false`, and request
+  `cache_prompt=false`; servers used `--cache-ram 0` and
+  `--no-cache-idle-slots`; every measured response had `timings.cache_n=0`.
+  The fail-closed summarizer recomputed request medians/P95 and batch aggregate
+  medians from raw samples and accepted the complete matrix.
+- **[VERIFY] ROCm execution**: all six brain loads and three perceive loads
+  produced non-empty GPU proofs binding the local process to an exclusive
+  assigned-KFD delta and the checksummed binary. Logs contain ROCm/HIP and full
+  layer offload: brain **66/66**, perceive **43/43**. Resident and 200 ms sampled
+  peak VRAM evidence is present for every cell.
+- **[VERIFY] content gates**: every brain request returned the exact required
+  `1..80` sequence (100% pass); every perceive request used the same fixture
+  SHA256 `d7903ab467f554b2fba7489380024c603c0ad3b8785ccb08f62af07cc976caf9`
+  and identified `parse.py` (100% pass). These are narrow deterministic
+  compliance/visual-path gates, not general reasoning or VLM accuracy claims.
+- **[VERIFY] MTP result**: deterministic on/off output parity **PASS**. All
+  MTP-on cells accepted 98.9% of generated drafts. Aggregate-throughput ratios
+  (on/off) were Q8_0 c1/c4/c8 =
+  **2.018×/0.986×/0.973×**; Q6_K =
+  **1.738×/1.261×/1.292×**; Q4_K_M =
+  **1.474×/1.436×/1.504×**. MTP added **4.95 GiB** resident VRAM.
+- **Production decision**: keep the fixed brain default **Q6_K**. Enable MTP
+  for Q6_K only on an exclusive or positively headroom-checked session; when
+  Dolphin or another co-tenant is present, stop perceive and keep MTP off unless
+  post-load telemetry preserves the 6 GB reserve. Q8_0 uses MTP only at c1
+  because c4/c8 regress; Q4_K_M+MTP is the throughput/headroom fallback but its
+  narrow compliance pass does not justify replacing Q6_K for general quality.
+- **[VERIFY] perceive scaling**: aggregate output rose
+  **31.2 → 40.7 → 50.0 t/s** for `-np` 1/2/4, while per-request decode fell
+  **59.4 → 46.8 → 32.8 t/s** and P95 rose
+  **739.1 → 1150.8 → 1861.6 ms**. Production remains `-np 2` as the balance
+  point; `-np 4` is the throughput-first option.
+- **Cleanup / no residue**: entry and exit service snapshots both show
+  gateway/sentinel/fast/embed/perceive/brain down; exit VRAM returned exactly
+  to **28,016,640 B** and the assigned-GPU KFD inventory was empty. Per
+  `service-state-policy.txt`, brain and perceive were deliberately left stopped
+  rather than starting an unmonitored restore load.
+- **Supersession**: this checksummed run closes the brain/MTP/concurrency and
+  perceive `-np` gaps recorded in the historical 2026-07-23 P3.1 entry above.
+  That earlier small-model pass remains provenance only and no longer represents
+  current P3.1 status.

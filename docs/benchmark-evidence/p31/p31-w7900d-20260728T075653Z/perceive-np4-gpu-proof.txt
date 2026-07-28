@@ -1,0 +1,28 @@
+pid=327052
+pid_starttime=1229765525
+alias=perceive-bench
+local_process_holds_dev_kfd=true
+bound_kfd_pid=4006607
+kfd_binding=exclusive_assigned_kfd_delta
+assigned_kfd_process=4006607	unknown	60148
+executable=/root/llama.cpp/build/bin/llama-server
+executable_sha256=90d82cee630d8340b0f1f629e4675a23b7189b49f2d9869ed6efb424cfdeb55f
+llama_cpp_commit=76f46ad29d61fd8c1401e8221842934bf62a6064
+llama_bin_sha256=90d82cee630d8340b0f1f629e4675a23b7189b49f2d9869ed6efb424cfdeb55f
+0.00.132.434 I cmn  common_param:   - ROCm0   : AMD Radeon Graphics (49136 MiB, 49022 MiB free)
+0.00.132.619 I cmn  common_param: system_info: n_threads = 64 (n_threads_batch = 64) / 128 | ROCm : NO_VMM = 1 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | AVX512 = 1 | AVX512_VBMI = 1 | AVX512_VNNI = 1 | AVX512_BF16 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | 
+0.01.714.875 I common_memory_breakdown_print: |   - ROCm0 (Graphics)   | 49136 = 48874 + (5310 =  4788 +     416 +     106) +       -5048 |
+0.02.449.163 I llama_prepare_model_devices: using device ROCm0 (AMD Radeon Graphics) (0000:43:00.0) - 48874 MiB free
+0.03.997.327 I load_tensors: offloading output layer to GPU
+0.03.997.459 I load_tensors: offloading 41 repeating layers to GPU
+0.03.997.463 I load_tensors: offloaded 43/43 layers to GPU
+0.03.997.471 I load_tensors:        ROCm0 model buffer size =  4788.12 MiB
+0.18.635.221 I llama_context:  ROCm_Host  output buffer size =     4.00 MiB
+0.18.635.846 I llama_kv_cache:      ROCm0 KV buffer size =   256.00 MiB
+0.18.639.535 I llama_kv_cache:      ROCm0 KV buffer size =   160.00 MiB
+0.18.681.453 I sched_reserve:      ROCm0 compute buffer size =   106.02 MiB
+0.18.681.475 I sched_reserve:  ROCm_Host compute buffer size =    36.02 MiB
+0.18.851.602 I clip_ctx: CLIP using ROCm0 backend
+0.19.106.009 I reserve_compute_meta:      ROCm0 compute buffer size =    94.52 MiB
+0.19.106.103 I clip_ctx: CLIP using ROCm0 backend
+0.19.406.410 I reserve_compute_meta:      ROCm0 compute buffer size =   101.19 MiB

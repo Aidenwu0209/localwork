@@ -13,6 +13,7 @@ models/
 # user memory data (never in git)
 dejaview-data/
 data/
+deploy/server/bench/results/
 
 # python
 __pycache__/
@@ -27,5 +28,6 @@ node_modules/
 # os / editor
 .DS_Store
 *.log
+!docs/benchmark-evidence/**/*.log
 .idea/
 .vscode/

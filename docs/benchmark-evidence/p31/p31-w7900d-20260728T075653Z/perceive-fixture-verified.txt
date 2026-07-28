@@ -1,0 +1,1 @@
+d7903ab467f554b2fba7489380024c603c0ad3b8785ccb08f62af07cc976caf9  /root/dejaview-p31/tests/assets/screenshots/code_01_p31_focus.png

@@ -1,0 +1,6 @@
+llama_cpp_commit=76f46ad29d61fd8c1401e8221842934bf62a6064
+llama_binary_reported_commit=76f46ad2
+llama_bin_sha256=90d82cee630d8340b0f1f629e4675a23b7189b49f2d9869ed6efb424cfdeb55f
+expected_gpu_arch=gfx1100
+version: 1 (76f46ad2)
+built with GNU 13.3.0 for Linux x86_64

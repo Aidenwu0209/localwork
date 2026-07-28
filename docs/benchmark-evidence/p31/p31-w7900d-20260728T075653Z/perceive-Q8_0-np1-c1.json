@@ -1,0 +1,175 @@
+{
+  "schema_version": 2,
+  "label": "perceive-Q8_0-np1-c1",
+  "measured_at_utc": "2026-07-28T08:26:53.124310+00:00",
+  "evidence": {
+    "run_id": "p31-w7900d-20260728T075653Z",
+    "manifest_sha256": "4b92324cb33c724d60d5cfcc308c0f52c04cb72d351e75642ed8dd9c56a80799",
+    "llama_commit": "76f46ad29d61fd8c1401e8221842934bf62a6064",
+    "llama_bin_sha256": "90d82cee630d8340b0f1f629e4675a23b7189b49f2d9869ed6efb424cfdeb55f"
+  },
+  "method": {
+    "url": "http://127.0.0.1:18002/v1/chat/completions",
+    "model": "perceive-bench",
+    "concurrency": 1,
+    "runs": 3,
+    "warmup_batches": 1,
+    "max_tokens": 96,
+    "temperature": 0,
+    "cache_prompt": false,
+    "enable_thinking": false,
+    "required_content_regex": "(?i)\\bparse\\.py\\b",
+    "required_numeric_prefix": 0,
+    "image_sha256": "d7903ab467f554b2fba7489380024c603c0ad3b8785ccb08f62af07cc976caf9",
+    "require_draft": false,
+    "forbid_draft": true,
+    "synthetic_prompt_sha256": "f00a4e1995fdd8e63562c8058110192f296f7163a0e1e1993ded3f0f51112cfb"
+  },
+  "summary": {
+    "successful_requests": 3,
+    "trial_count": 3,
+    "concurrency": 1,
+    "prompt_tps_median": 1152.8673042482071,
+    "decode_tps_median_per_request": 59.40588944822261,
+    "aggregate_output_tps_end_to_end_median": 31.213278123515813,
+    "request_wall_p50_ms": 735.5977315455675,
+    "request_wall_p95_ms": 739.1059175133705,
+    "batch_wall_p50_ms": 736.8658911436796,
+    "batch_wall_p95_ms": 740.6041361391544,
+    "completion_tokens_median": 23.0,
+    "numeric_sequence_prefix_median": 0.0,
+    "numeric_sequence_complete_rate": 1.0,
+    "required_content_match_rate": 1.0,
+    "draft_n": 0,
+    "draft_n_accepted": 0,
+    "draft_acceptance_ratio": null
+  },
+  "batches": [
+    {
+      "trial": 1,
+      "batch_wall_ms": 740.6041361391544,
+      "aggregate_output_tps_end_to_end": 31.055727179571758,
+      "generated_tokens": 23,
+      "prompt_tokens": 318,
+      "samples": [
+        {
+          "request_id": "trial-1-request-1",
+          "http_status": 200,
+          "wall_ms": 739.1059175133705,
+          "cache_n": 0,
+          "prompt_n": 318,
+          "predicted_n": 23,
+          "prompt_per_second": 1122.120596205962,
+          "predicted_per_second": 59.40588944822261,
+          "prompt_ms": 283.392,
+          "predicted_ms": 387.167,
+          "draft_n": 0,
+          "draft_n_accepted": 0,
+          "content_sha256": "343eb7a9b2eb691a0f2393ae43a7d679cb0cc58b975f86177945393549bbf657",
+          "content_length": 103,
+          "content_preview": "parse.py The code defines a `TimelineParser` class for parsing raw capture events into a flat timeline.",
+          "numeric_sequence_prefix": 0,
+          "numeric_sequence_complete": true,
+          "numeric_sequence_exact": true,
+          "content_matches_required": true,
+          "finish_reason": "stop",
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 318,
+            "prompt_ms": 283.392,
+            "prompt_per_token_ms": 0.8911698113207547,
+            "prompt_per_second": 1122.120596205962,
+            "predicted_n": 23,
+            "predicted_ms": 387.167,
+            "predicted_per_token_ms": 16.833347826086957,
+            "predicted_per_second": 59.40588944822261
+          }
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "batch_wall_ms": 736.8658911436796,
+      "aggregate_output_tps_end_to_end": 31.213278123515813,
+      "generated_tokens": 23,
+      "prompt_tokens": 318,
+      "samples": [
+        {
+          "request_id": "trial-2-request-1",
+          "http_status": 200,
+          "wall_ms": 735.5977315455675,
+          "cache_n": 0,
+          "prompt_n": 318,
+          "predicted_n": 23,
+          "prompt_per_second": 1155.0196135406072,
+          "predicted_per_second": 58.865834525579764,
+          "prompt_ms": 275.32,
+          "predicted_ms": 390.719,
+          "draft_n": 0,
+          "draft_n_accepted": 0,
+          "content_sha256": "343eb7a9b2eb691a0f2393ae43a7d679cb0cc58b975f86177945393549bbf657",
+          "content_length": 103,
+          "content_preview": "parse.py The code defines a `TimelineParser` class for parsing raw capture events into a flat timeline.",
+          "numeric_sequence_prefix": 0,
+          "numeric_sequence_complete": true,
+          "numeric_sequence_exact": true,
+          "content_matches_required": true,
+          "finish_reason": "stop",
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 318,
+            "prompt_ms": 275.32,
+            "prompt_per_token_ms": 0.8657861635220125,
+            "prompt_per_second": 1155.0196135406072,
+            "predicted_n": 23,
+            "predicted_ms": 390.719,
+            "predicted_per_token_ms": 16.987782608695653,
+            "predicted_per_second": 58.865834525579764
+          }
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "batch_wall_ms": 731.9131549447775,
+      "aggregate_output_tps_end_to_end": 31.424493253896138,
+      "generated_tokens": 23,
+      "prompt_tokens": 318,
+      "samples": [
+        {
+          "request_id": "trial-3-request-1",
+          "http_status": 200,
+          "wall_ms": 730.5532116442919,
+          "cache_n": 0,
+          "prompt_n": 318,
+          "predicted_n": 23,
+          "prompt_per_second": 1152.8673042482071,
+          "predicted_per_second": 59.749881799146884,
+          "prompt_ms": 275.834,
+          "predicted_ms": 384.938,
+          "draft_n": 0,
+          "draft_n_accepted": 0,
+          "content_sha256": "343eb7a9b2eb691a0f2393ae43a7d679cb0cc58b975f86177945393549bbf657",
+          "content_length": 103,
+          "content_preview": "parse.py The code defines a `TimelineParser` class for parsing raw capture events into a flat timeline.",
+          "numeric_sequence_prefix": 0,
+          "numeric_sequence_complete": true,
+          "numeric_sequence_exact": true,
+          "content_matches_required": true,
+          "finish_reason": "stop",
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 318,
+            "prompt_ms": 275.834,
+            "prompt_per_token_ms": 0.8674025157232704,
+            "prompt_per_second": 1152.8673042482071,
+            "predicted_n": 23,
+            "predicted_ms": 384.938,
+            "predicted_per_token_ms": 16.736434782608693,
+            "predicted_per_second": 59.749881799146884
+          }
+        }
+      ]
+    }
+  ]
+}

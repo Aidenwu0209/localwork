@@ -1,0 +1,2 @@
+# Raw benchmark captures are checksummed and must remain byte-for-byte intact.
+docs/benchmark-evidence/** -whitespace

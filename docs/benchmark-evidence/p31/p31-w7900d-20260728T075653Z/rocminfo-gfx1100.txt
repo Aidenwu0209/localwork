@@ -1,0 +1,11 @@
+Agent 3                  
+*******                  
+  Name:                    gfx1100                            
+  Uuid:                    GPU-610b0d1e5093e141               
+  Marketing Name:          AMD Radeon Graphics                
+--
+  ISA Info:                
+    ISA 1                    
+      Name:                    amdgcn-amd-amdhsa--gfx1100         
+      Machine Models:          HSA_MACHINE_MODEL_LARGE            
+      Profiles:                HSA_PROFILE_BASE                   

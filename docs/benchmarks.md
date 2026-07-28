@@ -201,144 +201,180 @@ transcribed from the JSON's `aggregates` block.
 
 ## 2. ROCm ablation on W7900D (P3.1 / handbook §8)
 
-Production compute host. Every number below is a live measurement on this box
-unless a cell is marked `—` / `[VERIFY]` / `blocked`. Medians are over **n≥3**
-successful runs after one warmup (except where noted).
+The authoritative P3.1 campaign is the successful `mode=all` run
+`p31-w7900d-20260728T075653Z`. It contains the complete 18-cell brain factorial
+and three perceive cells. No number from an incomplete or failed run is used in
+the tables below. The earlier 2026-07-23 small-model pass is retained in §2.7 as
+historical context and its former blocked status is superseded by this run.
 
-### 2.1 Hardware / software environment
+### 2.1 Hardware, software, and evidence identity
 
-| Component | Value |
+| Component | Formal run value |
 |---|---|
-| GPU | AMD Radeon PRO W7900D, **48 GB** VRAM, gfx1100 |
-| Host CPU / RAM | Dual-socket EPYC, **128** logical CPUs, **503 GB** RAM |
-| ROCm | **7.2.0** (`/opt/rocm/.info/version`) |
-| AMDGPU driver | **6.14.14** (`rocm-smi --showdriverversion`) |
-| llama.cpp | commit **76f46ad29**, built `GGML_HIP=ON -DAMDGPU_TARGETS=gfx1100`, binary `/root/llama.cpp/build/bin/llama-server` |
-| Inference ports | brain `:8001` · perceive `:8002` · sentinel `:8003` · embed `:8004` · fast `:8005` · LiteLLM gateway `:4000` |
-| Co-tenant | Dolphin-v2-ROCm historically ~**10.6 GB** VRAM (PID 20527). **Absent** at this capture (process gone; VRAM matches 4-model stack only). |
-| Measured at | 2026-07-23 ~02:36–02:38 UTC via `ssh radeon-cloud` |
+| Run / time | `p31-w7900d-20260728T075653Z`; 2026-07-28 07:57–08:28 UTC |
+| GPU | AMD Radeon PRO W7900D, gfx1100; **51,522,830,336 B = 47.98 GiB** VRAM; assigned KFD GPU ID `60148` |
+| Host | `u-4695-e6d1476b`; 2× AMD EPYC 9334, **128** logical CPUs; **1007.56 GiB** RAM |
+| OS / ROCm / driver | Linux 6.8.0-79-generic; ROCm **7.2.1**; AMDGPU driver **6.14.14** |
+| llama.cpp | commit `76f46ad29d61fd8c1401e8221842934bf62a6064`; Release build with `GGML_HIP=ON`, `AMDGPU_TARGETS=gfx1100` |
+| Binary identity | `/root/llama.cpp/build/bin/llama-server`; SHA256 `90d82cee630d8340b0f1f629e4675a23b7189b49f2d9869ed6efb424cfdeb55f` |
+| Model identity | Exact SHA256-verified Q8_0/Q6_K/Q4_K_M brain weights + f16 mmproj; perceive Q8_0 + **BF16** mmproj |
+| Benchmark endpoints | Direct loopback brain `:18001`, perceive `:18002`; brain max tokens 256, perceive max tokens 96 |
+| Entry state | All DejaView roles down; GPU 0%, **28,016,640 B** VRAM used; assigned-GPU KFD inventory empty |
+| Raw evidence | [`p31-summary.md`](benchmark-evidence/p31/p31-w7900d-20260728T075653Z/p31-summary.md), [`run-manifest.txt`](benchmark-evidence/p31/p31-w7900d-20260728T075653Z/run-manifest.txt), and [`SHA256SUMS`](benchmark-evidence/p31/p31-w7900d-20260728T075653Z/SHA256SUMS) |
 
-### 2.2 Five-model VRAM allocation (measured + planned)
+![Formal P3.1 preflight rocm-smi capture](assets/p31/p31-w7900d-20260728T075653Z/rocm-smi-before.png)
 
-![rocm-smi VRAM — 4-model residency](assets/rocm-smi-vram-4model.png)
+![Formal P3.1 brain Q6_K MTP-off residency](assets/p31/p31-w7900d-20260728T075653Z/brain-Q6_K-mtp-off-resident.png)
 
-**Method**: `rocm-smi --showmeminfo vram --showuse` while
-`server-stack.sh` reported `embed+fast+sentinel+perceive` up and `brain` down.
-Screenshot rendered from that capture into `docs/assets/rocm-smi-vram-4model.png`.
+Both PNGs are deterministic renders of the corresponding checksummed text
+captures in the raw-evidence directory; values were not retyped into the images.
 
-| Configuration | VRAM used (measured / expected) | Notes |
-|---|---|---|
-| embed + fast + sentinel + perceive (4-model常驻) | **13.71 GiB** used / 47.98 GiB total (**34.27 GiB free**) | Measured 2026-07-23. Matches handbook “~12 GB” order of magnitude (+KV/runtime overhead). |
-| + brain Q6_K, perceive stopped | ~21 GB brain + ~4 GB small trio ≈ **~25 GB** (+ Dolphin 10.6 → ~36 GB) | Shared-GPU ops pattern per `DEPLOY.md`. **Not re-measured this session** — SSH dropped before brain bring-up. |
-| + brain Q8_0, perceive stopped | ~28 GB brain | Safe only when Dolphin absent. **Not measured this session.** |
-| Full 5-model + Dolphin | — | Impossible within 48 GB (handbook §2.4 / STATUS.md). |
+### 2.2 Method and acceptance gates
 
-Approximate per-role resident weights on disk (for the allocation narrative):
+- Brain is a full factorial: quant `{Q8_0,Q6_K,Q4_K_M}` × MTP `{off,on}` ×
+  client concurrency `{1,4,8}` = **18 cells**. Perceive pairs server slots and
+  client concurrency at `(1,1)`, `(2,2)`, and `(4,4)` = **3 cells**.
+- Every cell runs one excluded warm-up batch followed by **n=3 measured
+  batches**. Thus `n=3` is a batch count; a concurrency-8 row contains 24
+  successful measured requests. Prefill/decode medians are over requests,
+  aggregate output throughput is the median of the three batch-level
+  end-to-end rates, and P95 is the nearest-rank request wall latency.
+- Requests use synthetic prompts only, `temperature=0`,
+  `chat_template_kwargs.enable_thinking=false`, and `cache_prompt=false`.
+  Servers also use `--cache-ram 0 --no-cache-idle-slots`; every measured
+  response reports `timings.cache_n=0`.
+- Every server load is bound to the assigned KFD GPU through an exclusive KFD
+  delta, uses the checksummed llama binary, logs ROCm/HIP, and proves full layer
+  offload (`66/66` for brain; `43/43` for perceive). Resident and sampled peak
+  VRAM are separate measurements.
+- Brain's narrow compliance gate is the exact deterministic sequence `1..80`;
+  all cells passed 100%. This is not a general reasoning/accuracy benchmark.
+  Perceive uses one fixed image
+  (`SHA256 d7903ab467f554b2fba7489380024c603c0ad3b8785ccb08f62af07cc976caf9`)
+  and requires the visible text `parse.py`; all cells passed 100%. This is a
+  visual-path grounding gate, not general VLM accuracy.
+- MTP-on cells must emit draft tokens, MTP-off cells must emit none, and
+  on/off response hashes are compared in request order. The fail-closed
+  summarizer recomputed every reported metric from the raw batches before
+  producing the formal summary.
 
-| Role | Weights on disk | Default launch flags |
-|---|---|---|
-| brain | Q8_0 28 GB / Q6_K 21 GB / Q4_K_M ~16 GB (+ mmproj 0.9 GB) | `-ngl 99 -c 32768 -np 2` |
-| perceive | E4B Q8_0 7.5 GB + mmproj-BF16 0.9 GB | `-ngl 99 -c 16384 -np 2` |
-| sentinel | MiniCPM-V 4.6 Q4_K_M 0.5 GB + mmproj-f16 1.1 GB | `-ngl 99 -c 4096 -np 4` |
-| fast | MiniCPM5-1B Q8_0 1.1 GB | `-ngl 99 -c 8192 -np 4` |
-| embed | Qwen3-Embedding-0.6B Q8_0 0.6 GB | `-ngl 99 -c 8192 --embedding` |
+### 2.3 Resident and sampled peak VRAM
 
-### 2.3 Fast lane + embed (text / vision classification)
+Values are total assigned-GPU VRAM used, not just weight-file sizes. The entry
+and exit baseline was the same **0.026 GiB** (28,016,640 B).
 
-**Method**: direct `POST /v1/chat/completions` (or `/v1/embeddings`) against the
-role port. `temperature=0`, `chat_template_kwargs.enable_thinking=false`.
-Timings taken from llama-server response `timings.{prompt_per_second,
-predicted_per_second, prompt_ms, predicted_ms}` plus client wall clock.
-**n=3** after 1 warmup; table shows **medians**. Vision prompt uses a 640×360
-synthetic PNG (`ROCM-4042` / PR URL text).
+| Load | Resident GiB | Maximum sampled peak GiB | Peak cell |
+|---|---:|---:|---|
+| brain Q8_0, MTP off | 29.36 | 29.43 | c8 |
+| brain Q8_0, MTP on | 34.31 | 34.43 | c8 |
+| brain Q6_K, MTP off | 23.49 | 23.83 | c8 |
+| brain Q6_K, MTP on | 28.44 | 29.23 | c8 |
+| brain Q4_K_M, MTP off | 18.56 | 18.90 | c8 |
+| brain Q4_K_M, MTP on | 23.51 | 24.10 | c8 |
+| perceive Q8_0, `-np 1` / c1 | 6.38 | 6.51 | c1 |
+| perceive Q8_0, `-np 2` / c2 | 6.41 | 6.55 | c2 |
+| perceive Q8_0, `-np 4` / c4 | 6.48 | 6.62 | c4 |
 
-| Model | Quant | Scene | Server `-np` | prefill t/s (med) | decode t/s (med) | wall P50 ms | VRAM note |
-|---|---|---|---|---|---|---|---|
-| fast | Q8_0 | short text (`Reply with exactly: OK.`) | 4 | **240.2** | **366.7** | **13.4** | in 4-model residency |
-| sentinel | Q4_K_M + f16 mmproj | single-frame privacy classify (vision) | 4 | **326.7** | **221.1** | **108.1** | in 4-model residency |
-| embed | Q8_0 | single short sentence → 1024-d | n/a | — (no timings field) | — | **6.0** | in 4-model residency |
+MTP raises brain resident VRAM by **4.95 GiB** for every quant in this build.
+The formal run was exclusive on the assigned GPU and deliberately kept all
+other DejaView roles stopped, so these values must not be added to an
+unmeasured co-tenant configuration without a fresh `rocm-smi` headroom check.
 
-Notes:
+### 2.4 Brain (ThinkingCap-27B): quant × MTP × concurrency
 
-- fast decode ~**367 tok/s** is the fast-lane ceiling for novelty-gate / merge /
-  tag prompts on this GPU.
-- sentinel end-to-end classification median **~108 ms** (wall) on a small
-  synthetic frame — well under the tunnel-era ~0.5–15 s pipeline budgets.
-- 4× vs 16× image-compression ablation for sentinel: **not run** this session
-  (`[VERIFY]` still open; only one synthetic PNG used).
+| Quant | MTP | conc | prefill t/s | decode t/s/request | aggregate output t/s | request P95 ms | resident / peak VRAM GiB | draft accepted / generated | correct prefix / pass | n |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Q8_0 | off | 1 | 173.4 | 21.4 | 20.9 | 11056.9 | 29.36 / 29.37 | — | 80 / 100% | 3 |
+| Q8_0 | off | 4 | 55.7 | 15.1 | 56.8 | 16294.6 | 29.36 / 29.39 | — | 80 / 100% | 3 |
+| Q8_0 | off | 8 | 30.4 | 10.0 | 74.5 | 24858.3 | 29.36 / 29.43 | — | 80 / 100% | 3 |
+| Q8_0 | on | 1 | 117.6 | 45.1 | 42.2 | 5496.6 | 34.31 / 34.34 | 558 / 564 (98.9%) | 80 / 100% | 3 |
+| Q8_0 | on | 4 | 44.1 | 15.0 | 56.0 | 16543.5 | 34.31 / 34.40 | 2232 / 2256 (98.9%) | 80 / 100% | 3 |
+| Q8_0 | on | 8 | 22.7 | 9.9 | 72.5 | 25477.0 | 34.31 / 34.43 | 4464 / 4512 (98.9%) | 80 / 100% | 3 |
+| Q6_K | off | 1 | 147.4 | 24.7 | 23.9 | 9654.7 | 23.49 / 23.50 | — | 80 / 100% | 3 |
+| Q6_K | off | 4 | 51.1 | 13.7 | 51.3 | 18168.3 | 23.49 / 23.50 | — | 80 / 100% | 3 |
+| Q6_K | off | 8 | 25.6 | 8.0 | 59.7 | 31064.3 | 23.49 / 23.83 | — | 80 / 100% | 3 |
+| Q6_K | on | 1 | 104.0 | 44.8 | 41.6 | 5571.6 | 28.44 / 28.46 | 558 / 564 (98.9%) | 80 / 100% | 3 |
+| Q6_K | on | 4 | 41.9 | 18.0 | 64.7 | 14305.6 | 28.44 / 28.47 | 2232 / 2256 (98.9%) | 80 / 100% | 3 |
+| Q6_K | on | 8 | 23.1 | 10.7 | 77.1 | 23979.2 | 28.44 / 29.23 | 4464 / 4512 (98.9%) | 80 / 100% | 3 |
+| Q4_K_M | off | 1 | 164.6 | 28.0 | 27.2 | 8507.9 | 18.56 / 18.57 | — | 80 / 100% | 3 |
+| Q4_K_M | off | 4 | 52.3 | 13.2 | 49.8 | 18567.0 | 18.56 / 18.57 | — | 80 / 100% | 3 |
+| Q4_K_M | off | 8 | 30.8 | 7.4 | 55.2 | 33494.4 | 18.56 / 18.90 | — | 80 / 100% | 3 |
+| Q4_K_M | on | 1 | 114.3 | 42.8 | 40.1 | 5771.9 | 23.51 / 23.53 | 558 / 564 (98.9%) | 80 / 100% | 3 |
+| Q4_K_M | on | 4 | 43.1 | 19.8 | 71.5 | 12937.0 | 23.51 / 23.54 | 2232 / 2256 (98.9%) | 80 / 100% | 3 |
+| Q4_K_M | on | 8 | 23.5 | 11.5 | 83.0 | 22496.6 | 23.51 / 24.10 | 4464 / 4512 (98.9%) | 80 / 100% | 3 |
 
-### 2.4 Perceive (mid-tier) — latency and concurrency
+### 2.5 MTP ablation and production decision
 
-**Default server**: Gemma 4 E4B Q8_0 + BF16 mmproj, `-np 2`, port 8002.
-Same chat timing method as §2.3. Text prompt ≈ one-sentence summary; vision
-prompt = same synthetic PNG + “what is on this screen?”. **n=3**, medians.
+The ratio is MTP-on / MTP-off aggregate end-to-end output throughput for the
+same quant and client concurrency.
 
-| Model | Quant | Scene | Concurrency (client) | Server `-np` | prefill t/s | decode t/s | wall P50 ms | VRAM |
-|---|---|---|---|---|---|---|---|---|
-| perceive | Q8_0 | text summary, max_tokens=96 | 1 | 2 | **169.4** | **80.7** | **243** | in 4-model residency |
-| perceive | Q8_0 | single-frame read-screen, max_tokens=96 | 1 | 2 | **158.7** | **79.9** | **416** | in 4-model residency |
+| Quant | concurrency | ratio |
+|---|---:|---:|
+| Q8_0 | 1 | 2.018× |
+| Q8_0 | 4 | 0.986× |
+| Q8_0 | 8 | 0.973× |
+| Q6_K | 1 | 1.738× |
+| Q6_K | 4 | 1.261× |
+| Q6_K | 8 | 1.292× |
+| Q4_K_M | 1 | 1.474× |
+| Q4_K_M | 4 | 1.436× |
+| Q4_K_M | 8 | 1.504× |
 
-**`-np` 1/2/4 throughput sweep** (restart perceive with each `-np`, fire
-client concurrency 1/2/4, n=3 medians): **blocked mid-run** — SSH to
-`radeon-cloud:30147` began refusing connections immediately after the
-single-request perceive benches above completed. Numbers for the sweep are
-therefore absent; resume when the port is back.
+Deterministic MTP output parity is **PASS** for all nine pairs, and every
+MTP-on cell accepted **98.9%** of generated draft tokens.
 
-Partial observation at the stock `-np 2` (single-request only): decode holds
-~**80–81 tok/s** text / ~**80 tok/s** vision, wall ~**0.24 s** text /
-~**0.42 s** vision for max_tokens=96 on this short prompt set.
+Production policy from this evidence:
 
-### 2.5 Brain (27B) — quant × MTP × concurrency
+- Keep the fixed product default **Q6_K**. MTP improves Q6_K aggregate
+  throughput at c1/c4/c8 by 1.738×/1.261×/1.292×, so enable it for an exclusive
+  or positively headroom-checked brain session.
+- MTP costs 4.95 GiB resident VRAM. On a shared GPU (especially if Dolphin is
+  present), stop perceive and leave MTP off unless post-load telemetry still
+  satisfies the 6 GB reserve. Co-tenant performance was intentionally not
+  tested.
+- For Q8_0, enable MTP only for single-request work; c4 and c8 are slightly
+  slower and use more memory, so multi-request Q8_0 stays MTP-off.
+- Q4_K_M benefits at every tested concurrency and is the throughput/headroom
+  fallback. Its 1..80 compliance pass does not establish parity on broader
+  reasoning quality, so it does not replace Q6_K as the default brain.
 
-**Status: blocked this session.** Planned matrix (handbook §8 / DEPLOY.md §7):
+### 2.6 Perceive (Gemma 4 E4B): `-np` and paired concurrency
 
-| Quant | MTP (`--spec-type draft-mtp`) | Client concurrency | prefill t/s | decode t/s | P95 ms | VRAM GB | Quality sample |
-|---|---|---|---|---|---|---|---|
-| Q6_K | off | 1 | — | — | — | — | — |
-| Q6_K | on | 1 | — | — | — | — | — |
-| Q8_0 | off | 1 | — | — | — | — | — |
-| Q4_K_M | off | 1 | — | — | — | — | — |
-| Q6_K | off | 4 / 8 | — | — | — | — | — |
+Every row uses the exact Q8_0 model and BF16 mmproj, the same synthetic image,
+and client concurrency equal to server slots.
 
-**What was prepared before the SSH drop:**
+| Quant | server `-np` | client conc | prefill t/s | decode t/s/request | aggregate output t/s | request P95 ms | resident / peak VRAM GiB | visual text pass | n |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Q8_0 | 1 | 1 | 1152.9 | 59.4 | 31.2 | 739.1 | 6.38 / 6.51 | 100% | 3 |
+| Q8_0 | 2 | 2 | 581.8 | 46.8 | 40.7 | 1150.8 | 6.41 / 6.55 | 100% | 3 |
+| Q8_0 | 4 | 4 | 430.4 | 32.8 | 50.0 | 1861.6 | 6.48 / 6.62 | 100% | 3 |
 
-- Ops plan: `rocm-smi` first → `./server-stack.sh down perceive` →
-  `BRAIN_QUANT=Q6_K ./server-stack.sh up brain` (Dolphin was already gone, so
-  Q8_0 was also candidate for an exclusive pass).
-- Q4_K_M download started from
-  `hf-mirror.com/.../ThinkingCap-Qwen3.6-27B-Q4_K_M.gguf` (~16 GB); progress
-  had reached ~18% / ~2.9 GB when connectivity was lost — file may be partial
-  on the overlay disk and will need `wget -c` resume.
-- MTP flag surface on this build: `--spec-type` accepts
-  `none,draft-simple,draft-eagle3,draft-mtp,...` (**flag exists**). Whether
-  ThinkingCap-27B GGUF actually accelerates under `draft-mtp` on gfx1100 is
-  still **`[VERIFY]`** — run on/off A/B when SSH returns; if startup errors or
-  speedup &lt;1.1×, record the conclusion in `docs/verification-log.md` and
-  leave MTP off for production (handbook §11).
+`-np 4` maximizes aggregate throughput (**50.0 t/s**) but reduces per-request
+decode speed and raises request P95 to **1.86 s**. The fixed production default
+remains **`-np 2`** as the balance point; use `-np 4` only when batch throughput
+matters more than interactive latency.
 
-Historical smoke (verification-log 2026-07-20, not this ablation): brain Q6_K
-answered `17×23=391` in **14.6 s** including reasoning — useful as an order-of-
-magnitude check only; not a tok/s median.
+### 2.7 Historical 2026-07-23 small-model pass (superseded)
 
-### 2.6 Gaps deferred (still required for full §8)
+This earlier successful subset used the previous server session and is retained
+for fast/sentinel/embed context only. It is **not** mixed into the formal
+2026-07-28 brain/perceive matrix.
 
-| Item | Status |
-|---|---|
-| brain Q8 / Q6 / Q4 prefill+decode medians | **blocked** — SSH `Connection refused` on `:30147` after small-model pass |
-| brain MTP on/off | **blocked** / `[VERIFY]` flag present, no timed A/B yet |
-| brain concurrency 1/4/8 | **blocked** |
-| perceive `-np` 1/2/4 throughput curve | **blocked** mid-session (single `-np 2` latency captured) |
-| sentinel 4× vs 16× compression | not started |
-| novelty-gate Jaccard zero-LLM share / routing token cost | needs memoryd load trace, not GPU-only |
-| ocrd on EPYC (paddle) single-frame + parallel | ocrd currently Mac-side; EPYC pass separate |
-| end-to-end ingest segment timings | needs Mac+tunnel while server up |
+![Historical rocm-smi VRAM — four-model residency](assets/rocm-smi-vram-4model.png)
 
-**Resume checklist** (when `ssh radeon-cloud` works again):
+| Model | Scene | prefill t/s | decode t/s | wall P50 ms | Note |
+|---|---|---:|---:|---:|---|
+| fast Q8_0 | short text | 240.2 | 366.7 | 13.4 | n=3 median |
+| sentinel Q4_K_M + f16 mmproj | privacy classify, vision | 326.7 | 221.1 | 108.1 | n=3 median |
+| embed Q8_0 | sentence → 1024-d | — | — | 6.0 | embeddings response had no llama timing fields |
+| perceive Q8_0 | text summary | 169.4 | 80.7 | 243 | n=3 median |
+| perceive Q8_0 | single-frame read-screen | 158.7 | 79.9 | 416 | n=3 median |
 
-1. `rocm-smi --showmeminfo vram` — confirm Dolphin footprint.
-2. Finish Q4 `wget -c` if incomplete; hash into `sha256.txt`.
-3. Capture VRAM PNG for brain Q6_K residency (perceive down).
-4. Run brain quant×MTP×concurrency harness; append medians to §2.5.
-5. Restart perceive at `-np` 1/2/4 and fill §2.4 concurrency table.
-6. Flip this section’s blocked rows to measured numbers; promote TASKBOARD
-   P3.1 `blocked` → `accept`.
+That capture measured the four-model residency at **13.71 / 47.98 GiB**. Its
+subsequent SSH-blocked brain/perceive gap was a historical operational state;
+the complete checksummed run `p31-w7900d-20260728T075653Z` supersedes it for
+P3.1 acceptance.
+
+Measurements still outside P3.1 scope (sentinel 4×/16× compression,
+novelty-gate routing cost, EPYC ocrd, and full Mac+tunnel segment timings) do
+not block this completed ROCm factorial.
