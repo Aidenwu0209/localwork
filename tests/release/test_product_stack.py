@@ -47,8 +47,20 @@ class ProductStackTest(unittest.TestCase):
         lsof = bin_dir / "lsof"
         lsof.write_text(
             "#!/bin/sh\n"
-            'case "$*" in *"TCP:${DEJAVIEW_TEST_OCCUPIED_PORT:-none}"*) exit 0 ;; esac\n'
-            "exit 1\n",
+            'for arg; do case "$arg" in -iTCP:*) port="${arg#-iTCP:}";; esac; done\n'
+            'case "$port" in\n'
+            '  "${DEJAVIEW_TEST_OCCUPIED_PORT:-none}") case "$*" in *-t*) printf "%s\\n" "${DEJAVIEW_TEST_LISTENER_PID:-999999}";; esac; exit 0 ;;\n'
+            '  "${DEJAVIEW_TEST_UNRELATED_PORT:-none}") case "$*" in *-t*) printf "%s\\n" "$DEJAVIEW_TEST_LISTENER_PID";; esac; exit 0 ;;\n'
+            '  8003) file="$DEJAVIEW_RUNTIME_DIR/privacy/dejaview-sentinel.pid" ;;\n'
+            '  4000) file="$DEJAVIEW_RUNTIME_DIR/privacy/dejaview-gateway.pid" ;;\n'
+            '  8006) file="$DEJAVIEW_RUNTIME_DIR/ocrd.pid" ;;\n'
+            '  8090) file="$DEJAVIEW_RUNTIME_DIR/memoryd.pid" ;;\n'
+            '  8101) file="$DEJAVIEW_RUNTIME_DIR/agentd.pid" ;;\n'
+            '  *) exit 1 ;;\n'
+            'esac\n'
+            '[ -f "$file" ] || exit 1\n'
+            'case "$*" in *-t*) cut -d "|" -f 1 "$file";; esac\n'
+            "exit 0\n",
             encoding="utf-8",
         )
         lsof.chmod(0o755)
@@ -230,7 +242,7 @@ class ProductStackTest(unittest.TestCase):
             "#!/bin/sh\n"
             'case "$*" in\n'
             '  *"stat="*) printf "S\\n" ;;\n'
-            '  *"command="*) printf "uv run --project %s/services/ocrd --project %s/services/memoryd --project %s/services/agentd python -m ocrd python -m memoryd python -m agentd\\n" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" ;;\n'
+            '  *"command="*) printf "uv run --project %s/services/ocrd --project %s/services/memoryd --project %s/services/agentd %s/deploy/mac/llama-launch/sentinel.sh %s/deploy/mac/llama-launch/gateway.sh python -m ocrd python -m memoryd python -m agentd\\n" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" ;;\n'
             '  *"lstart="*) printf "Mon Aug 3 00:00:00 2026\\n" ;;\n'
             "esac\n",
             encoding="utf-8",
@@ -541,6 +553,9 @@ class ProductStackTest(unittest.TestCase):
                 status = subprocess.run([SCRIPT, "status"], env=env, capture_output=True, text=True)
                 self.assertNotEqual(status.returncode, 0, status.stdout + status.stderr)
                 self.assertIn("NOT_READY", status.stdout)
+                down = subprocess.run([SCRIPT, "down"], env=env, capture_output=True, text=True)
+                self.assertEqual(down.returncode, 0, down.stdout + down.stderr)
+                self.assertFalse(list((tmp / "run").glob("*.pid")))
             finally:
                 path.write_text(original, encoding="utf-8")
                 subprocess.run([SCRIPT, "down"], env=env, capture_output=True, text=True)
@@ -574,6 +589,78 @@ class ProductStackTest(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertFalse((tmp / "order.log").exists())
             self.assertFalse((tmp / "uv-started").exists())
+
+    def test_status_rejects_partial_compose_json_state(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            env = self._environment(tmp)
+            up = subprocess.run([SCRIPT, "up"], env=env, capture_output=True, text=True)
+            self.assertEqual(up.returncode, 0, up.stdout + up.stderr)
+            docker = tmp / "bin" / "docker"
+            docker.write_text(
+                "#!/bin/sh\n"
+                'case "$*" in\n'
+                '  *" ps -q") printf "one-id\\n" ;;\n'
+                '  *" ps --format json") printf "{\\\"Service\\\":\\\"database\\\",\\\"State\\\":\\\"running\\\",\\\"Health\\\":\\\"healthy\\\"}\\n" ;;\n'
+                "esac\n",
+                encoding="utf-8",
+            )
+            docker.chmod(0o755)
+            try:
+                status = subprocess.run([SCRIPT, "status"], env=env | {"DEJAVIEW_SKIP_INFRA": "0"}, capture_output=True, text=True)
+                self.assertNotEqual(status.returncode, 0, status.stdout + status.stderr)
+                self.assertIn("NOT_READY", status.stdout)
+            finally:
+                subprocess.run([SCRIPT, "down"], env=env, capture_output=True, text=True)
+
+    def test_status_rejects_unrelated_app_listener(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            env = self._environment(tmp)
+            up = subprocess.run([SCRIPT, "up"], env=env, capture_output=True, text=True)
+            self.assertEqual(up.returncode, 0, up.stdout + up.stderr)
+            try:
+                status = subprocess.run(
+                    [SCRIPT, "status"],
+                    env=env | {"DEJAVIEW_TEST_UNRELATED_PORT": "8006", "DEJAVIEW_TEST_LISTENER_PID": str(os.getpid())},
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertNotEqual(status.returncode, 0, status.stdout + status.stderr)
+                self.assertIn("NOT_READY", status.stdout)
+            finally:
+                subprocess.run([SCRIPT, "down"], env=env, capture_output=True, text=True)
+
+    def test_production_root_rejects_untracked_importable_service_source(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            repo = tmp / "repo"
+            script = repo / "deploy" / "mac" / "product-stack.sh"
+            script.parent.mkdir(parents=True)
+            shutil.copy2(SCRIPT, script)
+            for service in ("ocrd", "memoryd", "agentd"):
+                source = repo / "services" / service / "src" / service
+                source.mkdir(parents=True)
+                (source / "__init__.py").write_text("", encoding="utf-8")
+            subprocess.run(["git", "init", "-q", repo], check=True)
+            subprocess.run(["git", "-C", repo, "add", "."], check=True)
+            subprocess.run(
+                ["git", "-C", repo, "-c", "user.name=test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"],
+                check=True,
+            )
+            env = self._environment(tmp)
+            setup = tmp / "setup-ok.sh"
+            setup.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            setup.chmod(0o755)
+            env |= {"DEJAVIEW_SETUP_HONCHO_SCRIPT": str(setup)}
+            up = subprocess.run([script, "up"], env=env, capture_output=True, text=True)
+            self.assertEqual(up.returncode, 0, up.stdout + up.stderr)
+            (repo / "services" / "ocrd" / "src" / "ocrd" / "injected.py").write_text("value = 1\n", encoding="utf-8")
+            status = subprocess.run([script, "status"], env=env, capture_output=True, text=True)
+            self.assertNotEqual(status.returncode, 0, status.stdout + status.stderr)
+            self.assertIn("NOT_READY", status.stdout)
+            down = subprocess.run([script, "down"], env=env, capture_output=True, text=True)
+            self.assertEqual(down.returncode, 0, down.stdout + down.stderr)
 
 
 if __name__ == "__main__":

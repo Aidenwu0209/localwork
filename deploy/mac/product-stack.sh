@@ -33,6 +33,23 @@ privacy_marker() { printf '%s/privacy.product-owned\n' "$RUNTIME_DIR"; }
 service_tree_revision() {
   local service="$1" source_root="${DEJAVIEW_SERVICE_SOURCE_ROOT:-$ROOT}"
   if [[ "$source_root" == "$ROOT" ]]; then
+    if ! git -C "$ROOT" ls-files --others --exclude-standard -- "services/$service" |
+      python3 -c '
+import os
+import sys
+
+allowed_suffixes = {".py", ".pyi", ".toml", ".yaml", ".yml", ".lock"}
+ignored_parts = {"__pycache__", ".venv", "logs", "log"}
+for line in sys.stdin:
+    path = line.strip()
+    parts = set(path.split("/"))
+    if parts & ignored_parts:
+        continue
+    if os.path.splitext(path)[1] in allowed_suffixes:
+        raise SystemExit(1)
+'; then
+      return 1
+    fi
     git -C "$ROOT" ls-files -z -- "services/$service" |
       python3 -c '
 import hashlib
@@ -101,14 +118,12 @@ raw_pid() {
   printf '%s\n' "$value"
 }
 
-read_owned_record() {
+read_process_record() {
   local pf="$1" expected="$2" pid fingerprint service token revision current command current_revision
   [[ -f "$pf" ]] || return 1
   IFS='|' read -r pid fingerprint service token revision < "$pf" || return 1
   [[ "$pid" =~ ^[0-9]+$ ]] || return 1
   [[ "$service" == "$expected" && -n "$fingerprint" && -n "$token" && -n "$revision" ]] || return 1
-  current_revision="$(service_tree_revision "$service")"
-  [[ -n "$current_revision" && "$current_revision" == "$revision" ]] || return 1
   kill -0 "$pid" 2>/dev/null || return 1
   process_is_zombie "$pid" && return 1
   current="$(process_fingerprint "$pid")"
@@ -117,6 +132,14 @@ read_owned_record() {
   [[ "$command" == *"$(project_path "$service")"* && "$command" == *"python -m $service"* ]] || return 1
   OWNED_PID="$pid"
   OWNED_TOKEN="$token"
+}
+
+read_owned_record() {
+  local pf="$1" expected="$2" revision current_revision
+  read_process_record "$pf" "$expected" || return 1
+  IFS='|' read -r _ _ _ _ revision < "$pf" || return 1
+  current_revision="$(service_tree_revision "$expected")"
+  [[ -n "$current_revision" && "$current_revision" == "$revision" ]]
 }
 
 write_pid_record() {
@@ -139,6 +162,10 @@ service_state() {
   local service="$1" pf
   pf="$(pidfile "$service")"
   read_owned_record "$pf" "$service"
+}
+
+service_stop_authorized() {
+  read_process_record "$(pidfile "$1")" "$1"
 }
 
 health_contract() {
@@ -204,7 +231,7 @@ raise SystemExit(0 if valid else 1)
 privacy_pidfile() { printf '%s/dejaview-%s.pid\n' "$(privacy_runtime_dir)" "$1"; }
 
 read_privacy_record() {
-  local expected="$1" pf pid fingerprint kind current
+  local expected="$1" pf pid fingerprint kind current command launcher
   pf="$(privacy_pidfile "$expected")"
   [[ -f "$pf" ]] || return 1
   IFS='|' read -r pid fingerprint kind < "$pf" || return 1
@@ -213,8 +240,19 @@ read_privacy_record() {
   process_is_zombie "$pid" && return 1
   current="$(process_fingerprint "$pid")"
   [[ -n "$current" && "$current" == "$fingerprint" ]] || return 1
+  command="$(process_command "$pid")"
+  launcher="$ROOT/deploy/mac/llama-launch/$expected.sh"
+  [[ "$command" == *"$launcher"* ]] || return 1
   PRIVACY_PID="$pid"
   PRIVACY_FINGERPRINT="$fingerprint"
+}
+
+privacy_listener_owned() {
+  local role="$1" port="$2" listener owner
+  read_privacy_record "$role" || return 1
+  owner="$PRIVACY_PID"
+  listener="$(listener_pid "$port")"
+  [[ -n "$listener" ]] && pid_is_descendant_or_self "$listener" "$owner"
 }
 
 privacy_stack_owned() {
@@ -245,6 +283,32 @@ port_is_listening() {
   lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1
 }
 
+listener_pid() {
+  lsof -nP -t -iTCP:"$1" -sTCP:LISTEN 2>/dev/null | head -n 1
+}
+
+pid_is_descendant_or_self() {
+  local candidate="$1" owner="$2" parent hops=0
+  [[ "$candidate" == "$owner" ]] && return 0
+  while [[ "$candidate" =~ ^[0-9]+$ && "$candidate" != "1" && "$hops" -lt 32 ]]; do
+    parent="$(ps -p "$candidate" -o ppid= 2>/dev/null | awk '{$1=$1; print}')"
+    [[ -n "$parent" ]] || return 1
+    [[ "$parent" == "$owner" ]] && return 0
+    [[ "$parent" == "$candidate" ]] && return 1
+    candidate="$parent"
+    hops=$((hops + 1))
+  done
+  return 1
+}
+
+service_listener_owned() {
+  local service="$1" port="$2" listener owner
+  service_stop_authorized "$service" || return 1
+  owner="$OWNED_PID"
+  listener="$(listener_pid "$port")"
+  [[ -n "$listener" ]] && pid_is_descendant_or_self "$listener" "$owner"
+}
+
 preflight_service_ports() {
   local service port
   if ! command -v lsof >/dev/null 2>&1; then
@@ -258,7 +322,7 @@ preflight_service_ports() {
         echo "error: port $port is occupied by an unowned privacy process; refusing to adopt or signal it" >&2
         return 1
       fi
-    elif ! service_state "$service" && port_is_listening "$port"; then
+    elif ! service_stop_authorized "$service" && port_is_listening "$port"; then
       echo "error: port $port is occupied by an unowned process; refusing to adopt or signal it" >&2
       return 1
     fi
@@ -291,7 +355,7 @@ start_privacy_stack() {
     return 1
   fi
   PRIVACY_STARTED=1
-  if ! write_privacy_marker || ! gateway_has_owned_sentinel || ! privacy_stack_owned; then
+  if ! write_privacy_marker || ! gateway_has_owned_sentinel || ! privacy_stack_owned || ! privacy_listener_owned sentinel 8003 || ! privacy_listener_owned gateway 4000; then
     echo "error: owned privacy stack did not expose an owned sentinel role" >&2
     rollback_privacy_started || true
     return 1
@@ -327,7 +391,7 @@ stop_service() {
   local service="$1" pf pid deadline kill_deadline
   pf="$(pidfile "$service")"
   [[ -f "$pf" ]] || return 0
-  if ! read_owned_record "$pf" "$service"; then
+  if ! service_stop_authorized "$service"; then
     pid="$(raw_pid "$pf" 2>/dev/null || true)"
     if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null && ! process_is_zombie "$pid"; then
       echo "error: refusing to stop unowned PID $pid from $pf" >&2
@@ -410,6 +474,59 @@ compose_state() {
     return 1
   fi
   if [[ -n "$output" ]]; then COMPOSE_ACTIVE=1; else COMPOSE_ACTIVE=0; fi
+}
+
+compose_required_services() {
+  python3 - "$1" <<'PY'
+import re
+import sys
+
+lines = open(sys.argv[1], encoding="utf-8").read().splitlines()
+inside = False
+services = []
+current = None
+for line in lines:
+    if line == "services:":
+        inside = True
+        continue
+    if inside and line and not line.startswith((" ", "#")):
+        break
+    match = re.match(r"^  ([A-Za-z0-9_-]+):\s*$", line)
+    if inside and match:
+        current = [match.group(1), False]
+        services.append(current)
+    elif current and re.match(r"^    healthcheck:\s*$", line):
+        current[1] = True
+for name, health in services:
+    print(f"{name}\t{int(health)}")
+PY
+}
+
+compose_stack_ready() {
+  local compose_file="$1" label="$2" output
+  if ! output="$(docker compose -f "$compose_file" ps --format json 2>/dev/null)"; then
+    echo "error: could not inspect $label compose state" >&2
+    return 1
+  fi
+  COMPOSE_REQUIRED="$(compose_required_services "$compose_file")" || return 1
+  printf '%s\n' "$output" | python3 -c '
+import json
+import sys
+
+required = [line.split("\t") for line in sys.argv[1].splitlines() if line]
+raw = sys.stdin.read().strip()
+try:
+    rows = json.loads(raw) if raw.startswith("[") else [json.loads(line) for line in raw.splitlines() if line]
+except ValueError:
+    raise SystemExit(1)
+by_service = {row.get("Service"): row for row in rows if isinstance(row, dict)}
+for name, health_required in required:
+    row = by_service.get(name)
+    if not row or row.get("State") != "running":
+        raise SystemExit(1)
+    if health_required == "1" and row.get("Health") != "healthy":
+        raise SystemExit(1)
+' "$COMPOSE_REQUIRED"
 }
 
 rollback_infra() {
@@ -511,7 +628,7 @@ cmd_status() {
   for pair in "ocrd:8006" "memoryd:8090" "agentd:8101"; do
     service="${pair%%:*}"; port="${pair#*:}"
     if service_state "$service"; then
-      if health_contract "$service" "http://127.0.0.1:${port}/health"; then
+      if health_contract "$service" "http://127.0.0.1:${port}/health" && service_listener_owned "$service" "$port"; then
         echo "$service: managed and ready"
       else
         echo "$service: managed but not ready"
@@ -524,7 +641,7 @@ cmd_status() {
   done
   if [[ "$SKIP_PRIVACY_STACK" != "1" ]]; then
     export SENTINEL_GATEWAY_URL="${SENTINEL_GATEWAY_URL:-${LOCAL_GATEWAY_URL:-http://127.0.0.1:4000/v1}}"
-    if gateway_has_owned_sentinel && privacy_stack_owned; then
+    if gateway_has_owned_sentinel && privacy_stack_owned && privacy_listener_owned sentinel 8003 && privacy_listener_owned gateway 4000; then
       echo "privacy gateway: owned sentinel role ready"
     else
       echo "privacy gateway: missing or invalid sentinel role"
@@ -532,17 +649,13 @@ cmd_status() {
     fi
   fi
   if [[ "$SKIP_INFRA" != "1" ]]; then
-    COMPOSE_COMMAND=("${DATA_COMPOSE[@]}")
-    COMPOSE_LABEL=data
-    if ! compose_state || [[ "$COMPOSE_ACTIVE" -ne 1 ]]; then
+    if ! compose_stack_ready "$ROOT/deploy/mac/compose.data.yml" data; then
       echo "data compose: missing or unhealthy"
       failures=$((failures + 1))
     else
       echo "data compose: ready"
     fi
-    COMPOSE_COMMAND=("${HONCHO_COMPOSE[@]}")
-    COMPOSE_LABEL=Honcho
-    if ! compose_state || [[ "$COMPOSE_ACTIVE" -ne 1 ]]; then
+    if ! compose_stack_ready "$ROOT/deploy/mac/compose.honcho.yml" Honcho; then
       echo "Honcho compose: missing or unhealthy"
       failures=$((failures + 1))
     else
