@@ -40,7 +40,12 @@ CREATE TABLE sentinel_audit (
   device_id  text,
   category   text NOT NULL,                    -- password_prompt|banking_finance|private_chat|id_document|adult|normal
   decision   text NOT NULL,                    -- allow|block
-  confidence real
+  confidence real,
+  reason     text NOT NULL,
+  CONSTRAINT p313_sentinel_audit_reason_check CHECK (reason IN (
+    'classified_normal', 'sensitive_category', 'malformed_output',
+    'unknown_category', 'low_confidence', 'sentinel_unavailable', 'test_stub'
+  ))
 );
 
 CREATE TABLE kb_chunks (

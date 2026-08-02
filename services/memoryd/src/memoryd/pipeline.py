@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import io
 from dataclasses import dataclass
-from typing import Literal
 from PIL import Image
 
 from memoryd.models import (
@@ -32,12 +31,6 @@ from memoryd.stages import (
     SentinelStage,
 )
 from memoryd.storage import TimelineStore
-
-
-class BlockedIngestAck(IngestAck):
-    """Blocked acknowledgements expose their terminal processing state."""
-
-    processing_state: Literal["blocked"] = "blocked"
 
 
 @dataclass
@@ -67,7 +60,8 @@ class Pipeline:
             ts=meta.ts, device_id=meta.device_id, verdict=verdict
         )
         if verdict.decision == "block":
-            return BlockedIngestAck(
+            return IngestAck(
+                processing_state="blocked",
                 accepted=False,
                 sentinel=verdict,
                 note="blocked by privacy sentinel; image discarded, not OCR'd, not stored",
@@ -93,6 +87,7 @@ class Pipeline:
         if novelty.merge_into_previous and prev_id is not None:
             self.store.merge_into_previous(event_id=prev_id, ts=meta.ts)
             return IngestAck(
+                processing_state="merged",
                 accepted=True,
                 merged_into=prev_id,
                 sentinel=verdict,
@@ -145,6 +140,7 @@ class Pipeline:
         # Step 6 — Honcho throttled flush is stubbed in M3.2 (no-op); M2.6 wires
         # the real deriver message via the gateway.
         return IngestAck(
+            processing_state="stored",
             accepted=True, event_id=event_id, sentinel=verdict,
             note=f"new event {event_id} ({event.activity})",
         )

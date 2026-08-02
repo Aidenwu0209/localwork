@@ -49,9 +49,17 @@ class TimelineStore:
         """Record a sentinel decision. Called for BOTH allow and block."""
         with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
             cur.execute(
-                """INSERT INTO sentinel_audit (ts, device_id, category, decision, confidence)
-                   VALUES (%s, %s, %s, %s, %s) RETURNING id""",
-                (ts, device_id, verdict.category, verdict.decision, verdict.confidence),
+                """INSERT INTO sentinel_audit
+                   (ts, device_id, category, decision, confidence, reason)
+                   VALUES (%s, %s, %s, %s, %s, %s) RETURNING id""",
+                (
+                    ts,
+                    device_id,
+                    verdict.category,
+                    verdict.decision,
+                    verdict.confidence,
+                    verdict.reason,
+                ),
             )
             return int(cur.fetchone()[0])
 

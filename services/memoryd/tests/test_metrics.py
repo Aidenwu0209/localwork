@@ -28,21 +28,16 @@ from memoryd.storage import TimelineStore
 class MemoryMetricsTest(unittest.TestCase):
     def test_frame_outcomes_and_timeline_counter(self) -> None:
         metrics = MemoryMetrics()
-        metrics.observe_frame(IngestAck(accepted=True, event_id=42))
-        metrics.observe_frame(IngestAck(accepted=True, merged_into=42))
-        metrics.observe_frame(IngestAck(accepted=False))
+        metrics.observe_frame(IngestAck(accepted=True, event_id=42, processing_state="stored"))
+        metrics.observe_frame(IngestAck(accepted=True, merged_into=42, processing_state="merged"))
+        metrics.observe_frame(IngestAck(accepted=False, processing_state="blocked"))
 
         rendered = metrics.render_prometheus()
-        self.assertIn('dejaview_memory_ingest_total{outcome="created"} 1', rendered)
+        self.assertIn('dejaview_memory_ingest_total{outcome="stored"} 1', rendered)
         self.assertIn('dejaview_memory_ingest_total{outcome="merged"} 1', rendered)
         self.assertIn('dejaview_memory_ingest_total{outcome="blocked"} 1', rendered)
+        self.assertNotIn('outcome="created"', rendered)
         self.assertIn("dejaview_timeline_events_total 1", rendered)
-
-    def test_unclassified_accept_is_not_counted(self) -> None:
-        metrics = MemoryMetrics()
-        metrics.observe_frame(IngestAck(accepted=True))
-        rendered = metrics.render_prometheus()
-        self.assertIn("dejaview_timeline_events_total 0", rendered)
 
     def test_metrics_route_is_prometheus_text(self) -> None:
         client = TestClient(create_app(pipeline=object()))

@@ -21,6 +21,7 @@ SentinelCategory = Literal[
     "normal",
 ]
 SentinelDecision = Literal["allow", "block"]
+ProcessingState = Literal["stored", "merged", "blocked"]
 SentinelReason = Literal[
     "classified_normal",
     "sensitive_category",
@@ -127,6 +128,7 @@ class DocMeta(BaseModel):
 class IngestAck(BaseModel):
     """202 Accepted reply — the frame passed the gateway and is queued."""
 
+    processing_state: ProcessingState
     accepted: bool = True
     event_id: int | None = None  # set when a new timeline_events row was created
     merged_into: int | None = None  # set when novelty gate merged into previous

@@ -187,8 +187,14 @@ def create_app(
             raise HTTPException(
                 status_code=422, detail=f"invalid meta JSON: {exc}"
             ) from exc
-        await file.read()  # drain; not persisted in M3.2
-        return IngestAck(accepted=True, note="audio stubbed: accepted, not transcribed")
+        raise HTTPException(
+            status_code=501,
+            detail={
+                "code": "unsupported_media",
+                "stored": False,
+                "supported": ["frame"],
+            },
+        )
 
     @app.post("/v1/ingest/doc", response_model=IngestAck, status_code=202)
     async def ingest_doc(
@@ -202,8 +208,14 @@ def create_app(
             raise HTTPException(
                 status_code=422, detail=f"invalid meta JSON: {exc}"
             ) from exc
-        await file.read()
-        return IngestAck(accepted=True, note="doc stubbed: accepted, not chunked")
+        raise HTTPException(
+            status_code=501,
+            detail={
+                "code": "unsupported_media",
+                "stored": False,
+                "supported": ["frame"],
+            },
+        )
 
     @app.post("/v1/search")
     async def search(body: dict) -> dict:

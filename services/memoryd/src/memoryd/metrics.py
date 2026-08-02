@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class MemoryMetrics:
     """Track frame-ingest outcomes without adding a Prometheus dependency."""
 
-    _OUTCOMES = ("created", "merged", "blocked")
+    _OUTCOMES = ("stored", "merged", "blocked")
 
     def __init__(self) -> None:
         self._lock = Lock()
@@ -20,18 +20,11 @@ class MemoryMetrics:
         self._timeline_events = 0
 
     def observe_frame(self, ack: IngestAck) -> None:
-        if ack.event_id is not None:
-            outcome = "created"
-        elif ack.merged_into is not None:
-            outcome = "merged"
-        elif not ack.accepted:
-            outcome = "blocked"
-        else:
-            return
+        outcome = ack.processing_state
 
         with self._lock:
             self._ingest_counts[outcome] += 1
-            if outcome == "created":
+            if outcome == "stored":
                 self._timeline_events += 1
 
     def render_prometheus(self) -> str:
