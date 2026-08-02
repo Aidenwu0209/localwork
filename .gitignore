@@ -31,3 +31,6 @@ node_modules/
 !docs/benchmark-evidence/**/*.log
 .idea/
 .vscode/
+
+# local isolated implementation worktrees
+.worktrees/
