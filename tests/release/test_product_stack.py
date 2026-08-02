@@ -236,12 +236,20 @@ class ProductStackTest(unittest.TestCase):
         env = self._environment(tmp)
         privacy_ready = tmp / "privacy-ready"
         dev_stack = tmp / "dev-stack.sh"
+        sentinel_owner = subprocess.Popen(["sleep", "30"])
+        gateway_owner = subprocess.Popen(["sleep", "30"])
+        def cleanup_owner(process: subprocess.Popen[str]) -> None:
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)
+        self.addCleanup(cleanup_owner, sentinel_owner)
+        self.addCleanup(cleanup_owner, gateway_owner)
         ps = tmp / "bin" / "ps"
         ps.write_text(
             "#!/bin/sh\n"
             'case "$*" in\n'
             '  *"stat="*) printf "S\\n" ;;\n'
-            '  *"command="*) printf "uv run --project %s/services/ocrd --project %s/services/memoryd --project %s/services/agentd llama-server -m fixture --alias sentinel --host 127.0.0.1 --port 8003 uvx --from litellm[proxy]==1.93.0 litellm --config %s/deploy/mac/server/litellm.yaml --host 127.0.0.1 --port 4000 python -m ocrd python -m memoryd python -m agentd\\n" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" ;;\n'
+            '  *"command="*) case "$*" in *"$DEJAVIEW_TEST_SENTINEL_PID"*) printf "llama-server -m fixture --alias sentinel --host 127.0.0.1 --port 8003\\n" ;; *"$DEJAVIEW_TEST_GATEWAY_PID"*) printf "python -m litellm --config %s/deploy/mac/server/litellm.yaml --host 127.0.0.1 --port 4000\\n" "$DEJAVIEW_TEST_ROOT" ;; *) printf "uv run --project %s/services/ocrd --project %s/services/memoryd --project %s/services/agentd python -m ocrd python -m memoryd python -m agentd\\n" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" ;; esac ;;\n'
             '  *"lstart="*) printf "Mon Aug 3 00:00:00 2026\\n" ;;\n'
             "esac\n",
             encoding="utf-8",
@@ -252,8 +260,8 @@ class ProductStackTest(unittest.TestCase):
             'printf "privacy %s\\n" "$*" >> "$DEJAVIEW_TEST_ORDER_LOG"\n'
             'if [ "$1" = up ]; then\n'
             '  mkdir -p "$DEJAVIEW_RUNTIME_DIR"\n'
-            '  printf "%s|ps:Mon Aug 3 00:00:00 2026|sentinel\\n" "$DEJAVIEW_TEST_OWNER_PID" > "$DEJAVIEW_RUNTIME_DIR/dejaview-sentinel.pid"\n'
-            '  printf "%s|ps:Mon Aug 3 00:00:00 2026|gateway\\n" "$DEJAVIEW_TEST_OWNER_PID" > "$DEJAVIEW_RUNTIME_DIR/dejaview-gateway.pid"\n'
+            '  printf "%s|ps:Mon Aug 3 00:00:00 2026|sentinel\\n" "$DEJAVIEW_TEST_SENTINEL_PID" > "$DEJAVIEW_RUNTIME_DIR/dejaview-sentinel.pid"\n'
+            '  printf "%s|ps:Mon Aug 3 00:00:00 2026|gateway\\n" "$DEJAVIEW_TEST_GATEWAY_PID" > "$DEJAVIEW_RUNTIME_DIR/dejaview-gateway.pid"\n'
             '  touch "$DEJAVIEW_TEST_PRIVACY_READY"\n'
             'elif [ "$1" = down ]; then\n'
             '  [ "${DEJAVIEW_TEST_PRIVACY_DOWN_FAIL:-0}" = 1 ] && exit 9\n'
@@ -267,7 +275,8 @@ class ProductStackTest(unittest.TestCase):
             "DEJAVIEW_SKIP_PRIVACY_STACK": "0",
             "DEJAVIEW_DEV_STACK_SCRIPT": str(dev_stack),
             "DEJAVIEW_TEST_ROOT": str(ROOT),
-            "DEJAVIEW_TEST_OWNER_PID": str(os.getpid()),
+            "DEJAVIEW_TEST_SENTINEL_PID": str(sentinel_owner.pid),
+            "DEJAVIEW_TEST_GATEWAY_PID": str(gateway_owner.pid),
             "DEJAVIEW_TEST_REQUIRE_PRIVACY_START": "1",
             "DEJAVIEW_TEST_PRIVACY_READY": str(privacy_ready),
         }
