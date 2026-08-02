@@ -546,8 +546,8 @@
       "depends": [
         "P3.13"
       ],
-      "status": false,
-      "note": ""
+      "status": "doing",
+      "note": "Implementation plan: docs/superpowers/plans/2026-08-03-p314-agent-fallback.md"
     },
     {
       "id": "P3.15",
