@@ -1,8 +1,10 @@
 # DejaView 执行手册(交付给执行 Agent 的完整规格)
 
 > 项目代号 **DejaView**(déjà vu + view:你的机器替你"似曾相识")。中文叙事名:**全本地数字记忆体**。
-> 本手册是唯一事实来源(single source of truth)。执行 Agent 领取任务前必须通读第 0–4 节 + **第 12 节(交接)**,再跳到自己任务所在小节。
-> 版本:v1.4 · 2026-07-28 · 维护人:Wu
+> 本手册保存产品决策、当前规格与历史执行记录。任务状态唯一以
+> `TASKBOARD.json` 为准;执行 Agent 领取任务前必须先读 **第 12 节(交接)**,
+> 再按需读第 0–4 / 8 / 9 / 10 节。
+> 版本:v1.5 · 2026-08-03 · 维护人:Wu
 > 仓库:`github.com/Aidenwu0209/localwork`(private) · 本地:`/Users/wu/Projects/Aidenwu0209/localwork/`
 
 ---
@@ -27,14 +29,15 @@
 
 - **赛事**:AMD AI DevMaster Hackathon(https://luma.com/amd-4dhi),线上提交。
 - **赛道**:Track 2 · Agentic AI。
-- **评分**:功能完整性与应用价值 **60 分**(含场景创新与用户体验);AMD Radeon GPU 与 ROCm 优化 **40 分**(明确包含本地推理执行与推理速度优化)。
-- **截止**:2026-08-06 23:59(UTC+8)。今天 7/20,剩 17 天。
+- **基础评分**:功能完整性与应用价值 **60 分**(含场景创新与用户体验);AMD Radeon GPU 与 ROCm 优化 **40 分**(明确包含本地推理执行与推理速度优化)。
+- **可选加分**:官方规则另有云模型优化奖励(最高 +20);当前全本地竞赛路径**未申报**,不得把基础 100 分写成已覆盖 120 分。
+- **截止**:2026-08-06 23:59(UTC+8)。当前已进入最后提交窗口。
 - **合规前置**:所有队员必须注册 AMD AI Developer Program(中国大陆走 AMD Developer Program China),否则获奖不发钱。提交前通读官方 Rules & Conditions。
 - 团队最多 3 人。联系方式 ai_dev_contests@amd.com,Discord https://discord.gg/zt9caur5B3。
 
 ### 1.2 一句话定位
 
-> 持续感知你的屏幕与语音,把数字生活变成可问答、带证据的记忆;用 Honcho 心理建模理解"你是谁";隐私哨兵把关"什么不该被记住"。AI 推理 100% 在 Radeon PRO W7900D(ROCm)上执行,数据永远存在用户自己的设备上。
+> 持续感知屏幕,把数字生活变成可问答、带证据的记忆;用 Honcho 心理建模理解"你是谁";隐私哨兵把关"什么不该被记住"。用户记忆留在数据主权设备;放行后的主要 Agentic 推理在 Radeon PRO W7900D(ROCm)执行,并有已验证的 Local Metal 故障降级。当前产品只支持屏幕帧写入,音频和文档入口明确返回 `501 unsupported_media`。
 
 ### 1.3 获奖叙事(答辩主线,不要改)
 
@@ -43,12 +46,12 @@
 ### 1.4 先例与差异化(答辩要主动提)
 
 - 同品类先例:Microsoft Recall(云端信任危机)、Rewind.ai(已转向)、OpenRecall(开源,AGPL,截屏+OCR+搜索,无理解层)。
-- 我们的差异:① Honcho reasoning-first 用户画像(dialectic 问答);② 入库前隐私哨兵;③ Agent 任务闭环(tool calling、日报多 Agent 流);④ 五模型分层常驻 48 GB(深/中/快车道三层推理金字塔)+ ROCm 优化报告;⑤ 存储/计算分离的数据主权架构。
+- 我们的差异:① Honcho reasoning-first 用户画像(dialectic 问答);② 入库前隐私哨兵;③ Agent 任务闭环(tool calling、日报多 Agent 流);④ 五个稳定逻辑模型角色与显存感知编排(深/中/快车道三层推理金字塔)+ ROCm 优化报告;⑤ 存储/计算分离的数据主权架构。
 
 ### 1.5 四根柱子(任何情况下不砍)
 
 隐私哨兵 · 带截图证据的问答 · 日报多 Agent 流 · ROCm 优化报告。
-**砍需求顺序**(时间不够从前往后砍):MCP 记忆接口 → 主动建议 → 实时音频(退化为录音文件转写)。
+音频、文档、MCP、账户同步与安装器不在当前发布范围;不得在评委材料中写成已实现。
 
 ---
 
@@ -58,30 +61,33 @@
 
 ```mermaid
 flowchart LR
-  subgraph MacWin["传感器端 (Mac / Windows)"]
-    CC[capture-client<br/>截屏+窗口元数据+音频<br/>即发即删不落盘]
+  subgraph MacWin["数据主权端 (Mac / Windows)"]
+    CC[capture-client<br/>截屏+窗口元数据<br/>即发即删不落盘]
+    SG[本地 Sentinel gateway]
+    S[Sentinel<br/>MiniCPM-V 4.6]
+    O[ocrd<br/>PP-OCRv6 / rapidocr]
   end
   subgraph Mac["数据主权端 (Mac)"]
     MD[memoryd<br/>FastAPI 编排]
     TL[(Postgres+pgvector<br/>timeline/kb/audit)]
     HO[Honcho fork<br/>API+deriver+Redis]
-    FS[/DATA_ROOT 文件区<br/>截图·录音·文档/]
+    FS[/DATA_ROOT 文件区<br/>仅放行截图/]
     AG[agentd<br/>主脑 Agent 服务]
-    UI[Open WebUI / 自建前端]
+    UI[默认日常产品页]
   end
   subgraph SRV["算力端 (AMD 服务器 · 无状态)"]
     GW[LiteLLM 网关 :4000]
     B[brain :8001<br/>ThinkingCap-27B]
     P[perceive :8002<br/>Gemma 4 E4B]
-    S[sentinel :8003<br/>MiniCPM-V 4.6]
     F[fast :8005<br/>MiniCPM5-1B]
-    E[embed :8004<br/>bge-m3]
-    O[ocrd :8006<br/>PP-OCRv6 · EPYC CPU]
+    E[embed :8004<br/>Qwen3-Embedding-0.6B]
+    SX[sentinel :8003<br/>仅单机/演示拓扑]
   end
   CC -->|/v1/ingest/*| MD
-  MD -->|哨兵判定| GW --> S
+  MD -->|未过滤像素| SG --> S
   MD -->|逐字OCR| O
-  MD -->|读屏/转写| GW --> P
+  S -->|仅 allow| O
+  MD -->|已放行读屏| GW --> P
   MD --> TL & FS
   MD -->|事件消息| HO
   HO -->|deriver 调用| GW
@@ -89,39 +95,45 @@ flowchart LR
   AG -->|推理| GW --> B
   GW --> F
   GW --> E
+  GW -. 单机/演示 .-> SX
   UI --> AG
 ```
 
 ### 2.2 部署原则
 
-- **有状态的全在 Mac**:Postgres、Redis、截图/录音/文档文件、审计日志。单一数据根目录 `DATA_ROOT`(默认 `~/dejaview-data`),可整体打包迁移。
-- **服务器纯无状态**:只有模型服务 + OCR 微服务 + 网关 + 监控。GPU 归五个 LLM,双路 EPYC 归 OCR 与调度。llama-server 与 LiteLLM 关闭请求内容日志(`--log-disable` / verbose off)`[VERIFY 具体旗标]`,prompt 不落服务器磁盘。
+- **有状态的全在数据主权端**:Postgres、Redis、放行截图、时间线、Honcho 和审计日志。单一数据根目录 `DATA_ROOT`(默认 `~/dejaview-data`),可整体打包迁移;当前不写入音频/文档。
+- **已交付平台边界**:capture 客户端当前是 macOS-only;Windows 是同一数据主权架构的目标,不在 P3.17 声称已交付。
+- **服务器纯无状态**:默认只有模型服务 + 网关 + 监控;单机评委拓扑可在 EPYC 运行 ocrd。llama-server 用 `--log-disable`,LiteLLM 关闭请求/支出日志,prompt 不作为用户记忆落服务器磁盘。
 - **网络**:LAN 直连或 Tailscale/WireGuard。Honcho 的 Redis 队列天然容错,断网积压重试。
-- **提交两种形态**:同一套 compose,通过 `.env` 的 `GATEWAY_URL` 与 profile 切换:
-  - 形态 A「单机」:全部服务部署在一台 AMD 机器(评委复现用);
-  - 形态 B「分离」:传感器/数据在用户设备,算力在 AMD 服务器(实际使用形态)。
+- **两种形态(与双语 README 同名)**:
+  - 形态 A「分离 / 日常」:Sentinel、ocrd、memoryd、agentd、数据库与 Honcho 在数据主权设备;仅 Sentinel 放行内容使用 AMD 无状态算力;
+  - 形态 B「AMD 单机 / 评委」:同一信任边界内部署全部服务,方便无 Mac 数据面复现。
 - SearXNG(用户现有 compose 里有)默认 **disabled**:联网元搜索与"数据不出设备"叙事冲突,演示期间关闭。
 
 ### 2.3 逻辑模型名(全系统唯一的模型引用方式)
 
 | 逻辑名 | 角色 | 物理模型 | 端口 |
 |---|---|---|---|
-| `brain` | 深层:推理/规划/深度视觉/写作 | ThinkingCap-Qwen3.6-27B Q8_0 + mmproj-f16 | 8001 |
-| `perceive` | 中层:读屏理解、音频转写、Honcho deriver(基线) | Gemma 4 E4B(Q8 级)+ mmproj-BF16 | 8002 |
+| `brain` | 深层:推理/规划/深度视觉/写作 | ThinkingCap-Qwen3.6-27B(Q6_K 产品默认;Q8/Q4 用于消融)+ mmproj-f16 | 8001 |
+| `perceive` | 中层:读屏理解、Honcho deriver(基线) | Gemma 4 E4B(Q8 级)+ mmproj-BF16 | 8002 |
 | `sentinel` | 快车道·视觉:截图隐私分类 | MiniCPM-V 4.6 Q4_K_M + mmproj-f16 | 8003 |
 | `fast` | 快车道·文本:新颖度门/事件合并/打标/主动触发预筛,deriver 候选(T0.9) | MiniCPM5-1B Q8_0 `[VERIFY GGUF repo]` | 8005 |
 | `embed` | 全部向量化(查询侧加指令前缀) | Qwen3-Embedding-0.6B Q8_0(官方 GGUF,1024 维,32K 上下文) | 8004 |
-| `rerank`(可选) | 检索重排,Phase 2 按需启用 | Qwen3-Reranker-0.6B `[VERIFY 官方 GGUF 与 llama.cpp rerank 端点]` | 8007 |
 
 **分层推理原则**:每个请求路由到"够用的最便宜层"——高频浅任务走快车道(≈1B),中频理解走 perceive(8B 级),低频深推理走 brain(27B)。这个金字塔本身就是"推理速度优化"评分项的叙事素材。
-**应用代码只允许出现逻辑名**,经网关(`GATEWAY_URL`)调用。物理路由只存在于 `deploy/server/litellm.yaml`。
-**确定性层**:PaddleOCR(`ocrd`,:8006,EPYC CPU)提供零幻觉逐字文本,不是 LLM、不经 LiteLLM,memoryd 经 `OCR_URL` 直连。
+**应用代码只允许出现逻辑名**。未过滤画面的 `sentinel` 必须经独立且本地的 `SENTINEL_GATEWAY_URL`;其他已放行阶段经 `GATEWAY_URL`,agentd 使用 `RADEON_GATEWAY_URL` 并在真实失败时切 `LOCAL_GATEWAY_URL`。物理路由只存在网关配置。
+**确定性层**:ocrd(:8006;Mac 开发默认 rapidocr,产品目标 PP-OCRv6)提供可溯源逐字文本,不是 LLM、不经 LiteLLM,memoryd 经 `OCR_URL` 直连。
+
+**常驻边界**:五个名称是逻辑角色,不是五套权重在所有拓扑同时常驻。分离日常拓扑保留本地 Sentinel,brain 按需起停;单机/演示拓扑根据 `docs/benchmarks.md` 和 `rocm-smi` 余量编排。
 **注**:MiniCPM4 论文的内核级加速(InfLLM v2 稀疏注意力、FR-Spec、CPM.cu)绑定 CUDA 框架,llama.cpp ROCm 不继承;我们继承的是能力密度(每参数能力)与 token 效率(MiniCPM-V 4.6 以 1/19 token 成本超过 Qwen3.5-0.8B 的 AAII 分数)。
 
 ### 2.4 显存预算(W7900D 48 GB)
 
-brain ≈28 GB(Q8_0 27.1 GB + mmproj 0.9 GB)+ KV ≈2 GB;perceive ≈10 GB;sentinel ≈1.6 GB;fast ≈1.2 GB;embed ≈0.7 GB。合计 ≈43.5 GB,余 ≈4.5 GB(启用可选 rerank +0.7 GB → 余 ≈3.8 GB)。
-应急:brain 退 Q6_K(20.9 GB)立省 6 GB;fast 退 Q4(≈0.7 GB)再省 0.5 GB。
+P3.1 正式实测表明:brain Q8_0/Q6_K/Q4_K_M 在 MTP-off 时 resident
+约 29.36/23.49/18.56 GiB;MTP 在该 build 中额外占用约 4.95 GiB;
+perceive Q8_0 resident 约 6.38–6.48 GiB。完整数据见 `docs/benchmarks.md` §2。
+产品 brain 默认 Q6_K;共租时先停 perceive、默认关 MTP,只有加载后仍保留
+≥6 GiB 余量才可开。每次起服前以 `rocm-smi` 实测为准,不把权重文件大小当成实际峰值。
 **embed 选型依据**:Qwen3-Embedding-0.6B vs bge-m3(同为 0.6B 级):MMTEB 64.33 vs 59.56,CMTEB-R 71.02 vs 63.66,上下文 32K vs 8K,维度同 1024(MRL 弹性,升级 4B 可截断回 1024,schema 不变但需全量重嵌)。bge-m3 的稀疏检索优势被 pg_trgm 层覆盖,故弃用。**嵌入模型在 Phase 1 建索引前锁定,之后更换=全量重嵌。**
 
 ---
@@ -357,12 +369,12 @@ create table kb_chunks(id bigserial primary key, doc_id text, source_path text,
 
 ### 6.5 agentd(Mac,主脑服务)
 
-- 对外暴露 **OpenAI-compatible** `/v1/chat/completions`(model=`dejaview`),Open WebUI 直接接。
+- 对外暴露 **OpenAI-compatible** `/v1/chat/completions`(model=`dejaview`),同时在 `/` 提供默认日常产品页。
 - Tools(function calling,经 `brain`):
   - `search_timeline(query, mode=hybrid|semantic|exact, time_from?, time_to?, k)` → 向量 + pg_trgm 精确子串 + 时间过滤;报错码/PR 号/URL 类查询走 exact 直接命中。语义路查询侧统一加指令前缀(`Instruct: 检索用户活动时间线\nQuery: …`,Qwen3-Embedding 的 instruction-aware 用法);命中不足时可启用 `rerank` 对 top-50 重排(可选)
   - `query_user_model(question)` → Honcho dialectic
-  - `search_kb(query, k)`
-  - `fetch_screenshot(event_id, highlight_text?)` → 回图作证据;给了 highlight_text 时按 ocr_blocks 的 bbox 在截图上框出命中文字
+  - `search_kb(query, k)`(仅检索已有合成/历史块;当前文档写入入口为 501)
+  - `fetch_screenshot(event_id, highlight_text?)` → 只返回受控证据可用性/高亮元数据;不把本机原始路径暴露给模型或浏览器
   - `generate_daily_report(date)`
 - **回答格式纪律**:凡引用记忆必须带 `[event#id HH:MM app]` 行内引用,UI 侧渲染成可点开截图。
 - 日报多 Agent 流:Planner(brain)拟提纲 → Retriever(代码检索+perceive 压缩)取证据 → Writer(brain)成文 → Reviewer(brain, temperature 0.2)逐条核对引用真实性。过程日志在 UI 可见(体现 multi-agent,评委要看到)。
@@ -370,7 +382,7 @@ create table kb_chunks(id bigserial primary key, doc_id text, source_path text,
 
 ### 6.6 UI
 
-- 首选 Open WebUI 指向 agentd;时间线浏览页用最简单的自建页(表格+缩略图)即可。
+- 默认产品页由 agentd 自带:时间线筛选、开放式问答、结构化引用、短时签名证据、隐私摘要、Honcho 画像和诚实状态。六幕 demo stage 保持隔离,不是日常产品入口。
 - Grafana 大屏独立浏览器窗口,演示时并排。
 
 ---
@@ -441,7 +453,7 @@ create table kb_chunks(id bigserial primary key, doc_id text, source_path text,
 
 ### Phase 3 · 优化与材料(8/2–8/5)
 
-> 注:下表为原始 WBS 规划编号(T3.x)。**Phase 3 的实际执行状态与领取以 §12.3 的 P3.x 队列为准**(对应关系:T3.1→P3.1、T3.2→P3.2、T3.4→P3.3、T3.5→P3.4、T3.6→P3.5、T2.1→P3.6、T1.6→P3.7)。
+> 注:下表为原始 WBS 规划编号(T3.x),只作历史。**实际执行状态唯一以 `TASKBOARD.json` 为准**;当前产品化队列已扩展至 P3.12–P3.18。
 
 | ID | 任务 | 验收标准 |
 |---|---|---|
@@ -460,9 +472,9 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 
 ## 8. ROCm 优化报告规格(评分 40 分的主武器)
 
-`docs/benchmarks.md` 必含:
+`docs/benchmarks.md` 的原始目标清单为:
 1. 硬件/软件环境表(W7900D、ROCm 7.2、llama.cpp commit、驱动 6.14.14);
-2. 五模型常驻 VRAM 分配图(rocm-smi 截图 + 表);
+2. 逻辑角色的 VRAM 分配与实际常驻策略(rocm-smi 截图 + 表),不强说所有权重同时常驻;
 3. brain:prefill/decode tok/s,MTP on/off,Q8 vs Q6 vs Q4(速度+抽样质量对比);
 4. perceive:单帧读屏延迟分布,`-np` 1/2/4 吞吐曲线;
 5. 快车道:sentinel 单帧分类延迟(4x vs 16x 压缩档 `[VERIFY]`)、fast 吞吐;分层路由收益(同日负载若全走 brain 的 token 成本对比)、新颖度门节流比例(其中零 LLM 的 Jaccard 级占比);ocrd 在 EPYC 上的单帧延迟与并行吞吐;
@@ -470,11 +482,17 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 7. 每张表注明测法与次数(≥3 次取中位)。
 表格模板:`| 模型 | 量化 | 场景 | 并发 | prefill t/s | decode t/s | P95 ms | VRAM GB |`
 
+**已完成与边界**:P3.1 已完成 checksummed 的 brain 18-cell
+quant×MTP×concurrency 矩阵和 perceive 3-cell `-np` 矩阵,每 cell 1 warm-up
++ 3 次实测;历史小模型 pass 也保留了 fast/sentinel/embed 参考。
+sentinel 4×/16×压缩、novelty-gate 节流收益、EPYC ocrd 并发和完整跨机分段时延
+仍在报告中明确标为 P3.1 范围外;不得对评委声称已覆盖全部原始目标。
+
 ---
 
 ## 9. 演示视频分镜(六幕)
 
-1. 大屏:五模型常驻、GPU 拉满(Grafana+rocm-smi),旁白讲存储/计算分离拓扑与三层推理金字塔;
+1. 大屏:五个逻辑角色、当前实际常驻状态与 GPU 指标(Grafana+rocm-smi),旁白讲存储/计算分离拓扑与三层推理金字塔;
 2. 正常工作几分钟,时间线自动长出带理解的事件流;
 3. 打开银行登录页——哨兵当场拦截,审计日志出现"已拒绝记录",画面本身没入库;
 4. 问"上周三下午看的那个 ROCm PR 是哪个?"——回答附当时截图证据,命中文字用 bbox 高亮框出;
@@ -485,17 +503,21 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 
 ## 10. 提交清单
 
-> **P3.5 旁注(2026-07-23):** 诚实状态见 [`docs/licenses.md`](licenses.md)「Handbook §10 readiness」。**未完成项勿勾。** 队员须自行确认 AMD / Rules(agent 无法代注册)。
+> **2026-08-03 发布旁注:** 诚实状态见 [`docs/licenses.md`](licenses.md)「Handbook §10 readiness」。**未完成项勿勾。** 队员须自行确认 AMD / Rules(agent 无法代注册)。
 
 - [ ] 全员注册 AMD AI Developer Program(大陆:AMD Developer Program China) — **待·队员自检**(见 licenses.md AMD checklist)
 - [ ] Rules & Conditions 通读,按要求的格式/平台提交 — **待·队员自检**
-- [ ] 仓库公开、README 双语、两张拓扑图、快速开始可复现 — **部分具备**(P3.3 README/拓扑/冒烟已成;`63b10d3`;仓库仍 private)
+- [x] 英文 **Project Specification Document** — Markdown + 可编辑 DOCX 位于 `docs/submission/`;8 页渲染与可访问性 QA 已通过。
+- [x] 源码 + 英文 README + 可复现 quickstart — 干净检出已完成两次幂等 setup、doctor 与完整第一方测试;本地不推断 GitHub 可见性,提交前人工确认官方要求的公开状态。
+- [x] 可编辑 PPT / Poster 补充材料 — 7 页 PPT 已逐页渲染、无溢出,每页备注含来源。
 - [x] `docs/benchmarks.md` + Grafana 截图 — **已具备**(OCR A/B +
   P3.1 ROCm 正式消融 + P3.2 一屏截图)
-- [x] 演示视频(≤5 分钟) — **已完成**(P3.4;2:37 六幕成片,含远端链路故障切换与 Local Metal 第二次日报)
+- [x] 已验收演示视频(≤5 分钟) — **P3.4 已完成**:2:37 六幕成片,含远端链路故障切换与 Local Metal 第二次日报。官方推荐 3–5 分钟,因此最终提交前仍需人工确认是直接提交已验收版,还是在不伪造等待的前提下制作≥3:00 提交版。
 - [x] `docs/licenses.md`:Apache-2.0(ThinkingCap/MiniCPM/Honcho/Qwen3-Embedding;手册旧称 bge-m3 已替换)+ MIT(llama.cpp 等)+ **Gemma 单独标注** + 各 Python 依赖 — **已具备**(P3.5)
 - [x] 全部提示词/示例已去个人信息;仓库无任何真实隐私数据、无 API key — **基本具备**(演示前若真实采集须清库)
 - [ ] 比赛服务器上只有演示数据,赛后可一键销毁重建 — **部分具备**(无状态算力+模型引导脚本;提交前再确认演示数据)
+- [x] 根目录项目 `LICENSE` / `NOTICE` 与第三方清单 — P3.17 发布套件验收通过。
+- [ ] 可选云模型优化 +20 — **未申报**;当前材料仅对齐 60+40 基础分。
 
 ---
 
@@ -504,11 +526,11 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 | 风险 | 探测信号 | 兜底 |
 |---|---|---|
 | OCR 对小字/特殊 UI 识别差 | T0.5 弱项清单 | 提高上报分辨率(≤2560px 已预留);弱项场景由 E4B 图像通道补充逐字 |
-| E4B 音频在 ROCm 不可用 | T0.6 报错/乱码 | whisper.cpp(ROCm 或 CPU)做 ASR |
+| 评委误以为支持音频/文档 | README/规格出现旧规划 | 明确当前 screen-only;audio/doc 返回 501 |
 | MTP 在 gfx1100 无收益 | T0.7 加速 <1.1× | 关 MTP,保留"少思考 token"卖点 |
 | perceive 吞吐不足 | T0.8 P95>5s | 加大截屏间隔;调低新颖度门阈值多合并;或第二实例+brain 退 Q6_K |
 | 快车道(≈1B)质量不足 | T0.9 盲评低于 perceive 的 95% | deriver 留在 perceive;fast 只做新颖度门/打标/合并 |
-| 服务器被回收/故障 | — | 形态 A compose 可整体迁移;数据本就在 Mac |
+| 服务器被回收/故障 | — | 形态 A 的数据本在用户设备;AMD 无状态栈可重建,agentd 可显式降级到 Local Metal |
 | 时间不够 | 8/1 未到 M2 | 按 1.5 节砍需求顺序执行 |
 
 ---
@@ -531,16 +553,18 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 
 ---
 
-## 12. 工作交接(2026-07-28 · 给后续执行 Agent)
+## 12. 工作交接(2026-08-03 · 给后续执行 Agent)
 
-> **先读本节,再读其他章节。** 本节吸收了 2026-07-20～07-28 规划/执行会话的全部关键决策与进度,是「现在到哪了 / 还差什么 / 怎么继续 / 为什么这么定」的唯一交接入口。
+> **先读本节,再读其他章节。** 本节保留 2026-07-20～07-28 的历史决策,
+> 并补入 8/2–8/3 成熟产品加固。状态仍只以 `TASKBOARD.json` 为准;历史端口、
+> 旧 WBS 和旧未完成文案不能覆盖当前状态。
 > 配套:`STATUS.md`(人话起服)· `TASKBOARD.json`(状态机)· `docs/verification-log.md`(踩坑)· `deploy/server/DEPLOY.md`(服务器)· `docs/AGENT_KICKOFF_PROMPT.md`(开工指令)· `docs/benchmarks.md`(OCR+ROCm 数据)。
 
 ### 12.0 接手三步(不可跳过)
 
 1. 通读本节 §12 全文 + `STATUS.md`。
 2. 打开 `TASKBOARD.json`,只做 `false` / `blocked` / 合法恢复的 `doing`
-   任务(Phase 3 工程任务已全部 `accept`;勿重跑,只按 §10 做人工提交检查)。
+   任务。当前 P3.17=`accept`,P3.18=`doing`;P3.1–P3.17 已 accept,勿重做。
 3. 把 `docs/AGENT_KICKOFF_PROMPT.md` 整段丢给执行 agent 作为系统指令。
 
 | 顺序 | 文件 | 用途 |
@@ -552,21 +576,22 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 | 5 | `docs/benchmarks.md` | OCR A/B(§1)+ 已完成 ROCm 消融(§2) |
 | 6 | `deploy/server/DEPLOY.md` | 服务器起停 / VRAM / Dolphin |
 | 7 | `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/` | P3.1 原始 JSON、日志、rocm-smi、hash、派生 summary |
-| 8 | 本手册 §0–§11 | 架构规格(未变) |
+| 8 | 本手册 §0–§11 | 当前规格 + 显式标注的历史 WBS |
 | 9 | `docs/AGENT_KICKOFF_PROMPT.md` | 可直接粘贴的开工指令 |
 
-### 12.1 一句话现状(2026-07-28)
+### 12.1 一句话现状(2026-08-03)
 
-**产品代号 DejaView**(déjà vu + view / 全本地数字记忆体)。赛道:AMD AI DevMaster Hackathon Track 2 · Agentic AI。评分 60(功能)+40(ROCm)。截止 **2026-08-06 23:59 UTC+8**(约剩 **9 天**)。
+**产品代号 DejaView**(déjà vu + view / 全本地数字记忆体)。赛道:AMD AI DevMaster Hackathon Track 2 · Agentic AI。基础评分 60(功能)+40(ROCm),可选云模型奖励 +20 **未申报**。截止 **2026-08-06 23:59 UTC+8**。
 
 **全链路已跑通并验收**(Mac 采集 → memoryd → AMD ROCm →
 Postgres/Honcho → agentd 带证据引用)。`TASKBOARD`:**G0+M+D 33/33
-accept**;Phase3 中 **P3.1–P3.7 全部 accept**。P3.4 正式六幕成片为
+accept**;当前总计 **47/48 accept**,P3.17 干净复现/发布一致性已
+`accept`,P3.18 最终全链路验收为 `doing`。P3.4 正式六幕成片为
 `docs/assets/demo/dejaview-p34-six-act-20260802.mp4`(2:37)。P3.1 正式 run:
 `p31-w7900d-20260728T075653Z`,证据目录
 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`。
 
-仓库:`github.com/Aidenwu0209/localwork`(private) · 本地:`/Users/wu/Projects/Aidenwu0209/localwork/` · tip 附近:`d54260a` 及之后的 handoff/docs commits。
+仓库:`github.com/Aidenwu0209/localwork`。本地检出不证明 GitHub 当前可见性;公开状态必须在提交前人工确认。不在发布文档固化开发者机器绝对路径或临时 commit tip。
 
 ### 12.2 会话决策摘要(聊天记录里定死的,勿改)
 
@@ -574,15 +599,15 @@ accept**;Phase3 中 **P3.1–P3.7 全部 accept**。P3.4 正式六幕成片为
 
 #### 产品与叙事
 - **不做**普通办公 RAG / 泛聊天助手(用户明确说 idea 太普通)。
-- **做**数字记忆体:持续屏幕(+可选语音)感知 → 隐私哨兵 → 确定性 OCR + 语义理解 → Honcho 用户建模 → 带截图证据的问答。
+- **做**数字记忆体:持续屏幕感知 → 隐私哨兵 → 确定性 OCR + 语义理解 → Honcho 用户建模 → 带截图证据的问答。音频/文档仅是历史规划,当前入口为 501。
 - **答辩主线**:Microsoft Recall 因隐私翻车、Rewind 卖身——这个形态被云端判死刑;我们用 48GB Radeon 安全复活,并多两层:Honcho 心理建模 + 模型级隐私哨兵。
 - 参考开源只取思路:**禁止抄 AGPL 代码**(OpenRecall 等)。
 
 #### 架构(存储/计算分离)
-- **Mac/Windows = 数据主权端**:capture、memoryd、ocrd、agentd、Postgres+pgvector、Honcho、截图/录音文件。用户数据**永不落** AMD 服务器。
-- **AMD 服务器 = 无状态算力端**:llama.cpp ROCm + LiteLLM 网关;只收推理请求,不存用户 DB。
+- **Mac/Windows = 数据主权端**:capture、本地 Sentinel、memoryd、ocrd、agentd、Postgres+pgvector、Honcho、放行截图。用户记忆库**永不落** AMD 服务器。
+- **AMD 服务器 = 无状态算力端**:llama.cpp ROCm + LiteLLM 网关;只处理 Sentinel 放行后的短时推理请求,不存用户 DB。agentd 实际请求失败时可降级到 Local Metal,且必须如实显示 backend/model/degraded/reason。
 - Mac↔服务器用 SSH 隧道:`ssh -f -N -L 14000:127.0.0.1:4000 radeon-cloud`(网关不暴露公网)。决赛可用 LAN。
-- 逻辑模型名经网关统一:`brain / perceive / sentinel / fast / embed`(可选 rerank)。应用代码只说逻辑名,方便切云(LiteLLM)。
+- 逻辑模型名统一:`brain / perceive / sentinel / fast / embed`。Sentinel 用独立本地网关;其他阶段才经通用 LiteLLM 网关。
 
 #### 模型分层(最终定稿)
 | 逻辑名 | 用途 | 选型 | 端口 |
@@ -602,17 +627,14 @@ accept**;Phase3 中 **P3.1–P3.7 全部 accept**。P3.4 正式六幕成片为
 capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必要时 fast) → **perceive**(activity/topics;verbatim 必须来自 OCR) → embed → timeline + Honcho → **agentd**(tools + `[event#id HH:MM app]` 引用)。
 
 #### 部署与服务器铁律
-- 当前 SSH:`ssh root@36.150.116.206 -p 31357`(别名
-  `radeon-cloud`),实例 `u-15420-7be0d6c9`。硬件:Radeon PRO W7900D
-  48GB(gfx1100)、ROCm 7.2.1、双 EPYC、Ubuntu 24.04。旧 `:30147` /
-  `:30189` 是历史实例,仅保留作故障记录。
+- SSH 统一使用本机已授权别名 `ssh radeon-cloud`。临时公网 IP、端口与实例 ID 不进公开发布文档;替换实例后必须重新验证 alias。已验收硬件类型为 Radeon PRO W7900D 48GB(gfx1100)、ROCm 7.2.1、双 EPYC。
 - **只有 `/workspace` 持久(~10GB)**;模型权重在 overlay
   `/root/dejaview-models/`(生产基线约 41GB;含 P3.1 Q8/Q6/Q4 benchmark
   quants 的完整集合约 81GB),重建靠
   `/workspace/dejaview-models/download-models.sh`(wget + hf-mirror;
   **hf CLI Xet 经镜像会 401**)。
-- 早期 `:30147` 共享实例有别人的 **Dolphin** 任务;P3.1 正式 run
-  所在当前实例在容器分配 GPU 上无 KFD 共租进程。规则不变:起任何模型前
+- 早期共享实例曾有别人的 **Dolphin** 任务;P3.1 正式 run
+  所在 replacement instance 在容器分配 GPU 上无 KFD 共租进程。规则不变:起任何模型前
   `rocm-smi` + KFD 清点;若再次共租,勿 OOM,brain 用 **Q6_K** 并先停
   perceive;MTP 默认关,只有加载后仍保留 ≥6 GiB 余量才可开。
 - Honcho:**钉死 commit `340175ad`**,补丁在 `deploy/mac/honcho-patches/`;**禁止追上游 main**;submodule 保持 pristine(apply 后会 dirty——**不要 git add**)。
@@ -640,27 +662,32 @@ capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必�
 | 哨兵 | **P3.6** | category→decision;normal 误杀类 15/81→0;fixture 6/6 拦 / 0/4 误杀 |
 | 理解 | **P3.7** | 20/20 具体 activity;verbatim⊆ocr;脚本 `eval_*.py` |
 | ROCm 消融 | **P3.1** | **accept**:run `p31-w7900d-20260728T075653Z`;18 个 brain Q8/Q6/Q4×MTP×并发 cell + 3 个 perceive `-np` cell;每 cell 1 warm-up + 3 实测;MTP 确定性输出 parity PASS;原始证据与 `SHA256SUMS` 在 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/` |
+| 监控 | **P3.2/P3.11** | Grafana 一屏 + 系统自检;缺服务/隧道不误绿 |
+| 演示 | **P3.4** | 2:37 六幕成片;可见断开已验证 Radeon 计算链路 + Local Metal 完成第二次日报 |
+| 成熟产品加固 | **P3.12–P3.16** | fail-closed 采集;真实 Radeon→Local router;原子 Honcho outbox;默认日常产品页;安全/无障碍独立复审 PASS |
 
 > 历史插曲:UI 曾显示 M1.3/M2.4/M3.1 为 `doing` 半成品(`e5ade0c`),TASKBOARD 实已 `accept`;2026-07-23 live verify 再次确认。不要重做。
 >
-> **P3.1 历史阻塞记录(保留):** 2026-07-23 在旧 `:30147` 实例先得到
+> **P3.1 历史阻塞记录(保留):** 2026-07-23 在旧实例先得到
 > fast 366.7 / sentinel 221 / perceive ~80 tok/s 与 4-model VRAM 截图,
-> 随后 SSH 中断,brain×MTP×并发当时未测。2026-07-28 换到 `:30189`
+> 随后 SSH 中断,brain×MTP×并发当时未测。2026-07-28 换到 replacement instance
 > 实例后从持久 bootstrap 重建并完成上述正式 run,历史 `blocked` 已解除。
 
 ### 12.4 Phase 3 收尾状态
 
-Phase 3 工程任务已全部完成。不要因旧 `blocked` 文案、旧端口或旧状态
-重跑;下一步只做 §10 的人工提交检查。其余可砍见 §1.5。
+比赛功能、ROCm、演示与发布复现证据已完成;成熟产品收尾只剩 P3.18。
+不要因旧 `blocked` 文案、旧端口或旧状态重跑已 accept 任务。
 
 | ID | 状态 | 做什么 | 阻塞 |
 |---|---|---|---|
-| **P3.1** | **accept** | 正式 run、§2 表格、`[VERIFY]` 与 checksummed 原始证据已齐 | 历史 `:30147` SSH 阻塞已在 `:30189` replacement instance 解除 |
+| **P3.1** | **accept** | 正式 run、§2 表格、`[VERIFY]` 与 checksummed 原始证据已齐 | 历史 SSH 阻塞已在 replacement instance 解除 |
 | **P3.4** | **accept** | 2:37 六幕演示视频,**含可见远端链路故障切换**与 Local Metal 第二次日报 | `docs/assets/demo/dejaview-p34-six-act-20260802.mp4` |
 | **P3.2** | **accept** | Grafana 一屏:tokens/s、VRAM、GPU util、事件率 | `docs/assets/p32/grafana-rocm-live-20260802.png` |
-| — | 可砍 | P3.8 MarkItDown / P3.9 日报多 Agent UI / P3.10 Open WebUI / MCP / 音频 | 时间不够按 §1.5 砍 |
+| **P3.12–P3.16** | **accept** | 成熟产品设计、隐私采集、真实降级、Honcho 闭环、日常产品页 | 新鲜测试与独立复审已入 verification-log |
+| **P3.17** | **accept** | 干净检出、doctor/quickstart/CI、LICENSE/NOTICE、双语发布一致性、英文规格与 PPT 均通过 QA | 证据见 verification-log |
+| **P3.18** | **doing** | 成熟产品全链路最终验收 | P3.17 已解除依赖 |
 
-**§10 提交清单仍待人工**:全员 AMD Developer Program 注册、Rules 通读、仓库是否公开、服务器仅演示数据确认。演示视频与 `licenses.md` 已有。
+**§10 提交清单仍待人工**:全员 AMD Developer Program 注册、Rules 通读、仓库可见性、服务器仅演示数据、最终提交平台/格式确认。
 
 ### 12.5 已知问题 / 技术债
 
@@ -671,7 +698,7 @@ Phase 3 工程任务已全部完成。不要因旧 `blocked` 文案、旧端口�
 | — | P3.1 brain 消融曾未完成 | 已由 run `p31-w7900d-20260728T075653Z` 解除;勿重跑 |
 | — | P3.4 六幕视频尚未录成 | 已完成 2:37 成片;远端链路断开与 Local Metal 第二次日报均可见 |
 | — | P3.2 Grafana 尚未验收 | 已于 2026-08-02 完成一屏与实时门禁验收 |
-| 中 | 服务器端口可能随 replacement instance 漂移 | 当前 `36.150.116.206:31357`;每次先核对 `radeon-cloud` alias,旧端口仅历史 |
+| 中 | 服务器端口可能随 replacement instance 漂移 | 发布文档只用 `radeon-cloud` alias;每次连接前重新核对授权目标 |
 | 中 | 网关偶发 `model=None` 400(~2%) | 待查(疑 Honcho health) |
 | 中 | 隧道单帧 ~12–15s | 决赛 LAN |
 | 低 | Mac ocrd=rapidocr vs 生产 paddleocr | 一行配置 |
@@ -684,27 +711,32 @@ brain(28GB)+Dolphin(10.6)+4 小模型(12) > 48GB → 共租时用
 
 ### 12.6 起服冒烟
 
-当前 alias 应指向 `root@36.150.116.206 -p 31357`。当前 P3.4 录制栈已
-常驻 gateway、sentinel、fast、embed、perceive、brain 与 exporter;
+Radeon Cloud 实例是短暂资源,不假设 P3.4 录制时的进程仍常驻。
 实例重启或重新起服前先运行
 `rocm-smi --showmeminfo vram --showuse`、`rocm-smi --showpids verbose`
 和 `./server-stack.sh status`,再只起需要的角色。
 
 ```bash
-cd /Users/wu/Projects/Aidenwu0209/localwork
-make data-up
-docker compose -f deploy/mac/compose.honcho.yml up -d
-ssh -f -N -L 14000:127.0.0.1:4000 radeon-cloud
+# 从克隆根目录执行
+git submodule update --init --recursive
+make setup
+cp .env.example .env
+cp deploy/mac/honcho.env.example deploy/mac/honcho.env
+set -a; source .env; set +a
+make doctor
+make test
 ./deploy/mac/llama-launch/dev-stack.sh up sentinel
-cd services/ocrd && nohup uv run python -m ocrd > /tmp/ocrd.log 2>&1 &
-SENTINEL_GATEWAY_URL=http://127.0.0.1:4000/v1 \
-  GATEWAY_URL=http://127.0.0.1:14000/v1 \
-  nohup uv run --project services/memoryd python -m memoryd > /tmp/memoryd.log 2>&1 &
-cd clients/capture && CAPTURE_DEVICE_ID=dev uv run python -m capture
-GATEWAY_URL=http://127.0.0.1:14000/v1 uv run --project services/agentd python -m agentd
+ssh radeon-cloud "cd /root/dejaview-launch && ./server-stack.sh up embed fast perceive"
+ssh -f -N -L 14000:127.0.0.1:4000 radeon-cloud
+make product-up
+docker compose -f deploy/mac/compose.honcho.yml run --rm --no-deps \
+  --entrypoint /app/.venv/bin/python honcho-api scripts/configure_embeddings.py --yes
+make product-status
+make capture
 ```
 
-服务器:`ssh radeon-cloud` → `cd /root/dejaview-launch && ./server-stack.sh up embed fast sentinel perceive`。
+服务器:`ssh radeon-cloud` → `cd /root/dejaview-launch && ./server-stack.sh up embed fast perceive`。
+日常 split 拓扑不把未过滤 Sentinel 请求发往 AMD 端。
 
 ### 12.7 纪律 + 坑(强制)
 
@@ -717,10 +749,10 @@ GATEWAY_URL=http://127.0.0.1:14000/v1 uv run --project services/agentd python -m
 7. llama.cpp 视觉不支持 WebP → memoryd 已转 PNG。
 8. Docker `host.docker.internal` IPv6 → Honcho 用 IPv4 字面量。
 9. 模型在 overlay → `download-models.sh` 重建(wget+hf-mirror)。
-10. **Phase 3 工程任务已全部收尾**;勿重跑,只做 §10 人工提交检查。
+10. **P3.1–P3.17 已验收;P3.18 doing**。勿重跑已 accept 任务,只执行最终验收。
 
 ### 12.8 给后续 Agent 的一句话开工
 
-> 读完 §12 与 `STATUS.md` → 核对 `TASKBOARD` 已全部 accept → 只做 §10
-> 人工提交检查。不要重做 33+7 项已 accept 的工作,
-> 尤其不要重跑 P3.1;不要改产品叙事与五模型分层。
+> 读完 §12 与 `STATUS.md` → 以 `TASKBOARD` 核对当前任务 → 执行 P3.18。
+> 不要重做 47 项已 accept 的工作,尤其不要重跑 P3.1;
+> 不要改数字记忆体叙事与五个逻辑模型层级。

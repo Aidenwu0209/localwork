@@ -2,7 +2,7 @@
 
 > 持续感知你的屏幕,把数字生活变成**可问答、带证据的记忆**;用 Honcho 心理建模理解「你是谁」;隐私哨兵把关「什么不该被记住」。**原始画面先经过设备本地 Sentinel 隐私门,主要 Agentic 算力再由 Radeon PRO W7900D(ROCm)执行**,数据始终留在用户自己的设备上,并保留已验证的 Local Metal 降级能力。当前服务不支持音频和文档写入。
 
-产品代号:**DejaView**(déjà vu + view:你的机器替你「似曾相识」)。  
+产品代号:**DejaView**(déjà vu + view:你的机器替你「似曾相识」)。
 英文主文档:[README.md](README.md)
 
 面向 [AMD AI DevMaster Hackathon](https://luma.com/amd-4dhi) · **赛道 2 · Agentic AI**。
@@ -18,7 +18,7 @@
 
 **同品类先例:** Microsoft Recall(云端信任危机)、Rewind.ai(已转向)、OpenRecall(开源 AGPL——截屏+OCR+搜索,无理解层)。
 
-**我们的差异:** ① Honcho 用户画像 · ② 入库前隐私哨兵 · ③ Agent 任务闭环(tool calling、日报多 Agent 流) · ④ 五模型分层常驻 48 GB + ROCm 优化报告 · ⑤ 存储/计算分离的数据主权架构。
+**我们的差异:** ① Honcho 用户画像 · ② 入库前隐私哨兵 · ③ Agent 任务闭环(tool calling、日报多 Agent 流) · ④ 五个逻辑模型角色与经实测的显存编排 + ROCm 优化报告 · ⑤ 存储/计算分离的数据主权架构。
 
 **四根柱子(永不砍):** 隐私哨兵 · 带截图证据的问答 · 日报多 Agent 流 · ROCm 优化报告。
 
@@ -26,7 +26,7 @@
 
 ## 双拓扑
 
-同一套代码与 compose,靠 `GATEWAY_URL` / profile 切换(见 `docs/EXECUTION_HANDBOOK.md` §2.2)。  
+同一套代码与 compose,靠 `GATEWAY_URL` / profile 切换(见 `docs/EXECUTION_HANDBOOK.md` §2.2)。
 下方 **形态 A** 是陌生人今天就能冒烟的路径;**形态 B** 是评委复现 / 演示日用的单机 AMD 拓扑。
 
 ### 形态 A — Mac 数据主权 + AMD 无状态算力
@@ -44,6 +44,7 @@
 ```
 
 - **有状态只在 Mac:** Postgres、Redis、截图与审计日志。单一可移植 `DATA_ROOT`;当前不支持音频/文档写入。
+- **已交付采集客户端:** macOS。Windows 仍是数据主权架构目标,不声称 P3.17 已交付 Windows 可执行程序。
 - **服务器纯无状态:** 模型服务 + 网关(+ 可选 EPYC OCR)。不落用户数据、不落 prompt 日志。
 - **隐私顺序:** memoryd 先把原始帧发送到 `SENTINEL_GATEWAY_URL` 配置的本地 Sentinel；仅放行帧才会经 `GATEWAY_URL` 请求 Radeon 算力。
 - **网络:** LAN 或 Tailscale/WireGuard;冒烟用 SSH 隧道即可(见下)。
@@ -60,7 +61,7 @@
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-服务器起停、VRAM 预算与模型下载详见 [`deploy/server/DEPLOY.md`](deploy/server/DEPLOY.md)。  
+服务器起停、VRAM 预算与模型下载详见 [`deploy/server/DEPLOY.md`](deploy/server/DEPLOY.md)。
 日常端口表与已知问题见 [`STATUS.md`](STATUS.md)。
 
 ---
@@ -70,7 +71,9 @@
 | 评分维度 | 权重 | DejaView 怎么拿分 |
 |---|---|---|
 | 功能完整性与应用价值 | **60** | 逐窗口采集 → 哨兵 → OCR → 新颖度门 → perceive → 时间线 → Honcho 画像 → 带证据问答(`[event#id HH:MM app]`)。四柱 + 多窗口感知。 |
-| AMD Radeon GPU 与 ROCm 优化 | **40** | W7900D 48 GB 五逻辑模型常驻;三层推理金字塔;llama.cpp HIP / gfx1100;存储/计算分离。**证据:** [`docs/benchmarks.md`](docs/benchmarks.md)(OCR A/B 已入;**ROCm 消融章节由 P3.1 补全**)。 |
+| AMD Radeon GPU 与 ROCm 优化 | **40** | W7900D 48 GB 五个逻辑角色与显存感知编排;三层推理金字塔;llama.cpp HIP / gfx1100;存储/计算分离。**证据:** [`docs/benchmarks.md`](docs/benchmarks.md)(OCR A/B 已入;**ROCm 消融章节由 P3.1 补全**)。 |
+
+上表是 Track 2 的 **100 分基础评分**。本地竞赛路径没有申报可选的云模型优化加分。
 
 ---
 
@@ -84,40 +87,45 @@
 
 ## 形态 A 冒烟(干净机器)
 
-前置:Docker Desktop · [`uv`](https://github.com/astral-sh/uv) · SSH 别名 `radeon-cloud` 指向已就绪的 AMD 推理栈(见 [`DEPLOY.md`](deploy/server/DEPLOY.md))。先复制环境模板:
+前置:Docker Desktop · [`uv`](https://github.com/astral-sh/uv) · `llama-server`
+与已下载的本地 Sentinel 权重 · SSH 别名 `radeon-cloud`
+指向已授权的 AMD 推理栈(见 [`DEPLOY.md`](deploy/server/DEPLOY.md))。
+下列命令均从克隆根目录执行;`REPO_ROOT` 保证后台进程不受后续 `cd` 影响:
 
 ```bash
+git submodule update --init --recursive
+make setup
 cp .env.example .env
 cp deploy/mac/honcho.env.example deploy/mac/honcho.env   # 按需改;本地冒烟无需真实密钥
 set -a; source .env; set +a   # memoryd 直接读取已导出的环境变量
+make doctor                    # 只读;启服前运行时端点可以是 WARN
+make test                      # 离线第一方契约;CI 跑同一命令
 ```
 
 最小命令(完整起服表与排障:[`STATUS.md`](STATUS.md) · 手册 §12.5):
 
 ```bash
-# 1. 数据层 + Honcho(Mac)
-make data-up
-docker compose -f deploy/mac/compose.honcho.yml up -d
-# 一次性:把 Honcho pgvector 维数对齐到 1024
-docker compose -f deploy/mac/compose.honcho.yml run --rm --no-deps \
-  --entrypoint /app/.venv/bin/python honcho-api scripts/configure_embeddings.py --yes
+# 1. 设备本地 Sentinel;未过滤像素只能走这个网关
+./deploy/mac/llama-launch/dev-stack.sh up sentinel
 
-# 2. AMD 推理(本地 Sentinel 之后的阶段;brain 按需——先查 VRAM)
+# 2. 只处理已放行内容的 AMD 推理;brain 按需启动,先查 VRAM
 ssh radeon-cloud "cd /root/dejaview-launch && ./server-stack.sh up embed fast perceive"
 
 # 3. 隧道(服务器网关不暴露公网)
 ssh -f -N -L 14000:127.0.0.1:4000 radeon-cloud
 
-# 4. 启动本地 Sentinel 网关并为它导出 SENTINEL_GATEWAY_URL；
-#    memoryd 只会向 Radeon 网关发送 Sentinel 放行的帧。
-#    ocrd · memoryd · capture
-cd services/ocrd && nohup uv run python -m ocrd > /tmp/ocrd.log 2>&1 &
-GATEWAY_URL=http://127.0.0.1:14000/v1 \
-  nohup uv run --project services/memoryd python -m memoryd > /tmp/memoryd.log 2>&1 &
-cd clients/capture && CAPTURE_DEVICE_ID=dev uv run python -m capture
+# 4. 按就绪门禁启数据层、Honcho、OCR、memoryd 和 agentd。
+#    已导出 URL 保证 Sentinel 本地、Radeon 主路、Metal 降级。
+make product-up
+# 每个全新 Honcho 数据库执行一次:将 pgvector 对齐为当前 embed 的 1024 维
+docker compose -f deploy/mac/compose.honcho.yml run --rm --no-deps \
+  --entrypoint /app/.venv/bin/python honcho-api scripts/configure_embeddings.py --yes
+make product-status
 
-# 5. agentd 问答(需要时先在服务器起 brain:./server-stack.sh up brain)
-GATEWAY_URL=http://127.0.0.1:14000/v1 uv run --project services/agentd python -m agentd
+# 5. capture 保持前台,便于看到屏幕录制授权
+make capture
+
+# 日常产品页:http://127.0.0.1:8101/(深度问答时按需起 brain)
 curl -s http://127.0.0.1:8101/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"messages":[{"role":"user","content":"我最近遇到过哪些 GPU 报错?请引用事件。"}]}'
@@ -125,13 +133,15 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 
 | 层 | 起法 | 端口 |
 |---|---|---|
-| 数据层 | `make data-up` | pg `:5433` · redis `:6380` |
-| Honcho | `compose.honcho.yml up -d` | `:8100` |
+| 产品生命周期 | `make product-up/status/down` | 受管本地服务 |
+| 数据层 | 由 `product-up` 启动 | pg `:5433` · redis `:6380` |
+| Honcho | 由 `product-up` 启动 | `:8100` |
+| 本地 Sentinel | `dev-stack.sh up sentinel` | 网关 `:4000` · 模型 `:8003` |
 | 隧道 | `ssh -L 14000:…:4000` | Mac `:14000` → 服务器 `:4000` |
-| ocrd | `uv run python -m ocrd` | `:8006` |
-| memoryd | `SENTINEL_GATEWAY_URL=… GATEWAY_URL=… python -m memoryd` | `:8090` |
-| agentd | `python -m agentd` | `:8101` |
-| capture | `python -m capture` | — |
+| ocrd | 由 `product-up` 启动 | `:8006` |
+| memoryd | 由 `product-up` 启动 | `:8090` |
+| agentd | 由 `product-up` 启动 | `:8101` |
+| capture | `make capture` | — |
 
 ---
 
@@ -144,13 +154,16 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 | 逻辑名 | 角色 | 物理模型 | 端口 |
 |---|---|---|---|
 | `brain` | 深层:推理 / 规划 / 视觉 / 写作 | ThinkingCap-Qwen3.6-27B(+ mmproj) | 8001 |
-| `perceive` | 中层:读屏理解、转写、Honcho deriver 基线 | Gemma 4 E4B(+ mmproj) | 8002 |
+| `perceive` | 中层:读屏理解、Honcho deriver 基线 | Gemma 4 E4B(+ mmproj) | 8002 |
 | `sentinel` | 快车道·视觉:隐私分类 | MiniCPM-V 4.6 Q4_K_M(+ mmproj) | 8003 |
 | `fast` | 快车道·文本:新颖度 / 合并 / 打标 | MiniCPM5-1B | 8005 |
 | `embed` | 全部向量化(查询侧加指令前缀) | Qwen3-Embedding-0.6B(1024 维) | 8004 |
 | `ocrd`*(非 LLM)* | 确定性逐字 OCR | PP-OCRv6 / rapidocr(CPU) | 8006 |
 
 **切云三纪律(仅开发期):** ① **`sentinel` 永远本地**——它看的是未过滤画面，须用 `SENTINEL_GATEWAY_URL` 单独配置。② 切换 `embed` 必须全量重建索引。③ 比赛演示与提交视频必须**全本地**。
+
+上表定义的是五个逻辑角色,不代表每种拓扑都把五套权重同时常驻。
+日常分离拓扑把 Sentinel 放在数据主权端,`brain` 按需启动;单机/演示拓扑可按实测显存策略把各角色放到 Radeon。
 
 ---
 
@@ -159,6 +172,7 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 - 用户记忆(Postgres、Redis、`DATA_ROOT` 截图、审计日志)只在**你自己的设备**——从不落 AMD 算力节点。当前音频和文档入口均返回 `501 unsupported_media`。
 - 采集端:**零落盘**(内存处理 → POST → 丢弃)。哨兵 `block` 帧只写审计——不 OCR、不落图。
 - 采集端每 30 秒发送一次仅元数据 heartbeat，锁屏时也继续；帧响应的 `processing_state` 为 `stored`、`merged` 或 `blocked`。缺少屏幕录制权限时，capture 会在开始采集前以状态码 `2` 退出。
+- 已入库事件通过原子 outbox 自动进入 Honcho。投影仅包含 activity/topics/app/time/event provenance;OCR、窗口标题、URL、截图和 blocked 帧永不进入,且可暂停、重试、幂等去重。
 - 仓库只有**合成测试资产**(无真实 PII、无 API key)。若跑过真实采集,公开演示前请清库。
 - SearXNG 默认 **disabled**(与「数据不出设备」叙事冲突)。
 
@@ -168,9 +182,9 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 
 第三方许可证、Gemma 单独标注、用户数据不上云声明、以及手册 §10 就绪说明见 [`docs/licenses.md`](docs/licenses.md)。
 
-- **Apache-2.0:** ThinkingCap · MiniCPM · Honcho · PaddleOCR · Qwen3-Embedding · Gemma 4(详见单独标注)  
-- **Gemma(单独标注):** Gemma 4 E4B perceive — 见 `docs/licenses.md`  
-- **MIT:** llama.cpp · LiteLLM · MarkItDown · Open WebUI  
+- **Apache-2.0:** ThinkingCap · MiniCPM · Honcho · PaddleOCR · Qwen3-Embedding · Gemma 4(详见单独标注)
+- **Gemma(单独标注):** Gemma 4 E4B perceive — 见 `docs/licenses.md`
+- **MIT:** llama.cpp · LiteLLM · MarkItDown · Open WebUI
 
 禁止引入 AGPL 代码(OpenRecall 只作思路参考)。
 
@@ -178,7 +192,9 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 
 ## 状态与延伸阅读
 
-**TASKBOARD:** G0+M+D **33/33 accept**，Phase 3 工程任务 **P3.1–P3.7 全部 accept**。全链路、ROCm 消融、Grafana、licenses 与 ≤5 分钟故障切换视频均已验收——见 [`STATUS.md`](STATUS.md)。
+**TASKBOARD:** 当前 **47/48 accept**;P3.12–P3.17 成熟产品加固与发布复现
+已验收,P3.18 最终全链路验收为 `doing`。已验收证据包括
+全链路、ROCm 消融、Grafana、隐私/理解门和 ≤5 分钟故障切换视频——见 [`STATUS.md`](STATUS.md)。
 
 | 文档 | 用途 |
 |---|---|
@@ -187,6 +203,7 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 | [`docs/verification-log.md`](docs/verification-log.md) | 已解 `[VERIFY]` 与踩坑 |
 | [`docs/benchmarks.md`](docs/benchmarks.md) | OCR A/B + ROCm 消融(P3.1) |
 | [`deploy/server/DEPLOY.md`](deploy/server/DEPLOY.md) | AMD 服务器运维 / VRAM / 隧道 |
+| [`docs/submission/PROJECT_SPECIFICATION.md`](docs/submission/PROJECT_SPECIFICATION.md) | Track 2 英文项目规格(同目录含可编辑 DOCX) |
 | [`TASKBOARD.json`](TASKBOARD.json) | 权威任务状态机 |
 
 ## 目录

@@ -8,11 +8,15 @@
 # generated here (litellm.server.yaml). See handbook §3.
 #
 # Run inside the llamavenv: /root/llamavenv/bin/pip install 'litellm[proxy]'
-# (once). Kill: pkill -f "litellm.server".
+# (once). Stop through server-stack.sh so only the tracked process is signalled.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VENV="${LLITELLM_VENV:-/root/llamavenv}"
-CONF="/tmp/dejaview-litellm.server.yaml"
+RUNTIME_DIR="${DEJAVIEW_RUNTIME_DIR:-/tmp/dejaview}"
+CONF="$RUNTIME_DIR/litellm.server.yaml"
+
+mkdir -p "$RUNTIME_DIR"
+chmod 700 "$RUNTIME_DIR"
 
 # Generate the server config from the shared logical names, pointing brain at
 # the real 27B instance on :8001 (overriding the dev dual-map).
@@ -35,4 +39,4 @@ general_settings:
   disable_spend_logs: true
 YAML
 
-exec "$VENV/bin/litellm" --config "$CONF" --host 0.0.0.0 --port 4000
+exec "$VENV/bin/litellm" --config "$CONF" --host 127.0.0.1 --port 4000

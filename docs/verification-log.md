@@ -546,3 +546,48 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
 - **Conclusion:** P3.16 moves from `doing` to `accept`. P3.17 is next; accepted
   benchmark, Grafana, video, model hierarchy, and product narrative were not
   modified or rerun.
+
+## 2026-08-03 — P3.17 clean reproduction and release consistency
+
+- **[VERIFY] Clean release path:** a temporary commit was built from the exact
+  staged release tree and checked out into a new clone. The pinned Honcho
+  submodule initialized at `340175ad5f8b49b73007481eef1885ffe99ac768`;
+  `make setup` passed twice with the exact two-patch stack, `make doctor`
+  passed, and the complete `make test` suite passed from that clean checkout.
+  The temporary checkout was moved to Trash after verification.
+- **[VERIFY] First-party regression:** both the working tree and clean checkout
+  passed release **21**, agentd **101**, memoryd **82 + 6 subtests**, capture
+  **22**, browser-product **9**, Mac launcher/monitoring **20**, and server
+  launcher/ROCm-support **46** tests. OCR also passed a locked import,
+  application-construction, entrypoint, and route check. Only existing
+  FastAPI/TestClient deprecation warnings remained.
+- **[VERIFY] Operator safety:** product readiness now requires the expected
+  managed process—with service name, command, start fingerprint, and private
+  token—to remain alive as well as its health endpoint to pass. Runtime and log
+  creation use `0700`/`0600`-equivalent private defaults. Stop uses separate
+  bounded TERM and KILL deadlines; stale or unowned PID records fail closed.
+  Compose rollback stops only stacks first started by the current command.
+  Server and Mac launchers reject false readiness, use fingerprinted PID
+  records, avoid broad `pkill`, and keep gateway listeners on loopback.
+- **[VERIFY] Doctor and CI:** doctor checks Git, uv/Python 3.12+, Node, Docker
+  Engine and Compose, curl, make, SSH, exact Honcho state, templates, platform,
+  and runtime endpoints without reading configuration contents. Its Honcho
+  check cannot initialize a missing submodule. CI invokes the same first-party
+  entrypoint and explicitly includes Mac launchers, PyYAML for isolated server
+  tests, and the locked OCR entrypoint.
+- **[VERIFY] Release artifacts:** root Apache-2.0 `LICENSE` and `NOTICE`, the
+  bilingual README/handbook/deployment set, and an English Track 2 specification
+  in Markdown plus editable DOCX were reconciled. The DOCX rendered as 8 clean
+  pages and reported 0 high / 0 medium / 0 low accessibility findings. The
+  editable 7-slide presentation rendered without overflow; all 7 speaker-note
+  sections contain `[Sources]`. Privacy-pattern scans and `git diff --check`
+  passed. Windows is explicitly an unshipped architecture target, five model
+  names remain logical roles rather than universal simultaneous residency, and
+  the 2:37 video versus the official 3–5 minute recommendation is disclosed.
+- **Boundaries:** this task did not restart the real Docker/Honcho/OCR model or
+  Radeon stack and did not rerun accepted P3.1, P3.2, or P3.4 evidence. OCR
+  release verification loads the application boundary, not model weights.
+  Repository visibility, team registration, Rules confirmation, server demo
+  data, and the final submission/video-format decision remain human gates.
+- **Conclusion:** P3.17 meets its acceptance criteria and moves from `doing` to
+  `accept`. P3.18 is claimed for the final evidence-bound audit.

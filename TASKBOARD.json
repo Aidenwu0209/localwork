@@ -583,8 +583,8 @@
       "depends": [
         "P3.16"
       ],
-      "status": "doing",
-      "note": "2026-08-03 claimed: audit clean-clone/operator paths, add fail-closed doctor and first-party CI, reconcile docs/LICENSE/NOTICE, and prepare official English specification plus editable presentation artifacts."
+      "status": "accept",
+      "note": "2026-08-03 accept: clean staged checkout initialized pinned Honcho twice idempotently, doctor passed, and the full first-party suite passed (release 21, agentd 101, memoryd 82+6 subtests, capture 22, Node 9, Mac 20, server 46). Product lifecycle now requires owned live PID fingerprint plus health, uses private runtime/log permissions, bounded TERM/KILL, and conservative rollback; gateway is loopback-only. CI covers launchers and locked OCR entrypoint. Root LICENSE/NOTICE, bilingual release docs, English Markdown+8-page DOCX specification and 7-slide editable PPT passed render/accessibility/privacy QA. Evidence=docs/verification-log.md [VERIFY] P3.17."
     },
     {
       "id": "P3.18",
@@ -599,8 +599,8 @@
         "P3.16",
         "P3.17"
       ],
-      "status": false,
-      "note": ""
+      "status": "doing",
+      "note": "2026-08-03 claimed after P3.17 acceptance: perform the final evidence-bound product audit without rerunning accepted ROCm/video/Grafana work; verify fresh tests, release artifacts, privacy/secret boundaries, accepted live-flow evidence, and remaining human submission gates."
     }
   ]
 }

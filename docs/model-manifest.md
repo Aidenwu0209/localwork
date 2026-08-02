@@ -34,4 +34,4 @@ bash /workspace/dejaview-models/download-models.sh   # persistent copy; also at 
 Mac-side dev copies (task M2.5, downloaded separately, lower quants where noted):
 sentinel Q4_K_M + mmproj-f16 · fast Q8_0 · embed Q8_0 · perceive `gemma-4-E4B-it-Q4_K_M.gguf` + mmproj-BF16.
 
-Licenses: Apache-2.0 (ThinkingCap, MiniCPM-V, MiniCPM5, Qwen3-Embedding) · Gemma License (E4B — flag separately in `docs/licenses.md`, T3.4).
+Licenses: Apache-2.0 (ThinkingCap, MiniCPM-V, MiniCPM5, Qwen3-Embedding, and Gemma 4 E4B). Gemma 4 remains flagged separately in `docs/licenses.md` because older Gemma generations used different terms and the release must not blur that distinction.

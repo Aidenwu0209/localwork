@@ -1,0 +1,13 @@
+DejaView
+Copyright 2026 Aidenwu0209
+
+This product includes repository-owned modifications to third-party software.
+The Honcho modifications are distributed as patches under
+deploy/mac/honcho-patches/ and apply only to the pinned upstream revision.
+
+Third-party components and model weights retain their own licenses and notices.
+They are not relicensed by this NOTICE and are not included in the source tree
+unless explicitly identified. See docs/licenses.md and docs/model-manifest.md.
+
+User data, screenshots, credentials, and downloaded model weights are not part
+of the source distribution.

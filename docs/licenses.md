@@ -1,17 +1,19 @@
 # Third-party licenses & submission checklist notes
 
-> DejaView / 全本地数字记忆体 · P3.5 · 2026-07-23  
+> DejaView / 全本地数字记忆体 · P3.5 许可证清单 + P3.17 发布就绪更新 · 2026-08-03
 > Weights are **not** in git (see [`model-manifest.md`](model-manifest.md)); this file records license facts for models, engines, and libraries we actually use.
 
 ---
 
-## User data never leaves the device
+## User memory stays on the data-sovereignty device
 
-- Screenshots, OCR text, timeline events, Honcho peer memory, audit logs, and `DATA_ROOT` artifacts live only on the **user-owned data plane** (Mac / single-box host).
-- The AMD compute node runs **stateless inference** over a local/tunnel gateway (`GATEWAY_URL`). Prompt/image payloads for inference are not retained as a user memory store on the GPU host.
+- Screenshots, OCR text, timeline events, Honcho peer memory, audit logs, and `DATA_ROOT` artifacts live only on the **user-owned data plane** (Mac/Windows or the trusted all-in-one host).
+- Unfiltered pixels first pass through the data-plane Sentinel configured by `SENTINEL_GATEWAY_URL`. Only allowed inference payloads may use the AMD compute gateway.
+- The AMD compute node runs **stateless inference** over the local/tunnel gateway (`GATEWAY_URL`). Allowed prompt/image payloads are transient requests and are not retained as a user memory store on the GPU host.
 - Capture client: in-memory → POST → discard (**zero local disk**). Sentinel `block` frames write audit only — no OCR, no screenshot file.
 - No cloud LLM API keys in the contest path. SearXNG stays **disabled** by default.
 - Repo fixtures are **synthetic only**; clear the timeline DB before public demos if real capture was used.
+- agentd tries Radeon first and can fall back to verified Local Metal on classified request/product failures; the result reports the backend honestly. This fallback does not copy the memory database to the compute node.
 
 ---
 
@@ -92,7 +94,7 @@ Record who confirmed (name + date) in the team chat or a private note — not re
 
 ---
 
-## Handbook §10 readiness (honest status · 2026-07-23)
+## Handbook §10 readiness (honest status · 2026-08-03)
 
 Mirror of `docs/EXECUTION_HANDBOOK.md` §10. **Do not treat unchecked boxes as done.**
 
@@ -100,11 +102,15 @@ Mirror of `docs/EXECUTION_HANDBOOK.md` §10. **Do not treat unchecked boxes as d
 |---|---|---|
 | 全员注册 AMD AI Developer Program | **待** | Team self-check above — not automatable |
 | Rules & Conditions 通读 + 按规定提交 | **待** | Same; portal/format TBD by Rules at submit time |
-| 仓库公开、README 双语、两拓扑、快速开始可复现 | **部分具备** | README 双语 + 形态 A/B 拓扑 + 冒烟步骤已由 **P3.3** (`63b10d3`) 完成;仓库仍为 **private**,公开化留提交前 |
-| `docs/benchmarks.md` + Grafana 截图 | **待** | OCR A/B 已在 `benchmarks.md`;**ROCm 消融 = P3.1**(进行中);**Grafana = P3.2**(depends P3.1) |
-| 演示视频 ≤5 分钟 | **待** | **P3.4**(depends P3.1;手册 §9 六幕含远端计算链路故障切换) |
+| 英文 Project Specification Document | **已具备** | `docs/submission/PROJECT_SPECIFICATION.md` 与可编辑 DOCX 已完成 8 页渲染和可访问性 QA |
+| 源码、英文 README、两拓扑、快速开始可复现 | **已具备** | 双语 README/拓扑、submodule/setup、doctor、CI 与干净检出全套已通过。本地不推断 GitHub 可见性,提交前人工确认 |
+| 可编辑 PPT / Poster | **已具备** | 7 页可编辑 PPT 已逐页渲染、无溢出且备注含来源 |
+| `docs/benchmarks.md` + Grafana 截图 | **已具备** | P3.1 ROCm 正式 18+3 cell 消融、checksummed 原始证据和 P3.2 一屏 Grafana 截图已 accept;未测项在 benchmarks 中保持显式边界 |
+| 演示视频 | **已具备，等最终格式确认** | P3.4 2:37 六幕成片已 accept,含已验证 Radeon 链路故障切换和 Local Metal 第二次日报;官方推荐 3–5 分钟,提交前人工确认是否需≥3:00 版 |
 | `docs/licenses.md`(含 Gemma 单独标注) | **已具备** | 本文(P3.5) |
 | 提示词/示例去个人信息;无真实隐私/API key 入库 | **基本具备** | Honcho few-shot 已合成化(M2.3);`tests/assets` 全合成;演示前若跑过真实采集须清库 |
 | 比赛服务器仅演示数据、赛后可销毁重建 | **部分具备** | 算力端无状态 + `download-models.sh` 可重建权重;提交前仍须确认演示数据/清库流程 |
+| 根目录 `LICENSE` / `NOTICE` | **已具备** | P3.17 发布套件整体验收通过 |
+| 可选云模型优化 +20 | **未申报** | 当前竞赛路径只对齐 60+40 基础评分,不声称 120 分覆盖 |
 
-**Still open for final submit (do not fake-check):** P3.1 ROCm ablation · P3.2 Grafana · P3.4 demo video · repo publicize · human AMD/Rules registration.
+**Still open for final submit (do not fake-check):** P3.18 · repository visibility · final video-format decision · server demo-data check · human AMD/Rules registration and submission-platform confirmation.

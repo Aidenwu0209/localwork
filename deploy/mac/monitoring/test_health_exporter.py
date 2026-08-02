@@ -8,6 +8,7 @@ import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -194,22 +195,28 @@ class ProbeIntegrationTest(unittest.TestCase):
 
     def test_probe_cycle_caches_live_fallback_inside_ttl(self) -> None:
         moments = iter((100.0, 105.0))
-        ports = {
-            name: self.server.server_port for name in health.COMPONENT_ORDER
-        }
         checker = health.SelfCheck(
             host="127.0.0.1",
-            ports=ports,
             timeout=1.0,
             fallback_timeout=1.0,
             fallback_ttl=30.0,
             clock=lambda: next(moments),
         )
+        fallback_calls: list[str] = []
 
-        checker.run_cycle()
-        checker.run_cycle()
+        def fake_fallback(url: str, *, timeout: float) -> health.ProbeResult:
+            fallback_calls.append(url)
+            return _result(True)
 
-        self.assertEqual(len(_FixtureHandler.fallback_requests), 1)
+        with (
+            patch.object(checker, "_probe_named", return_value=_result(True)),
+            patch.object(health, "probe_local_fallback", side_effect=fake_fallback),
+        ):
+            checker.run_cycle()
+            checker.run_cycle()
+
+        self.assertTrue(checker.results["local_fallback"].healthy)
+        self.assertEqual(len(fallback_calls), 1)
 
 
 if __name__ == "__main__":

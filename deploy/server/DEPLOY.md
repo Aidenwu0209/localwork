@@ -1,12 +1,11 @@
 # AMD 服务器部署指南(算力端)
 
-> 当前服务器:`ssh radeon-cloud`(本机别名,实际
-> `root@36.150.116.200 -p 30189`,实例 `u-4695-e6d1476b`)。旧 `:30147`
-> 是 2026-07-23～28 历史故障实例,勿再作为现行端口。
+> 连接入口统一为本机已授权的 `ssh radeon-cloud` 别名。Radeon Cloud
+> 实例和公网端口会更换;不在公开发布文档固化临时 IP、端口或实例 ID。
 > 硬件:AMD Radeon PRO W7900D 48GB(gfx1100)+ 双路 EPYC 9334 / 128 逻辑核
 > + 1007.56 GiB RAM。
-> 当前实例 ROCm 7.2.1。P3.1 正式 run 时容器分配 GPU 上无 KFD
-> 共租进程;旧 `:30147` 实例曾有 Dolphin-v2-ROCm 常驻(~10.6GB
+> 已验收环境为 ROCm 7.2.1。P3.1 正式 run 时容器分配 GPU 上无 KFD
+> 共租进程;早期共享实例曾有 Dolphin-v2-ROCm 常驻(~10.6GB
 > VRAM)。任何实例一旦出现 Dolphin/未知 KFD 进程都视为共租,
 > **不得影响**。
 
@@ -20,8 +19,8 @@ ssh radeon-cloud \
    rocm-smi --showpids verbose; echo '---'; \
    cd /root/dejaview-launch && ./server-stack.sh status"
 ```
-确认 alias 命中当前 `:30189`,GPU/KFD 进程身份清楚且 VRAM 足够。禁止凭
-旧 PID 判断 Dolphin;若有任何未知共租进程,先停止并确认操作范围。
+确认 alias 命中已授权的当前实例,GPU/KFD 进程身份清楚且 VRAM 足够。
+禁止凭旧端口、旧 PID 判断 Dolphin;若有任何未知共租进程,先停止并确认操作范围。
 
 ## 1. 推理引擎(llama.cpp HIP,已编译)
 
@@ -70,7 +69,7 @@ sha256:`/workspace/dejaview-models/sha256.txt` + `deploy/server/sha256.txt`。
 ssh radeon-cloud
 cd /root/dejaview-launch
 
-# 4 小模型常驻(~12GB,和 Dolphin 共存无压力)
+# 单机/演示拓扑可启 4 个小角色(~12GB);日常 split 拓扑的 sentinel 留在数据主权端
 ./server-stack.sh up embed fast sentinel perceive
 ./server-stack.sh status
 # brain 按需(先停 perceive 腾位,brain 能兼任 perceive)
@@ -80,6 +79,10 @@ cd /root/dejaview-launch
 
 `server-stack.sh` 命令:`up <role...>` / `down [role...]` / `status`。
 brain 的量化档:`BRAIN_QUANT=Q8_0 ./brain.sh`(默认 Q6_K,共享 GPU 必须用 Q6_K)。
+
+五个名称是稳定的逻辑角色,不是“任何时候五套权重全部同时常驻”的承诺。
+分离日常拓扑通常只在 AMD 端启 `embed fast perceive`,Sentinel 在数据主权端,
+brain 按需起停;单机/演示拓扑才根据实测显存余量编排全部角色。
 
 ### 3.1 同步并启用 P3.2 实时指标
 
@@ -92,27 +95,16 @@ rsync -a deploy/server/llama-launch/ radeon-cloud:/root/dejaview-launch/
 rsync -a deploy/server/monitoring/ radeon-cloud:/root/dejaview-launch/monitoring/
 ```
 
-随后在服务器先做 GPU/KFD 与 DejaView PID 只读清点，再只重启明确命名的
-DejaView 小模型角色，禁止广域 `pkill`、禁止碰 Dolphin 或未知 KFD 进程：
+随后在服务器先做 GPU/KFD 与 DejaView 托管进程的只读清点，再只重启明确
+命名的小模型角色，禁止广域 `pkill`、禁止碰 Dolphin 或未知 KFD 进程。
+`server-stack.sh` 会在 `${DEJAVIEW_RUNTIME_DIR:-/tmp/dejaview}` 中保存带进程
+启动指纹的 PID 记录；不要用旧版单行 PID 文件自行终止进程：
 
 ```bash
 rocm-smi --showmeminfo vram --showuse
 rocm-smi --showpids verbose
 cd /root/dejaview-launch
 ./server-stack.sh status
-for role in embed fast sentinel perceive; do
-  pidfile="/tmp/dejaview-$role.pid"
-  [[ -r "$pidfile" ]] || continue
-  pid="$(cat "$pidfile")"
-  kill -0 "$pid" 2>/dev/null || continue
-  command_line="$(tr '\0' ' ' <"/proc/$pid/cmdline")"
-  if [[ "$command_line" != *"llama-server"* ||
-        "$command_line" != *"--alias $role"* ]]; then
-    echo "$pidfile 指向非 DejaView PID $pid，停止操作" >&2
-    exit 1
-  fi
-  ps -fp "$pid"
-done
 ./server-stack.sh down embed fast sentinel perceive
 ./server-stack.sh up embed fast sentinel perceive
 if ss -H -ltnp 'sport = :9393' | grep -q .; then
@@ -163,14 +155,15 @@ P3.1 正式 run 在当前无容器内 KFD 共租的 replacement instance 上测�
 
 ## 5. Mac 怎么连(SSH 隧道)
 
-服务器网关绑 `0.0.0.0:4000` 但端口没暴露公网。Mac 走隧道:
+服务器网关硬绑定 `127.0.0.1:4000`，不接受公网或局域网直接访问。Mac 只走
+SSH 隧道：
 ```bash
 ssh -f -N -L 14000:127.0.0.1:4000 radeon-cloud
 # Mac 用 GATEWAY_URL=http://127.0.0.1:14000/v1
 ```
-隧道抖动会导致 httpx ReadTimeout —— memoryd 的 GatewaySentinel/Perceive 已加 retry+长 timeout(180/240s)。
-
-> 决赛现场用 LAN:服务器网关已在 0.0.0.0,Mac 直连服务器内网 IP:4000 即可,延迟从 ~15s 降到 ~5s。
+隧道抖动会导致 httpx ReadTimeout —— memoryd 的 GatewaySentinel/Perceive 已加
+retry 与长 timeout（180/240s）。现场也保持该回环绑定与隧道边界，不改成
+`0.0.0.0`。
 
 ## 6. ocrd 在哪跑
 

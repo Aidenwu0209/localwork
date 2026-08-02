@@ -3,11 +3,20 @@ COMPOSE_DATA := docker compose -f deploy/mac/compose.data.yml
 COMPOSE_DEMO_DATA := docker compose -f deploy/mac/compose.demo-data.yml
 COMPOSE_MONITORING := docker compose -f deploy/mac/compose.monitoring.yml
 
-.PHONY: data-up data-down data-logs data-psql data-reset \
+.PHONY: setup doctor test test-capture product-up product-down product-status capture \
+	data-up data-down data-logs data-psql data-reset \
 	demo-data-up demo-data-down demo-data-reset demo-data-logs \
 	monitoring-up monitoring-down monitoring-logs help
 
 help:
+	@echo "setup       initialize the pinned, patched Honcho submodule"
+	@echo "doctor      read-only prerequisite and release-state checks"
+	@echo "test        run the offline first-party release test suite"
+	@echo "test-capture run the macOS-only capture client suite"
+	@echo "product-up  start local data, Honcho, ocrd, memoryd, and agentd"
+	@echo "product-down stop only DejaView-managed local services (data preserved)"
+	@echo "product-status show local process and endpoint status"
+	@echo "capture     run the foreground macOS capture client"
 	@echo "data-up     start Mac data layer (postgres+pgvector on :5433, redis on :6380)"
 	@echo "data-down   stop data layer (volumes preserved)"
 	@echo "data-reset  stop and WIPE data layer volumes"
@@ -19,6 +28,30 @@ help:
 	@echo "monitoring-up    start local Prometheus + Grafana on :9090 / :3000"
 	@echo "monitoring-down  stop monitoring (metrics volumes preserved)"
 	@echo "monitoring-logs  tail local Prometheus + Grafana logs"
+
+setup:
+	./deploy/mac/setup-honcho.sh
+
+doctor:
+	./scripts/doctor.sh
+
+test:
+	./scripts/test-first-party.sh
+
+test-capture:
+	uv run --project clients/capture --with pytest pytest -q clients/capture/tests
+
+product-up:
+	./deploy/mac/product-stack.sh up
+
+product-down:
+	./deploy/mac/product-stack.sh down
+
+product-status:
+	./deploy/mac/product-stack.sh status
+
+capture:
+	CAPTURE_DEVICE_ID="$${CAPTURE_DEVICE_ID:-dev}" uv run --project clients/capture python -m capture
 
 data-up:
 	$(COMPOSE_DATA) up -d --wait

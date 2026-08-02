@@ -1,4 +1,4 @@
-# DejaView — 项目状态交接(2026-08-02)
+# DejaView — 项目状态交接(2026-08-03)
 
 > 人话版快照。完整决策与进度以 `docs/EXECUTION_HANDBOOK.md` **§12** 为准(已含 7/20–7/28 会话决策摘要)。状态机:`TASKBOARD.json`。踩坑:`docs/verification-log.md`。开工指令:`docs/AGENT_KICKOFF_PROMPT.md`。
 
@@ -6,17 +6,17 @@
 
 ## 一句话现状
 
-**DejaView** = 全本地数字记忆体(赛道 AMD Hackathon Track 2 · Agentic AI)。比赛六幕和 ROCm 证据已验收;成熟产品加固 P3.12–P3.18 已启动。截止 **2026-08-06 23:59 UTC+8**,约剩 **4 天**。
+**DejaView** = 全本地数字记忆体(赛道 AMD Hackathon Track 2 · Agentic AI)。比赛六幕和 ROCm 证据已验收;成熟产品加固 P3.12–P3.18 已启动。截止 **2026-08-06 23:59 UTC+8**,当前进入最后提交窗口。
 
 | 状态 | 内容 |
 |---|---|
 | **已完成** | G0+M+D **33/33 accept**;**P3.1 ROCm 消融**;P3.3 README;P3.5 licenses;P3.6 哨兵;P3.7 perceive |
 | **P3.1 正式证据** | run `p31-w7900d-20260728T075653Z`;18 个 brain 量化×MTP×并发 cell + 3 个 perceive `-np` cell,均为 1 次 warm-up + 3 次实测;原始证据在 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`,截图在 `docs/assets/p31/p31-w7900d-20260728T075653Z/` |
 | **本次新增完成** | **P3.2 Grafana** 一屏验收;**P3.4 六幕视频** 2:37 成片;**P3.11 Grafana 系统自检**含 READY/DEGRADED/FAILED、数据新鲜度、本机核心与算力路径 |
-| **工程任务** | TASKBOARD 当前 **46/48 accept**,P3.12–P3.16 已验收;P3.17–P3.18 待实施;成片 `docs/assets/demo/dejaview-p34-six-act-20260802.mp4`;自检截图 `docs/assets/p32/grafana-selfcheck-20260802.png` |
+| **工程任务** | TASKBOARD 当前 **47/48 accept**;P3.12–P3.17 已验收;**P3.18 doing**(最终全链路验收);成片 `docs/assets/demo/dejaview-p34-six-act-20260802.mp4`;自检截图 `docs/assets/p32/grafana-selfcheck-20260802.png` |
 | **产品化边界** | 单用户、屏幕记忆优先、隐私 fail-closed、真实 Radeon→Local Metal 降级、Honcho 自动成长、可点击证据产品页、干净机器复现 |
 
-**下一优先:P3.17 干净机器复现与发布一致性**;人工提交检查(AMD Developer Program、Rules、服务器仅演示数据)仍需队员本人完成。
+**下一优先:P3.18 成熟产品最终全链路验收**;人工提交检查(AMD Developer Program、Rules、服务器仅演示数据)仍需队员本人完成。
 
 ---
 
@@ -32,21 +32,24 @@
 
 | 层 | 命令 | 端口 |
 |---|---|---|
+| 发布体检 | `make setup && make doctor` | 只读依赖/补丁/端点检查 |
+| 第一方测试 | `make test` | 与 CI 相同的离线契约集 |
+| 产品生命周期 | `make product-up` / `make product-status` / `make product-down` | 本地受管服务 |
 | 数据层 | `make data-up` | pg :5433 / redis :6380 |
 | Honcho | `docker compose -f deploy/mac/compose.honcho.yml up -d` | :8100 |
 | ocrd | `cd services/ocrd && uv run python -m ocrd` | :8006 |
 | memoryd | `SENTINEL_GATEWAY_URL=http://127.0.0.1:4000/v1 GATEWAY_URL=http://127.0.0.1:14000/v1 uv run --project services/memoryd python -m memoryd` | :8090 |
 | agentd | `RADEON_GATEWAY_URL=http://127.0.0.1:14000/v1 LOCAL_GATEWAY_URL=http://127.0.0.1:4000/v1 uv run --project services/agentd python -m agentd` | :8101 |
-| capture | `cd clients/capture && CAPTURE_DEVICE_ID=<id> uv run python -m capture` | — |
+| capture | `CAPTURE_DEVICE_ID=<id> make capture`(前台,授权可见) | — |
 | 隧道 | `ssh -f -N -L 14000:127.0.0.1:4000 radeon-cloud` | Mac :14000 |
-| 服务器 | `ssh radeon-cloud` → `/root/dejaview-launch/server-stack.sh up embed fast sentinel perceive` | :4000 |
+| 本地隐私门 | `./deploy/mac/llama-launch/dev-stack.sh up sentinel` | :4000 / :8003 |
+| AMD 算力端 | `ssh radeon-cloud` → `/root/dejaview-launch/server-stack.sh up embed fast perceive` | :4000 |
 
-当前服务器:`root@36.150.116.206 -p 31357`(实例
-`u-15420-7be0d6c9`;别名仍为 `radeon-cloud`)。旧 `:30147` / `:30189` 是
-历史实例,勿再作为现行端口。当前五个模型角色、LiteLLM 网关与 ROCm
-exporter 已为 P3.4 录制常驻;若实例重启,先 `rocm-smi` +
-`server-stack.sh status`,再只起所需角色。若未来
-再次出现 Dolphin/未知 KFD 共租,brain 用 Q6_K、先停 perceive、MTP
+Radeon Cloud 实例和公网端口可能更换;发布文档只使用本机已授权的
+`ssh radeon-cloud` 别名,不把某次临时公网坐标当成产品配置。实例重启或重起模型前,
+先 `rocm-smi` + `server-stack.sh status`,再只起所需角色。五个逻辑角色
+不等于所有权重在每种拓扑同时常驻:daily split 中 Sentinel 留在数据主权端,
+brain 按需启动。若出现 Dolphin/未知 KFD 共租,brain 用 Q6_K、先停 perceive、MTP
 默认关;只有加载后仍保留 ≥6 GiB 余量才可开 MTP。
 
 ---
@@ -54,7 +57,7 @@ exporter 已为 P3.4 录制常驻;若实例重启,先 `rocm-smi` +
 ## 会话里定死的关键决策(摘要)
 
 - **产品**:数字记忆体,不做普通 RAG 聊天;叙事 = Recall/Rewind 翻车 → Radeon 安全复活 + Honcho + 哨兵。
-- **架构**:Mac=数据主权;AMD=无状态算力;经 LiteLLM 逻辑名(`brain/perceive/sentinel/fast/embed`)。
+- **架构**:Mac/Windows=数据主权,原始画面先过本地 Sentinel;AMD=放行后的无状态算力;经 LiteLLM 逻辑名(`brain/perceive/sentinel/fast/embed`)。
 - **模型**:brain=ThinkingCap-27B;perceive=Gemma4-E4B;sentinel=MiniCPM-V;fast=MiniCPM5;embed=Qwen3-Emb-0.6B;ocrd=**PP-OCRv6**(不用 VL)。
 - **Honcho**:钉 `340175ad` + `deploy/mac/honcho-patches/`;勿追 main;勿 add dirty submodule。
 - **Git**:作者仅 Aidenwu0209;无 AI trailer(Cursor 会自动加,用 commit-tree 清);每任务 push。
@@ -80,13 +83,14 @@ exporter 已为 P3.4 录制常驻;若实例重启,先 `rocm-smi` +
 | P3.14 | **accept** | 问答与日报共用真实 Radeon-first router;引用防伪;Local Metal `perceive` fallback;63 tests + Radeon/断链本地/双失败 live probes |
 | P3.15 | **accept** | 原子 Honcho outbox、严格最小化 payload、幂等 worker、退避/租约、暂停/状态;59 tests + live success/replay/failure/pause proof |
 | P3.16 | **accept** | 默认日常产品页;能力签名证据+CSRF+本地控制边界;四档无溢出;axe 0 violations;独立安全/UX 复审 PASS |
-| P3.17–P3.18 | false | 干净复现→全链路验收 |
+| P3.17 | **accept** | 干净检出全套通过;幂等 Honcho setup、只读 doctor、第一方 CI、受管生命周期、LICENSE/NOTICE、双语文档、英文规格与可编辑 PPT 均完成 QA |
+| P3.18 | **doing** | 成熟产品最终全链路验收 |
 
 ---
 
 ## 接手纪律(最短版)
 
-1. 勿重做 TASKBOARD 42 个已 accept 项,尤其不要重跑 P3.1 正式矩阵。
+1. 勿重做 TASKBOARD 47 个已 accept 项,尤其不要重跑 P3.1 正式矩阵。
 2. 起 GPU 前 `rocm-smi`,勿碰未知 KFD 进程;共租时勿 OOM Dolphin。
 3. commit 后检查无 `Co-authored-by`。
 4. 演示前清 timeline 库。
