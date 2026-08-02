@@ -248,11 +248,7 @@ document.getElementById("dailyButton").addEventListener("click", (event) => {
   let traceLines = [];
   stream.onmessage = (message) => {
     const data = JSON.parse(message.data);
-    if (data.type === "backend") {
-      const badge = document.getElementById("dailyBackend");
-      badge.textContent = data.backend.toUpperCase();
-      badge.classList.toggle("fallback", data.backend.includes("fallback"));
-    } else if (data.type === "trace") {
+    if (data.type === "trace") {
       traceLines.push(data.line);
       trace.innerHTML = traceLines.map((line) => {
         return escapeHtml(line).replace(/^(\[[^\]]+\])/, "<b>$1</b>");
@@ -263,6 +259,16 @@ document.getElementById("dailyButton").addEventListener("click", (event) => {
     } else if (data.type === "result") {
       report.textContent = data.report;
       pipeline.forEach((node) => node.classList.add("active"));
+      const actualRoutes = data.route_metadata || {};
+      const writerRoutes = actualRoutes.writer || [];
+      const finalWriterRoute = writerRoutes[writerRoutes.length - 1] ||
+        (actualRoutes.reviewer || [])[0] || null;
+      if (finalWriterRoute) {
+        const badge = document.getElementById("dailyBackend");
+        const local = finalWriterRoute.backend === "local_metal";
+        badge.textContent = local ? "ACTUAL · LOCAL METAL" : "ACTUAL · RADEON ROCm";
+        badge.classList.toggle("fallback", local);
+      }
       dailyBackendPinned = true;
     } else if (data.type === "error") {
       trace.innerHTML += `<br /><span class="error-state">${escapeHtml(data.message)}</span>`;

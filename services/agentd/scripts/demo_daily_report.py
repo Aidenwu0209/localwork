@@ -13,8 +13,10 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-import httpx
 import psycopg
+
+from agentd.config import Settings
+from agentd.router import BothBackendsFailed, ComputeFailure, ComputeRouter
 
 DEFAULT_DSN = "postgresql://dejaview:dejaview@127.0.0.1:5433/dejaview_demo"
 CITATION_RE = re.compile(r"\[event#(\d+) ([0-2]\d:[0-5]\d) ([^\]]+)\]")
@@ -29,8 +31,15 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--device-id", default="demo-p34")
     parser.add_argument(
-        "--gateway-url",
-        default=os.environ.get("GATEWAY_URL", "http://127.0.0.1:4000/v1"),
+        "--radeon-gateway-url",
+        default=os.environ.get(
+            "RADEON_GATEWAY_URL",
+            os.environ.get("GATEWAY_URL", "http://127.0.0.1:4000/v1"),
+        ),
+    )
+    parser.add_argument(
+        "--local-gateway-url",
+        default=os.environ.get("LOCAL_GATEWAY_URL", "http://127.0.0.1:4000/v1"),
     )
     parser.add_argument(
         "--output",
@@ -52,35 +61,26 @@ def _parse_args() -> argparse.Namespace:
     return args
 
 
-def _gateway_chat(
-    gateway_url: str,
+def _router_chat(
+    router: ComputeRouter,
     *,
     model: str,
     system: str,
     user: str,
     max_tokens: int,
     json_mode: bool = False,
-) -> str:
-    base = gateway_url.rstrip("/")
-    if not base.endswith("/v1"):
-        base += "/v1"
-    body = {
-        "model": model,
-        "messages": [
+) -> tuple[str, dict[str, Any]]:
+    result = router.chat(
+        model,
+        [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ],
-        "temperature": 0,
-        "max_tokens": max_tokens,
-        "stream": False,
-        "chat_template_kwargs": {"enable_thinking": False},
-    }
-    if json_mode:
-        body["response_format"] = {"type": "json_object"}
-    with httpx.Client(timeout=httpx.Timeout(300.0, connect=10.0)) as client:
-        response = client.post(f"{base}/chat/completions", json=body)
-        response.raise_for_status()
-    return response.json()["choices"][0]["message"].get("content") or ""
+        temperature=0,
+        max_tokens=max_tokens,
+        response_format={"type": "json_object"} if json_mode else None,
+    )
+    return result.content, {**result.route.as_dict(), "latency_ms": result.route.latency_ms}
 
 
 def _parse_json_object(content: str) -> dict[str, Any]:
@@ -90,7 +90,7 @@ def _parse_json_object(content: str) -> dict[str, Any]:
         cleaned = re.sub(r"\s*```$", "", cleaned)
     start, end = cleaned.find("{"), cleaned.rfind("}")
     if start < 0 or end <= start:
-        raise ValueError(f"model did not return JSON: {content[:300]}")
+        raise ValueError("model did not return a JSON object")
     value = json.loads(cleaned[start : end + 1])
     if not isinstance(value, dict):
         raise TypeError("expected a JSON object")
@@ -126,34 +126,39 @@ def _validate_review_response(value: dict[str, Any]) -> str | None:
     return None
 
 
-def _gateway_json_with_retry(
-    gateway_url: str,
+def _router_json_with_retry(
+    router: ComputeRouter,
     *,
     model: str,
     system: str,
     user: str,
     max_tokens: int,
     validate: Callable[[dict[str, Any]], str | None],
+    route_metadata: list[dict[str, Any]] | None = None,
 ) -> tuple[dict[str, Any], int]:
     """Require a real model JSON response, retrying one formatting contradiction."""
 
     failures: list[str] = []
     feedback = ""
     for attempt in range(1, MAX_MODEL_ATTEMPTS + 1):
-        raw = _gateway_chat(
-            gateway_url,
+        raw, route = _router_chat(
+            router,
             model=model,
             system=system,
             user=user + feedback,
             max_tokens=max_tokens,
             json_mode=True,
         )
+        if route_metadata is not None:
+            route_metadata.append(route)
         try:
             value = _parse_json_object(raw)
             problem = validate(value)
             if problem is None:
                 return value, attempt
-        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+        except json.JSONDecodeError:
+            problem = "model returned invalid JSON"
+        except (TypeError, ValueError) as exc:
             problem = str(exc)
         failures.append(f"attempt {attempt}: {problem}")
         feedback = (
@@ -266,6 +271,31 @@ def _review_event_projection(
     ]
 
 
+def _router_for_args(args: argparse.Namespace, dsn: str) -> ComputeRouter:
+    return ComputeRouter(
+        Settings(
+            gateway_url=args.radeon_gateway_url,
+            radeon_gateway_url=args.radeon_gateway_url,
+            local_gateway_url=args.local_gateway_url,
+            timeline_db_url=dsn,
+            honcho_url="http://127.0.0.1:8100",
+            data_root=Path("/tmp/dejaview-p34-data"),
+        )
+    )
+
+
+def _compute_failure_message(exc: ComputeFailure | BothBackendsFailed) -> str:
+    if isinstance(exc, BothBackendsFailed):
+        return "compute paths failed: " + ", ".join(exc.reasons)
+    return "compute rejected: " + exc.reason
+
+
+def _daily_failure_message(exc: ValueError | ComputeFailure | BothBackendsFailed) -> str:
+    if isinstance(exc, (ComputeFailure, BothBackendsFailed)):
+        return _compute_failure_message(exc)
+    return "invalid model output"
+
+
 def main() -> int:
     args = _parse_args()
     if os.environ.get("DEJAVIEW_DEMO_MODE") != "1":
@@ -274,6 +304,7 @@ def main() -> int:
     if dsn != DEFAULT_DSN:
         raise SystemExit("TIMELINE_DB_URL must target local database dejaview_demo")
     timezone_name = os.environ.get("TZ", "Asia/Kuching")
+    router = _router_for_args(args, dsn)
     with psycopg.connect(dsn) as conn, conn.cursor() as cur:
         cur.execute("SELECT current_database()")
         if cur.fetchone()[0] != "dejaview_demo":
@@ -285,9 +316,10 @@ def main() -> int:
             raise SystemExit("demo database contains a non-demo device")
 
     print("[Planner] fast: designing today's report sections...", flush=True)
+    planner_routes: list[dict[str, Any]] = []
     try:
-        plan, planner_attempts = _gateway_json_with_retry(
-            args.gateway_url,
+        plan, planner_attempts = _router_json_with_retry(
+            router,
             model="fast",
             system=(
                 "You are the Planner agent for a private digital-memory daily "
@@ -303,9 +335,12 @@ def main() -> int:
             ),
             max_tokens=160,
             validate=_validate_plan_response,
+            route_metadata=planner_routes,
         )
-    except ValueError as exc:
-        raise SystemExit(f"Planner failed after real-model retries: {exc}") from exc
+    except (ValueError, ComputeFailure, BothBackendsFailed) as exc:
+        raise SystemExit(
+            "Planner failed after real-model retries: " + _daily_failure_message(exc)
+        ) from exc
     if planner_attempts > 1:
         print(
             f"[Planner] recovered valid JSON on attempt {planner_attempts}",
@@ -335,28 +370,34 @@ def main() -> int:
     validation: dict[str, Any] = {}
     citations_normalized = False
     writer_attempts = 0
+    writer_routes: list[dict[str, Any]] = []
     repair: dict[str, Any] | None = None
     for writer_attempts in range(1, MAX_MODEL_ATTEMPTS + 1):
-        writer_raw = _gateway_chat(
-            args.gateway_url,
-            model="brain",
-            system=(
-                "You are the Writer agent. Write concise Markdown using only "
-                "headings and factual bullets from the supplied synthetic events. "
-                "Every non-heading line must end with a citation exactly like "
-                "[event#12 09:30 VS Code]. Never invent an id, time, app, or fact."
-            ),
-            user=json.dumps(
-                {
-                    "date": args.report_date.isoformat(),
-                    "plan": plan,
-                    "events": events,
-                    "repair_previous_validation": repair,
-                },
-                ensure_ascii=False,
-            ),
-            max_tokens=700,
-        ).strip()
+        try:
+            writer_raw, writer_route = _router_chat(
+                router,
+                model="brain",
+                system=(
+                    "You are the Writer agent. Write concise Markdown using only "
+                    "headings and factual bullets from the supplied synthetic events. "
+                    "Every non-heading line must end with a citation exactly like "
+                    "[event#12 09:30 VS Code]. Never invent an id, time, app, or fact."
+                ),
+                user=json.dumps(
+                    {
+                        "date": args.report_date.isoformat(),
+                        "plan": plan,
+                        "events": events,
+                        "repair_previous_validation": repair,
+                    },
+                    ensure_ascii=False,
+                ),
+                max_tokens=700,
+            )
+        except (ComputeFailure, BothBackendsFailed) as exc:
+            raise SystemExit("Writer failed: " + _compute_failure_message(exc)) from exc
+        writer_routes.append(writer_route)
+        writer_raw = writer_raw.strip()
         writer_raw, normalized_this_attempt = _normalize_citations(writer_raw)
         citations_normalized = citations_normalized or normalized_this_attempt
         validation = _validate_report(writer_raw, events)
@@ -369,11 +410,7 @@ def main() -> int:
                 flush=True,
             )
     if not validation["pass"]:
-        raise SystemExit(
-            "Writer citation validation failed after real-model retries: "
-            + json.dumps(validation, ensure_ascii=False)
-            + f"\nWriter output:\n{writer_raw[:1200]}"
-        )
+        raise SystemExit("Writer citation validation failed after real-model retries")
     print(
         f"[Writer] draft grounded by {validation['citation_count']} citations",
         flush=True,
@@ -381,9 +418,10 @@ def main() -> int:
 
     print("[Reviewer] fast: checking provenance and scope...", flush=True)
     review_events = _review_event_projection(events)
+    reviewer_routes: list[dict[str, Any]] = []
     try:
-        review, reviewer_attempts = _gateway_json_with_retry(
-            args.gateway_url,
+        review, reviewer_attempts = _router_json_with_retry(
+            router,
             model="fast",
             system=(
                 "You are the Reviewer agent. Independently review the report "
@@ -409,18 +447,19 @@ def main() -> int:
             ),
             max_tokens=100,
             validate=_validate_review_response,
+            route_metadata=reviewer_routes,
         )
-    except ValueError as exc:
-        raise SystemExit(f"Reviewer failed after real-model retries: {exc}") from exc
+    except (ValueError, ComputeFailure, BothBackendsFailed) as exc:
+        raise SystemExit(
+            "Reviewer failed after real-model retries: " + _daily_failure_message(exc)
+        ) from exc
     if reviewer_attempts > 1:
         print(
             f"[Reviewer] resolved contradictory JSON on attempt {reviewer_attempts}",
             flush=True,
         )
     if str(review.get("decision", "")).lower() != "pass" or review.get("issues") != []:
-        raise SystemExit(
-            "Reviewer rejected report: " + json.dumps(review, ensure_ascii=False)
-        )
+        raise SystemExit("Reviewer rejected report")
     print("[Reviewer] PASS — citations resolve to retrieved event ids", flush=True)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -441,6 +480,11 @@ def main() -> int:
                     "reviewer": reviewer_attempts,
                 },
                 "review": review,
+                "routes": {
+                    "planner": planner_routes,
+                    "writer": writer_routes,
+                    "reviewer": reviewer_routes,
+                },
             },
             indent=2,
             ensure_ascii=False,

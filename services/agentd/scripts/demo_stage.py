@@ -1271,11 +1271,18 @@ def _iter_process_output(
         yield str(item).rstrip()
 
 
-def _daily_stream(candidates: list[tuple[str, str]]) -> Iterator[str]:
+def _daily_route_metadata(audit: object) -> dict[str, Any]:
+    if not isinstance(audit, dict) or not isinstance(audit.get("routes"), dict):
+        raise ValueError("daily report is missing route metadata")
+    return audit["routes"]
+
+
+def _daily_stream(
+    *, radeon_gateway_url: str, local_gateway_url: str
+) -> Iterator[str]:
     today = datetime.now(TIMEZONE).date().isoformat()
     failures: list[str] = []
-    for backend, gateway_url in candidates:
-        yield _sse({"type": "backend", "backend": backend})
+    for backend in ("shared router",):
         with tempfile.TemporaryDirectory(prefix="dejaview-p34-") as temp_dir:
             output = Path(temp_dir) / "daily-report.md"
             audit_output = Path(temp_dir) / "daily-report-audit.json"
@@ -1287,8 +1294,10 @@ def _daily_stream(candidates: list[tuple[str, str]]) -> Iterator[str]:
                     today,
                     "--device-id",
                     DEVICE_ID,
-                    "--gateway-url",
-                    gateway_url,
+                    "--radeon-gateway-url",
+                    radeon_gateway_url,
+                    "--local-gateway-url",
+                    local_gateway_url,
                     "--output",
                     str(output),
                     "--audit-output",
@@ -1300,7 +1309,6 @@ def _daily_stream(candidates: list[tuple[str, str]]) -> Iterator[str]:
                 text=True,
                 bufsize=1,
             )
-            captured: list[str] = []
             try:
                 try:
                     for line in _iter_process_output(
@@ -1309,7 +1317,6 @@ def _daily_stream(candidates: list[tuple[str, str]]) -> Iterator[str]:
                     ):
                         if not line:
                             continue
-                        captured.append(line)
                         if not line.startswith("[Done]"):
                             yield _sse({"type": "trace", "line": line})
                 except TimeoutError as exc:
@@ -1341,8 +1348,7 @@ def _daily_stream(candidates: list[tuple[str, str]]) -> Iterator[str]:
             finally:
                 _terminate_process(process)
             if return_code != 0:
-                failure = "\n".join(captured[-12:]) or "daily report failed"
-                failures.append(f"{backend}: {failure}")
+                failures.append(f"{backend}: daily report failed")
                 yield _sse(
                     {
                         "type": "trace",
@@ -1353,8 +1359,9 @@ def _daily_stream(candidates: list[tuple[str, str]]) -> Iterator[str]:
             try:
                 report = output.read_text(encoding="utf-8")
                 audit = json.loads(audit_output.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as exc:
-                failures.append(f"{backend}: invalid result artifacts: {exc}")
+                route_metadata = _daily_route_metadata(audit)
+            except (OSError, ValueError):
+                failures.append(f"{backend}: invalid result artifacts")
                 yield _sse(
                     {
                         "type": "trace",
@@ -1370,6 +1377,7 @@ def _daily_stream(candidates: list[tuple[str, str]]) -> Iterator[str]:
                     "type": "result",
                     "report": report,
                     "audit": audit,
+                    "route_metadata": route_metadata,
                 }
             )
             yield _sse({"type": "done"})
@@ -1480,19 +1488,11 @@ async def preference() -> dict[str, Any]:
 
 @app.get("/api/daily/stream")
 async def daily_stream() -> StreamingResponse:
-    state = await _connectivity(force=True, include_daily=True)
-    candidates: list[tuple[str, str]] = []
-    if state["remote_daily_ready"]:
-        candidates.append(("Radeon ROCm", REMOTE_GATEWAY))
-    if state["local_daily_ready"]:
-        candidates.append(("Local Metal fallback", LOCAL_GATEWAY))
-    if not candidates:
-        raise HTTPException(
-            status_code=503,
-            detail="neither gateway completed real fast+brain inference smokes",
-        )
     return StreamingResponse(
-        _daily_stream(candidates),
+        _daily_stream(
+            radeon_gateway_url=REMOTE_GATEWAY,
+            local_gateway_url=LOCAL_GATEWAY,
+        ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

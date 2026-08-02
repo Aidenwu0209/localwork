@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib.util
+import json
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
@@ -11,6 +12,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from agentd.router import RouteMetadata, RouteResult
 
 
 def _load_module(name: str, filename: str):
@@ -39,6 +41,27 @@ def _events() -> list[dict]:
     ]
 
 
+def _route(*, backend: str, reason: str) -> RouteMetadata:
+    return RouteMetadata(
+        backend=backend,
+        physical_model="brain" if backend == "radeon" else "perceive",
+        logical_model="brain",
+        degraded=backend == "local_metal",
+        reason=reason,
+        latency_ms=7,
+    )
+
+
+class _DailyRouter:
+    def __init__(self, responses: list[RouteResult]) -> None:
+        self.responses = iter(responses)
+        self.calls: list[dict] = []
+
+    def chat(self, logical_model: str, messages: list[dict], **kwargs: object) -> RouteResult:
+        self.calls.append({"logical_model": logical_model, "messages": messages, **kwargs})
+        return next(self.responses)
+
+
 def test_previous_week_wednesday_is_dynamic() -> None:
     tz = timezone(timedelta(hours=8))
     now = datetime(2026, 8, 6, 12, 0, tzinfo=tz)
@@ -65,19 +88,24 @@ def test_daily_gate_rejects_wrong_app_and_uncited_fact() -> None:
     assert validation["uncited_factual_lines"] == ["- This line has no evidence."]
 
 
-def test_json_agent_retries_a_non_json_planner_response(monkeypatch) -> None:
-    responses = iter(
+def test_json_agent_retries_a_non_json_planner_response() -> None:
+    router = _DailyRouter(
         [
-            "I cannot plan without seeing the events.",
-            '{"sections":["Focus","Evidence"],"focus":"grounded work"}',
+            RouteResult(
+                content="I cannot plan without seeing the events.",
+                message={"content": "I cannot plan without seeing the events."},
+                route=_route(backend="radeon", reason="primary_ok"),
+            ),
+            RouteResult(
+                content='{"sections":["Focus","Evidence"],"focus":"grounded work"}',
+                message={"content": '{"sections":["Focus","Evidence"],"focus":"grounded work"}'},
+                route=_route(backend="radeon", reason="primary_ok"),
+            ),
         ]
     )
-    monkeypatch.setattr(
-        daily, "_gateway_chat", lambda *_args, **_kwargs: next(responses)
-    )
 
-    plan, attempts = daily._gateway_json_with_retry(
-        "http://127.0.0.1:4000/v1",
+    plan, attempts = daily._router_json_with_retry(
+        router,
         model="fast",
         system="return JSON",
         user="plan",
@@ -89,19 +117,32 @@ def test_json_agent_retries_a_non_json_planner_response(monkeypatch) -> None:
     assert plan["sections"] == ["Focus", "Evidence"]
 
 
-def test_json_agent_retries_contradictory_empty_rejection(monkeypatch) -> None:
-    responses = iter(
+def test_daily_json_parser_does_not_echo_model_output_in_errors() -> None:
+    with pytest.raises(ValueError) as failure:
+        daily._parse_json_object("upstream secret-token and private report text")
+
+    assert "secret-token" not in str(failure.value)
+    assert "private report" not in str(failure.value)
+
+
+def test_json_agent_retries_contradictory_empty_rejection() -> None:
+    router = _DailyRouter(
         [
-            '{"decision":"reject","issues":[]}',
-            '{"decision":"pass","issues":[]}',
+            RouteResult(
+                content='{"decision":"reject","issues":[]}',
+                message={"content": '{"decision":"reject","issues":[]}'},
+                route=_route(backend="radeon", reason="primary_ok"),
+            ),
+            RouteResult(
+                content='{"decision":"pass","issues":[]}',
+                message={"content": '{"decision":"pass","issues":[]}'},
+                route=_route(backend="radeon", reason="primary_ok"),
+            ),
         ]
     )
-    monkeypatch.setattr(
-        daily, "_gateway_chat", lambda *_args, **_kwargs: next(responses)
-    )
 
-    review, attempts = daily._gateway_json_with_retry(
-        "http://127.0.0.1:4000/v1",
+    review, attempts = daily._router_json_with_retry(
+        router,
         model="fast",
         system="return JSON",
         user="review",
@@ -111,6 +152,87 @@ def test_json_agent_retries_contradictory_empty_rejection(monkeypatch) -> None:
 
     assert attempts == 2
     assert review == {"decision": "pass", "issues": []}
+
+
+def test_daily_router_retries_invalid_json_and_records_actual_fallback_route() -> None:
+    router = _DailyRouter(
+        [
+            RouteResult(
+                content="not JSON",
+                message={"content": "not JSON"},
+                route=_route(backend="radeon", reason="primary_ok"),
+            ),
+            RouteResult(
+                content='{"sections":["Focus","Evidence"],"focus":"grounded"}',
+                message={"content": '{"sections":["Focus","Evidence"],"focus":"grounded"}'},
+                route=_route(backend="local_metal", reason="remote_invalid_output"),
+            ),
+        ]
+    )
+    routes: list[dict] = []
+
+    plan, attempts = daily._router_json_with_retry(
+        router,
+        model="fast",
+        system="return JSON",
+        user="plan",
+        max_tokens=100,
+        validate=daily._validate_plan_response,
+        route_metadata=routes,
+    )
+
+    assert plan["focus"] == "grounded"
+    assert attempts == 2
+    assert routes == [
+        {"backend": "radeon", "physical_model": "brain", "logical_model": "brain", "degraded": False, "reason": "primary_ok", "latency_ms": 7},
+        {"backend": "local_metal", "physical_model": "perceive", "logical_model": "brain", "degraded": True, "reason": "remote_invalid_output", "latency_ms": 7},
+    ]
+    assert [call["logical_model"] for call in router.calls] == ["fast", "fast"]
+
+
+def test_daily_stream_publishes_completed_report_route_not_preselected_backend(monkeypatch) -> None:
+    routes = {
+        "planner": [{"backend": "radeon", "reason": "primary_ok"}],
+        "writer": [{"backend": "local_metal", "reason": "remote_timeout"}],
+        "reviewer": [{"backend": "local_metal", "reason": "remote_timeout"}],
+    }
+    launched: list[list[str]] = []
+
+    class _Process:
+        stdout = None
+
+        def wait(self, timeout: float) -> int:
+            return 0
+
+        def poll(self) -> int:
+            return 0
+
+        def terminate(self) -> None:
+            return None
+
+    def fake_popen(command: list[str], **_kwargs: object) -> _Process:
+        launched.append(command)
+        output = Path(command[command.index("--output") + 1])
+        audit_output = Path(command[command.index("--audit-output") + 1])
+        output.write_text("# synthetic\n", encoding="utf-8")
+        audit_output.write_text(json.dumps({"routes": routes}), encoding="utf-8")
+        return _Process()
+
+    monkeypatch.setattr(stage.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(stage, "_iter_process_output", lambda *_args, **_kwargs: iter(()))
+
+    events = list(
+        stage._daily_stream(
+            radeon_gateway_url="http://synthetic-radeon/v1",
+            local_gateway_url="http://synthetic-local/v1",
+        )
+    )
+
+    result = next(json.loads(event[6:]) for event in events if '"type": "result"' in event)
+    assert len(launched) == 1
+    assert "--radeon-gateway-url" in launched[0]
+    assert "--local-gateway-url" in launched[0]
+    assert result["route_metadata"] == routes
 
 
 def test_reviewer_event_projection_excludes_raw_ocr() -> None:
