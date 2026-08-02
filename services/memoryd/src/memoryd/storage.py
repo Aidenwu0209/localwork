@@ -70,9 +70,12 @@ class TimelineStore:
     M3.3 will introduce a pool when ingest throughput matters.
     """
 
-    def __init__(self, dsn: str, data_root: Path) -> None:
+    def __init__(
+        self, dsn: str, data_root: Path, *, honcho_timezone: str = "Asia/Shanghai"
+    ) -> None:
         self._dsn = dsn
         self._data_root = data_root
+        self._honcho_timezone = honcho_timezone
 
     def write_sentinel_audit(
         self, *, ts: str, device_id: str, verdict: SentinelVerdict
@@ -148,7 +151,7 @@ class TimelineStore:
                 (
                     event_id,
                     json.dumps(payload, separators=(",", ":")),
-                    _honcho_session_id(ts),
+                    _honcho_session_id(ts, self._honcho_timezone),
                 ),
             )
             return event_id
@@ -281,12 +284,12 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _honcho_session_id(ts: str) -> str:
-    """Stable daily session name using the required Japan local calendar."""
+def _honcho_session_id(ts: str, timezone_name: str = "Asia/Shanghai") -> str:
+    """Stable daily session name using the configured user-local calendar."""
     occurred_at = datetime.fromisoformat(ts.replace("Z", "+00:00"))
     if occurred_at.tzinfo is None:
         occurred_at = occurred_at.replace(tzinfo=timezone.utc)
-    return f"dejaview-{occurred_at.astimezone(ZoneInfo('Asia/Tokyo')).date().isoformat()}"
+    return f"dejaview-{occurred_at.astimezone(ZoneInfo(timezone_name)).date().isoformat()}"
 
 
 def _projection_payload(
@@ -294,7 +297,7 @@ def _projection_payload(
 ) -> dict[str, object]:
     """Return the *complete* public projection schema, never a filtered copy."""
     return {
-        "schema": "dejaview.honcho_projection.v1",
+        "schema": 1,
         "event_id": event_id,
         "occurred_at": ts,
         "app_context": app_context,

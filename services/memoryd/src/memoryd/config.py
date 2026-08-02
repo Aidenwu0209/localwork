@@ -69,7 +69,7 @@ class Settings:
     honcho_max_retry_seconds: int = 300
     honcho_max_attempts: int = 5
     honcho_batch_size: int = 20
-    honcho_timezone: str = "Asia/Tokyo"
+    honcho_timezone: str = "Asia/Shanghai"
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -97,7 +97,7 @@ class Settings:
             honcho_max_retry_seconds=_positive_int("HONCHO_MAX_RETRY_SECONDS", "300"),
             honcho_max_attempts=_positive_int("HONCHO_MAX_ATTEMPTS", "5"),
             honcho_batch_size=_positive_int("HONCHO_BATCH_SIZE", "20"),
-            honcho_timezone=_safe_timezone(_env("HONCHO_TIMEZONE", "Asia/Tokyo")),
+            honcho_timezone=_safe_timezone(_env("HONCHO_TIMEZONE", "Asia/Shanghai")),
         )
 
 
@@ -121,7 +121,13 @@ def _safe_honcho_url(value: str) -> str:
     from urllib.parse import urlsplit
 
     parsed = urlsplit(value)
-    if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password:
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username
+        or parsed.password
+        or parsed.path not in {"", "/"}
+    ):
         raise ValueError("HONCHO_URL must be an http(s) origin without credentials")
     if parsed.query or parsed.fragment:
         raise ValueError("HONCHO_URL must not include a query or fragment")

@@ -146,7 +146,9 @@ def _default_pipeline(settings: Settings) -> Pipeline:
             perceive=GatewayPerceive(settings.gateway_url),
             embed=GatewayEmbed(settings.gateway_url),
             store=TimelineStore(
-                dsn=settings.timeline_db_url, data_root=settings.data_root
+                dsn=settings.timeline_db_url,
+                data_root=settings.data_root,
+                honcho_timezone=settings.honcho_timezone,
             ),
         )
     return Pipeline(
@@ -155,7 +157,11 @@ def _default_pipeline(settings: Settings) -> Pipeline:
         novelty=StubNovelty(),
         perceive=StubPerceive(),
         embed=StubEmbed(),
-        store=TimelineStore(dsn=settings.timeline_db_url, data_root=settings.data_root),
+        store=TimelineStore(
+            dsn=settings.timeline_db_url,
+            data_root=settings.data_root,
+            honcho_timezone=settings.honcho_timezone,
+        ),
     )
 
 

@@ -70,7 +70,7 @@ def _row(event_id: int = 9, attempt_count: int = 1) -> HonchoOutboxRow:
     return HonchoOutboxRow(
         event_id=event_id,
         payload={
-            "schema": "dejaview.honcho_projection.v1",
+            "schema": 1,
             "event_id": event_id,
             "occurred_at": "2026-08-03T15:30:00+00:00",
             "app_context": "browser",

@@ -91,7 +91,7 @@ def test_projection_payload_has_only_allowlisted_semantic_fields(tmp_path: Path)
     assert outbox_params[0] == 41
     payload = json.loads(outbox_params[1])
     assert payload == {
-        "schema": "dejaview.honcho_projection.v1",
+        "schema": 1,
         "event_id": 41,
         "occurred_at": TS,
         "app_context": "browser",
@@ -109,7 +109,20 @@ def test_projection_payload_has_only_allowlisted_semantic_fields(tmp_path: Path)
         "metadata",
     ):
         assert forbidden not in serialized
-    assert outbox_params[2] == "dejaview-2026-08-04"
+    # The constructor default follows the project's UTC+8 local time, rather
+    # than a hard-coded foreign timezone: 15:30 UTC is still Aug 3 in Shanghai.
+    assert outbox_params[2] == "dejaview-2026-08-03"
+
+
+def test_projection_session_uses_configured_user_timezone(tmp_path: Path) -> None:
+    connection = Connection()
+    with patch("memoryd.storage.psycopg.connect", return_value=connection):
+        _insert(
+            TimelineStore(
+                "postgresql://synthetic", tmp_path, honcho_timezone="Asia/Tokyo"
+            )
+        )
+    assert connection.executed[1][1][2] == "dejaview-2026-08-04"
 
 
 def test_clean_schema_and_migration_define_idempotent_projection_outbox() -> None:
