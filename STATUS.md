@@ -6,17 +6,17 @@
 
 ## 一句话现状
 
-**DejaView** = 全本地数字记忆体(赛道 AMD Hackathon Track 2 · Agentic AI)。全链路已跑通验收。截止 **2026-08-06 23:59 UTC+8**,约剩 **4 天**。
+**DejaView** = 全本地数字记忆体(赛道 AMD Hackathon Track 2 · Agentic AI)。比赛六幕和 ROCm 证据已验收;成熟产品加固 P3.12–P3.18 已启动。截止 **2026-08-06 23:59 UTC+8**,约剩 **4 天**。
 
 | 状态 | 内容 |
 |---|---|
 | **已完成** | G0+M+D **33/33 accept**;**P3.1 ROCm 消融**;P3.3 README;P3.5 licenses;P3.6 哨兵;P3.7 perceive |
 | **P3.1 正式证据** | run `p31-w7900d-20260728T075653Z`;18 个 brain 量化×MTP×并发 cell + 3 个 perceive `-np` cell,均为 1 次 warm-up + 3 次实测;原始证据在 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`,截图在 `docs/assets/p31/p31-w7900d-20260728T075653Z/` |
 | **本次新增完成** | **P3.2 Grafana** 一屏验收;**P3.4 六幕视频** 2:37 成片;**P3.11 Grafana 系统自检**含 READY/DEGRADED/FAILED、数据新鲜度、本机核心与算力路径 |
-| **工程任务** | TASKBOARD 当前 **41/41 accept**;成片 `docs/assets/demo/dejaview-p34-six-act-20260802.mp4`;自检截图 `docs/assets/p32/grafana-selfcheck-20260802.png` |
-| **可砍** | MCP / 音频 / MarkItDown / 日报多 Agent UI |
+| **工程任务** | TASKBOARD 当前 **42/48 accept**,P3.12 成熟产品设计已验收,P3.13–P3.18 待实施;成片 `docs/assets/demo/dejaview-p34-six-act-20260802.mp4`;自检截图 `docs/assets/p32/grafana-selfcheck-20260802.png` |
+| **产品化边界** | 单用户、屏幕记忆优先、隐私 fail-closed、真实 Radeon→Local Metal 降级、Honcho 自动成长、可点击证据产品页、干净机器复现 |
 
-**下一优先:人工提交检查**(AMD Developer Program、Rules、仓库公开、服务器仅演示数据)。
+**下一优先:P3.13 隐私门与采集可靠性加固**;人工提交检查(AMD Developer Program、Rules、服务器仅演示数据)仍需队员本人完成。
 
 ---
 
@@ -24,7 +24,7 @@
 
 1. `docs/EXECUTION_HANDBOOK.md` **§12**(含聊天决策:产品叙事、存算分离、五模型、OCR 不用 VL、git 纪律、Cursor trailer 坑)
 2. `docs/AGENT_KICKOFF_PROMPT.md`
-3. `TASKBOARD.json`(Phase 3 工程任务已全部验收)
+3. `TASKBOARD.json`(P3.12–P3.18 产品化阶段以此为准)
 
 ---
 
@@ -75,13 +75,15 @@ exporter 已为 P3.4 录制常驻;若实例重启,先 `rocm-smi` +
 | P3.4 | **accept** | 2:37 六幕成片;可见软件断开已验证远端链路,Local Metal 完成第二次引用日报 |
 | P3.2 | **accept** | Grafana 一屏 + 实时 fail-closed 门禁 + 截图已入仓 |
 | P3.11 | **accept** | Grafana 系统自检;缺服务/隧道不误绿;READY 实拍 + 13 tests |
+| P3.12 | **accept** | 成熟产品设计与 P3.13–P3.18 验收矩阵;基线 80 tests |
+| P3.13–P3.18 | false | 隐私/采集→真实降级→Honcho→产品页→复现→全链路验收 |
 
 ---
 
 ## 接手纪律(最短版)
 
-1. 勿重做 TASKBOARD 41 个已 accept 项,尤其不要重跑 P3.1 正式矩阵。
+1. 勿重做 TASKBOARD 42 个已 accept 项,尤其不要重跑 P3.1 正式矩阵。
 2. 起 GPU 前 `rocm-smi`,勿碰未知 KFD 进程;共租时勿 OOM Dolphin。
 3. commit 后检查无 `Co-authored-by`。
 4. 演示前清 timeline 库。
-5. Phase 3 工程任务已收尾;后续只按 §10 做人工提交检查,勿扩需求。
+5. 只按 P3.12 设计实施 P3.13–P3.18;不扩到账户、同步、安装器或未定义模型。

@@ -522,8 +522,8 @@
         "P3.6",
         "P3.11"
       ],
-      "status": "doing",
-      "note": "2026-08-02 认领:root;只做设计与验收矩阵,不修改生产代码。"
+      "status": "accept",
+      "note": "2026-08-02 accept:成熟产品边界、架构、隐私/采集、真实双路路由、Honcho outbox、日常产品页、干净复现与全链路验收写入 docs/superpowers/specs/2026-08-02-mature-product-design.md;无 TBD/TODO/矛盾;保持数字记忆体叙事和五模型。基线第一方 80 tests 通过。"
     },
     {
       "id": "P3.13",

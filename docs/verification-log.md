@@ -350,3 +350,32 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
 - **Conclusion:** every P3.11 verify condition is satisfied; the task moves from
   `doing` to `accept` with the exporter, dashboard, tests, documentation, and
   retained evidence in the same commit.
+
+## 2026-08-02 ([VERIFY] P3.12 mature-product design — accept)
+
+- **Scope derived from current code, not task color:** the accepted competition
+  demo remains intact, while P3.13–P3.18 cover the confirmed product gaps:
+  fail-open Sentinel parsing/default stubs, capture outcome loss, fixed-gateway
+  agentd, no-op timeline→Honcho projection, missing daily evidence UI, and
+  clean-clone/release drift.
+- **Architecture decision:** Topology A adds a mandatory local
+  `SENTINEL_GATEWAY_URL` with no Radeon fallback for raw pixels. Allowed frames
+  may use the stateless Radeon compute path; blocked pixels, durable timeline,
+  audit, screenshots, and Honcho state remain on the data device. Logical model
+  names and physical model choices are unchanged.
+- **Honest capability boundary:** the mature MVP is single-user and
+  screen-memory-first. Audio/document routes must return an explicit unsupported
+  response until they have storage or a traceable job; accounts, sync,
+  installers, and Windows capture are not claimed.
+- **Fresh baseline:** the current first-party suites ran **80 tests, 0
+  failures**: memoryd 5, agentd/P3.4 25, monitoring 13, P3.1 contracts 32,
+  Mac/server gateway launchers 2, ROCm exporter 2, and Honcho demo compose 1.
+  The initially combined ROCm exporter invocation exposed only a Python import
+  working-directory error; its correct discovery command passed 2/2.
+- **Design evidence:**
+  `docs/superpowers/specs/2026-08-02-mature-product-design.md` defines the data
+  flow, failure semantics, APIs, UI, accessibility, reproduction, automated
+  tests, live synthetic gates, exclusions, and requirement-to-task matrix. A
+  placeholder/contradiction scan and `git diff --check` passed.
+- **Conclusion:** P3.12 satisfies its design-only verify contract. Production
+  code remains unchanged; P3.13 is the next claimable task.
