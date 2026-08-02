@@ -168,6 +168,10 @@ separate local `SENTINEL_GATEWAY_URL`; the other gateway-backed stages use
   screen is locked. Frame replies report `processing_state`: `stored`,
   `merged`, or `blocked`; a missing Screen Recording permission exits capture
   with status `2` before frame capture begins.
+- Stored events automatically enter Honcho through an atomic local outbox. The
+  projection is restricted to activity/topics/app/time/event provenance;
+  OCR, window titles, URLs, screenshots, and blocked frames never enter it.
+  Delivery is retryable, idempotent, observable, and explicitly pausable.
 - Repo contains **synthetic fixtures only** (no real PII, no API keys). Clear the timeline DB before public demos if you ran real capture.
 - SearXNG stays **disabled** by default (conflicts with “data never leaves the device”).
 

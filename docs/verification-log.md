@@ -467,3 +467,43 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
 - **Conclusion:** P3.14 moves from `doing` to `accept`. P3.15 remains in
   progress; accepted benchmark, video, Grafana, and privacy evidence were not
   rerun or relabeled.
+
+## 2026-08-03 — P3.15 automatic privacy-minimized Honcho projection
+
+- **[VERIFY] Atomic boundary:** every stored timeline event and its projection
+  outbox row are inserted in the same database transaction. Blocked events
+  never reach either table; a Honcho outage changes only delivery state and
+  cannot roll back the already committed timeline event.
+- **[VERIFY] Minimal contract:** the worker reparses persisted payloads with
+  exact keys and types. Its outgoing projection contains only `schema`,
+  `event_id`, `occurred_at`, `app_context`, `activity`, and `topics`; OCR,
+  window title, URL, screenshot data, and unknown fields are rejected before
+  HTTP. Invalid rows become a sanitized terminal failure without a request.
+- **[VERIFY] Delivery semantics:** daily session IDs honor the configured local
+  timezone. Leases use `SKIP LOCKED`, expired work is recoverable, retries use
+  bounded exponential backoff, and maximum-attempt rows cannot resurrect.
+  Because pinned Honcho does not consume the HTTP idempotency header, the
+  worker queries the exact `dejaview_event_id` metadata marker before create;
+  recovered and replayed deliveries therefore do not duplicate messages.
+- **[VERIFY] Operator controls:** pause/resume/status endpoints and Prometheus
+  queue counters expose state and freshness without projection payloads.
+  memoryd lifecycle starts and stops the worker cleanly.
+- **Fresh regression:** the complete memoryd suite passed **59 tests** plus
+  **6 subtests**, with zero failures. Independent acceptance review passed
+  after covering recovered delivery, attempt caps, timezone boundaries,
+  malformed persisted payloads, and strict metadata matching.
+- **Live synthetic proof:** event `317` entered the expected daily session and
+  produced exactly one Honcho message; a second worker pass delivered zero and
+  the exact marker still matched once. A sentinel string placed outside the
+  six-field contract was absent from the request. With projection paused,
+  event `318` acquired no lease; after resume against a closed endpoint, its
+  timeline row remained while the outbox recorded one sanitized
+  `network_error` attempt.
+- **Cleanup:** exact synthetic timeline rows `317` and `318` were deleted in
+  one bounded transaction and their cascaded outbox count became zero. The
+  projection control remained enabled. Honcho accepted deletion of the exact
+  synthetic session and workspace (HTTP 202); no temporary screenshot
+  directory existed.
+- **Conclusion:** P3.15 moves from `doing` to `accept`. P3.16 is next; accepted
+  benchmark, video, Grafana, fallback, and privacy evidence were not rerun or
+  relabeled.

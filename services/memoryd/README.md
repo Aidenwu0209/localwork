@@ -57,3 +57,22 @@ counters. No pixels, window titles, app names, or URLs are accepted.
 `/v1/ingest/audio` and `/v1/ingest/doc` are intentionally unsupported today:
 both return `501` with `unsupported_media` and list `frame` as the only
 supported ingest type.
+
+## Automatic Honcho projection
+
+Every stored timeline event and its Honcho outbox record are committed in one
+Postgres transaction. A background worker then projects a strict six-field
+summary (`schema`, `event_id`, `occurred_at`, `app_context`, `activity`,
+`topics`) into the local Honcho daily session. OCR text, window titles, URLs,
+screenshots, and blocked frames are never part of the request.
+
+Configure `HONCHO_URL`, `HONCHO_WORKSPACE`, `HONCHO_PEER`, and
+`HONCHO_TIMEZONE` from `.env.example`. Delivery is leased, retried with bounded
+backoff, and deduplicated using the exact `dejaview_event_id` metadata marker.
+Operators can pause, resume, and inspect the queue without exposing payloads:
+
+```bash
+curl http://127.0.0.1:8090/v1/honcho/projection/status
+curl -X POST http://127.0.0.1:8090/v1/honcho/projection/pause
+curl -X POST http://127.0.0.1:8090/v1/honcho/projection/resume
+```
