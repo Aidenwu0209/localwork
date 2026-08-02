@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import io
 from dataclasses import dataclass
+from typing import Literal
 from PIL import Image
 
 from memoryd.models import (
@@ -33,6 +34,12 @@ from memoryd.stages import (
 from memoryd.storage import TimelineStore
 
 
+class BlockedIngestAck(IngestAck):
+    """Blocked acknowledgements expose their terminal processing state."""
+
+    processing_state: Literal["blocked"] = "blocked"
+
+
 @dataclass
 class Pipeline:
     sentinel: SentinelStage
@@ -47,16 +54,23 @@ class Pipeline:
     ) -> IngestAck:
         # Step 1 — privacy gate. Always audit (allow AND block); on block, the
         # image is dropped here and never reaches OCR or disk (handbook §6.2.1).
-        verdict: SentinelVerdict = await self.sentinel.classify(image_bytes)
+        try:
+            verdict: SentinelVerdict = await self.sentinel.classify(image_bytes)
+        except Exception:
+            verdict = SentinelVerdict(
+                decision="block",
+                category="normal",
+                confidence=0.0,
+                reason="sentinel_unavailable",
+            )
         self.store.write_sentinel_audit(
             ts=meta.ts, device_id=meta.device_id, verdict=verdict
         )
         if verdict.decision == "block":
-            return IngestAck(
+            return BlockedIngestAck(
                 accepted=False,
                 sentinel=verdict,
-                note=f"blocked by sentinel ({verdict.category}); image discarded, "
-                     f"not OCR'd, not stored",
+                note="blocked by privacy sentinel; image discarded, not OCR'd, not stored",
             )
 
         # Step 2 — deterministic verbatim OCR.

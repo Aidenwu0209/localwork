@@ -24,6 +24,17 @@ def _env_path(name: str, default: str) -> Path:
     return Path(_env(name, default)).expanduser().resolve()
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    value = _env(name, "true" if default else "false").lower()
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    if value in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(
+        f"{name} must be one of 1,true,yes,on,0,false,no,off; got {value!r}"
+    )
+
+
 @dataclass(frozen=True)
 class Settings:
     # Inference — logical names only. Gateway is LiteLLM (:4000); ocrd is direct.
@@ -42,10 +53,17 @@ class Settings:
     honcho_flush_event_count: int
     honcho_flush_seconds: int
 
+    # Pipeline safety: only explicit development/test wiring may use stubs.
+    sentinel_gateway_url: str = "http://127.0.0.1:4000/v1"
+    allow_stub_pipeline: bool = False
+
     @classmethod
     def from_env(cls) -> "Settings":
         return cls(
             gateway_url=_env("GATEWAY_URL", "http://127.0.0.1:4000/v1").rstrip("/"),
+            sentinel_gateway_url=_env(
+                "SENTINEL_GATEWAY_URL", "http://127.0.0.1:4000/v1"
+            ).rstrip("/"),
             ocr_url=_env("OCR_URL", "http://127.0.0.1:8006").rstrip("/"),
             timeline_db_url=_env(
                 "TIMELINE_DB_URL",
@@ -55,4 +73,5 @@ class Settings:
             data_root=_env_path("DATA_ROOT", "~/dejaview-data"),
             honcho_flush_event_count=int(_env("HONCHO_FLUSH_EVENT_COUNT", "20")),
             honcho_flush_seconds=int(_env("HONCHO_FLUSH_SECONDS", "300")),
+            allow_stub_pipeline=_env_bool("MEMORYD_ALLOW_STUB_PIPELINE", False),
         )

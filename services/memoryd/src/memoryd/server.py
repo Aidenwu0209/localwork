@@ -12,11 +12,9 @@ grounds). Health check at /health for docker/orchestration.
 from __future__ import annotations
 
 import asyncio
-import os
 from typing import Annotated
 from urllib.parse import urlsplit
 
-import httpx
 from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
 
 from memoryd.config import Settings
@@ -89,36 +87,11 @@ def _pipeline_identity(pipeline: object) -> str:
     return "custom"
 
 
-def _make_embed(settings: Settings):
-    """Use the real gateway-backed embed when a gateway is configured; fall back
-    to the stub when the gateway isn't reachable (so dev without a GPU still
-    works for the ingest path)."""
-    try:
-        base = settings.gateway_url.rstrip("/").removesuffix("/v1")
-        with httpx.Client(timeout=3.0) as c:
-            response = c.get(f"{base}/v1/models")
-            response.raise_for_status()
-        return GatewayEmbed(settings.gateway_url)
-    except httpx.HTTPError:
-        return StubEmbed()
-
-
-def _real_pipeline_enabled() -> bool:
-    return os.environ.get("MEMORYD_REAL_PIPELINE", "").strip() in (
-        "1",
-        "true",
-        "yes",
-    )
-
-
 def _default_pipeline(settings: Settings) -> Pipeline:
-    """Pipeline wiring. Set env MEMORYD_REAL_PIPELINE=1 to use the real Metal
-    inference stack (M3.4): sentinel + ocrd + fast novelty + perceive + embed,
-    all via the gateway / ocrd. Without it (default), the stub stages run except
-    for embed, which auto-upgrades to GatewayEmbed when the gateway is up."""
-    if _real_pipeline_enabled():
+    """Wire real stages by default; stubs require an explicit unsafe opt-in."""
+    if not settings.allow_stub_pipeline:
         return Pipeline(
-            sentinel=GatewaySentinel(settings.gateway_url),
+            sentinel=GatewaySentinel(settings.sentinel_gateway_url),
             ocr=OcrdClient(settings.ocr_url),
             novelty=RealNovelty(settings.gateway_url),
             perceive=GatewayPerceive(settings.gateway_url),
@@ -132,7 +105,7 @@ def _default_pipeline(settings: Settings) -> Pipeline:
         ocr=StubOcr(),
         novelty=StubNovelty(),
         perceive=StubPerceive(),
-        embed=_make_embed(settings),
+        embed=StubEmbed(),
         store=TimelineStore(dsn=settings.timeline_db_url, data_root=settings.data_root),
     )
 
@@ -151,10 +124,13 @@ def create_app(
     )
 
     @app.get("/health")
-    async def health() -> dict[str, str]:
+    async def health() -> dict[str, str | bool]:
+        pipeline_identity = _pipeline_identity(pipeline)
+        is_stub = pipeline_identity == "stub"
         return {
-            "status": "ok",
-            "pipeline": _pipeline_identity(pipeline),
+            "status": "degraded" if is_stub else "ok",
+            "pipeline": pipeline_identity,
+            "accepting_frames": not is_stub,
             "gateway_origin": _safe_url_origin(settings.gateway_url),
             "database": urlsplit(settings.timeline_db_url).path.removeprefix("/"),
             "data_root": str(settings.data_root),

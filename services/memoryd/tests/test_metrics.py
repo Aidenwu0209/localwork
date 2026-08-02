@@ -84,6 +84,7 @@ class MemoryMetricsTest(unittest.TestCase):
             {
                 "status": "ok",
                 "pipeline": "real",
+                "accepting_frames": True,
                 "gateway_origin": "https://example.com:4443",
                 "database": "dejaview_demo",
                 "data_root": str(Path("/tmp/dejaview-p34-data").resolve()),
@@ -116,6 +117,8 @@ class MemoryMetricsTest(unittest.TestCase):
                 "/health"
             )
         self.assertEqual(response.json()["pipeline"], "stub")
+        self.assertEqual(response.json()["status"], "degraded")
+        self.assertIs(response.json()["accepting_frames"], False)
 
 
 if __name__ == "__main__":
