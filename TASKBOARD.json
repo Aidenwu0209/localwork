@@ -599,8 +599,8 @@
         "P3.16",
         "P3.17"
       ],
-      "status": "doing",
-      "note": "2026-08-03 claimed after P3.17 acceptance: perform the final evidence-bound product audit without rerunning accepted ROCm/video/Grafana work; verify fresh tests, release artifacts, privacy/secret boundaries, accepted live-flow evidence, and remaining human submission gates."
+      "status": "accept",
+      "note": "2026-08-03 accept: exact commit 7eb9631 passed the GitHub first-party workflow (run 30766528216, both Linux offline-contract and macOS capture jobs green) and the same local make test suite passed: release 21, agentd 101, memoryd 82+6 subtests, capture 22, browser 9, Mac 20, server 46. A current-source agentd instance on an isolated port and synthetic dejaview_demo data completed a live Radeon brain recall for PR #1842 with one allowlisted event citation; compute reported radeon/brain/primary_ok, and capability-gated evidence metadata plus its 68,170-byte PNG returned 200 without path or OCR leakage. Accepted P3.13 allow/block, P3.14 fallback, and P3.15 Honcho proofs were audited rather than rerun. English specification, PPT, captioned 2:37 MP4/SRT, hashes, coordinate/credential scans, and human-only submission gates were reconciled in docs/verification-log.md."
     }
   ]
 }

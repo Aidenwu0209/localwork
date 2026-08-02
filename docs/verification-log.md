@@ -596,3 +596,51 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   data, and the final submission/video-format decision remain human gates.
 - **Conclusion:** P3.17 meets its acceptance criteria and moves from `doing` to
   `accept`. P3.18 is claimed for the final evidence-bound audit.
+
+## 2026-08-03 — P3.18 final evidence-bound product audit
+
+- **[VERIFY] Exact-source CI and regression:** commit
+  `7eb9631cff2db5cb81e70d02645a6dc5bb1abf9b` passed GitHub Actions run
+  `30766528216`: Linux `offline-contract` and macOS `macos-capture` were both
+  green. The same local `make test` entry point passed release **21**, agentd
+  **101**, memoryd **82 + 6 subtests**, capture **22**, browser-product **9**,
+  Mac launcher/monitoring **20**, and server launcher/ROCm-support **46** tests.
+  The earlier Linux failure exposed a real clean-checkout dependency on an
+  untracked `honcho.env`; the compose contract now copies the public example
+  into an isolated temporary directory and no longer depends on private state.
+- **[VERIFY] Current-source Radeon recall:** a new agentd process from the
+  current checkout was bound only to alternate loopback port `18101`, against
+  the isolated `dejaview_demo` database and synthetic P3.4 data root. It read
+  one synthetic PR #1842 event, sent the factual question through logical
+  `brain`, and returned the correct subject with exactly one allowlisted
+  `[event#1 15:18 Chrome]` citation. Route metadata was
+  `backend=radeon`, `physical_model=brain`, `logical_model=brain`,
+  `degraded=false`, `reason=primary_ok`; measured route latency was 10,564 ms.
+- **[VERIFY] Controlled evidence:** the citation capability resolved to
+  sanitized evidence metadata and a **68,170-byte PNG**, both HTTP 200. Metadata
+  contained only event/time/app/activity/topics and text-free highlight boxes;
+  scans found no `screenshot_path`, OCR text, `/tmp/`, or `/private/` path. The
+  image response was `private, no-store` and `nosniff`. The exact temporary
+  agentd process was then stopped; no pre-existing service was killed.
+- **[VERIFY] Accepted live-flow chain:** P3.13's real allow/block cleanup proof,
+  P3.14's Radeon-primary, Local-Metal fallback and dual-failure probes, and
+  P3.15's Honcho success/replay/failure/pause proof were re-audited from their
+  accepted records rather than destructively rerun. The fresh current-source
+  recall/evidence proof above closes the only missing daily-product segment.
+- **[VERIFY] Submission and privacy surface:** the English Markdown + rendered
+  8-page DOCX specification, editable 7-slide PPT, English-captioned 2:37 MP4
+  and SRT, manifest hashes, public-coordinate scan, tracked-secret scan, and
+  synthetic-fixture boundary were reconciled. The 2:37 duration remains an
+  explicit risk against the official 3–5 minute recommendation, not a hidden
+  claim. No real PII, credential, ephemeral public host, or instance identifier
+  was added to the release surface; checksummed raw benchmark provenance was
+  preserved unchanged.
+- **Human-only boundary:** this acceptance does not claim AMD Developer Program
+  registration, Rules acknowledgement, official-repository fork/English PR,
+  public repository visibility, final submission-platform upload, or the last
+  server demo-data inspection. The currently running default local stack is not
+  claimed READY merely because the isolated live gate passed.
+- **Conclusion:** P3.18 satisfies its repository acceptance criteria and moves
+  from `doing` to `accept`; TASKBOARD is **48/48 accept**. Remaining work is
+  submission ownership and contest administration, not another engineering
+  task.

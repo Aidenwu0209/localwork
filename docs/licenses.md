@@ -113,4 +113,4 @@ Mirror of `docs/EXECUTION_HANDBOOK.md` §10. **Do not treat unchecked boxes as d
 | 根目录 `LICENSE` / `NOTICE` | **已具备** | P3.17 发布套件整体验收通过 |
 | 可选云模型优化 +20 | **未申报** | 当前竞赛路径只对齐 60+40 基础评分,不声称 120 分覆盖 |
 
-**Still open for final submit (do not fake-check):** P3.18 · repository visibility · final video-format decision · server demo-data check · human AMD/Rules registration and submission-platform confirmation.
+**Still open for final submit (do not fake-check):** repository visibility · final video-format decision · server demo-data check · human AMD/Rules registration and submission-platform confirmation.
