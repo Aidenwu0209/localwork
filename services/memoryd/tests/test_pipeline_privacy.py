@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import io
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from PIL import Image
 
 from memoryd.config import Settings
 from memoryd.models import (
@@ -122,7 +124,9 @@ class RecordingStore:
 
     def screenshot_target(self, *, device_id: str, ts: str) -> Path:
         self._calls.append("store.screenshot")
-        return self._root / "screenshots" / "frame.webp"
+        target = self._root / "screenshots" / "frame.webp"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        return target
 
     def insert_event(self, **values: object) -> int:
         self._calls.append("store.insert")
@@ -263,6 +267,8 @@ def test_every_block_reason_audits_once_and_short_circuits(tmp_path: Path) -> No
 
 
 def test_allowed_frame_calls_all_downstream_stages_once(tmp_path: Path) -> None:
+    image_buffer = io.BytesIO()
+    Image.new("RGB", (1, 1), color=(12, 34, 56)).save(image_buffer, format="PNG")
     stages = recording_pipeline(
         tmp_path,
         sentinel=ReturningSentinel(
@@ -272,7 +278,7 @@ def test_allowed_frame_calls_all_downstream_stages_once(tmp_path: Path) -> None:
             )
         ),
     )
-    ack = asyncio.run(stages.pipeline.ingest_frame(b"synthetic", frame_meta()))
+    ack = asyncio.run(stages.pipeline.ingest_frame(image_buffer.getvalue(), frame_meta()))
 
     assert ack.accepted is True
     assert stages.audit_rows == [("allow", "classified_normal")]
@@ -286,3 +292,7 @@ def test_allowed_frame_calls_all_downstream_stages_once(tmp_path: Path) -> None:
         "store.insert",
     ]
     assert len(stages.timeline_rows) == 1
+    screenshots = list(tmp_path.rglob("*.webp"))
+    assert len(screenshots) == 1
+    with Image.open(screenshots[0]) as screenshot:
+        assert screenshot.format == "WEBP"
