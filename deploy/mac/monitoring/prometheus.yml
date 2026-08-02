@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: llama
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["host.docker.internal:18001"]
+        labels:
+          role: brain
+      - targets: ["host.docker.internal:18002"]
+        labels:
+          role: perceive
+      - targets: ["host.docker.internal:18003"]
+        labels:
+          role: sentinel
+      - targets: ["host.docker.internal:18004"]
+        labels:
+          role: embed
+      - targets: ["host.docker.internal:18005"]
+        labels:
+          role: fast
+
+  - job_name: rocm
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["host.docker.internal:19393"]
+
+  - job_name: memoryd
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["host.docker.internal:8090"]

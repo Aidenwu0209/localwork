@@ -224,3 +224,29 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   perceive `-np` gaps recorded in the historical 2026-07-23 P3.1 entry above.
   That earlier small-model pass remains provenance only and no longer represents
   current P3.1 status.
+
+## 2026-08-02 ([VERIFY] P3.2 Grafana / ROCm live dashboard — accept)
+
+- **Live topology:** replacement instance `u-15420-7be0d6c9`
+  (`36.150.116.206:31357`) ran the five fixed model roles plus LiteLLM and the
+  local-only ROCm exporter. Prometheus and Grafana ran on the Mac; all traffic
+  crossed explicit SSH forwards, so the AMD host exposed no metrics or model
+  port publicly.
+- **[VERIFY] simultaneous fail-closed gates:** Prometheus returned ROCm exporter
+  scrape success **1**, GPU series count **1**, required role health **4/4**
+  (`perceive/sentinel/embed/fast`), and required roles with positive prompt or
+  predicted tokens/s **4/4**. The same scrape window showed GPU utilization
+  **100%**, VRAM used **37.03 GiB**, and timeline ingest rate **1.09 events/min**.
+- **One-screen acceptance:** the provisioned Grafana dashboard displays per-role
+  llama.cpp prompt/decode tokens/s, Radeon GPU utilization, VRAM utilization,
+  the four green health/throughput gates, event rate by outcome, and live request
+  pressure. Evidence: `docs/assets/p32/grafana-rocm-live-20260802.png`.
+- **Transient-failure proof:** an existing SSH forwarding process had become
+  stale while its PID remained alive; the dashboard correctly turned exporter,
+  GPU-count, and role gates red. Recreating only the verified tunnel restored
+  all endpoints and the next scrape turned every gate green. This confirms the
+  dashboard fails closed instead of presenting stale telemetry as healthy.
+- **Tests:** monitoring contract tests cover scrape topology, provisioned panels,
+  pretty-JSON Grafana health output, and fail-closed queries; exporter parser
+  tests cover valid, missing, and malformed `rocm-smi` output; memoryd metrics
+  tests cover created/merged/blocked counters.

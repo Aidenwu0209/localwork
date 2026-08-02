@@ -442,8 +442,8 @@
       "depends": [
         "P3.1"
       ],
-      "status": "false",
-      "note": ""
+      "status": "accept",
+      "note": "2026-08-02 accept: replacement instance u-15420-7be0d6c9 at 36.150.116.206:31357; local Prometheus/Grafana + remote rocm-smi exporter live. Fail-closed gates passed simultaneously: exporter=1, GPU count=1, required role health=4/4, required roles with tokens/s=4/4; live GPU=100%, VRAM=37.03 GiB, timeline ingest rate=1.09 events/min. One-screen evidence=docs/assets/p32/grafana-rocm-live-20260802.png; [VERIFY]=docs/verification-log.md."
     },
     {
       "id": "P3.3",
@@ -464,8 +464,8 @@
       "depends": [
         "P3.1"
       ],
-      "status": "false",
-      "note": ""
+      "status": "doing",
+      "note": "2026-07-28 doing: P3.1 dependency accepted at 88e0a02; preparing the fail-closed six-act demo stage and a real ≤5 minute screen recording. Physical network-cable removal will be performed visibly by the user during Act 6; synthetic demo data only."
     },
     {
       "id": "P3.5",

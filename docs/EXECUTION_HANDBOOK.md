@@ -490,8 +490,8 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 - [ ] 全员注册 AMD AI Developer Program(大陆:AMD Developer Program China) — **待·队员自检**(见 licenses.md AMD checklist)
 - [ ] Rules & Conditions 通读,按要求的格式/平台提交 — **待·队员自检**
 - [ ] 仓库公开、README 双语、两张拓扑图、快速开始可复现 — **部分具备**(P3.3 README/拓扑/冒烟已成;`63b10d3`;仓库仍 private)
-- [ ] `docs/benchmarks.md` + Grafana 截图 — **部分具备**(OCR A/B +
-  P3.1 ROCm 正式消融已落仓;仅 Grafana=P3.2 待完成)
+- [x] `docs/benchmarks.md` + Grafana 截图 — **已具备**(OCR A/B +
+  P3.1 ROCm 正式消融 + P3.2 一屏截图)
 - [ ] 演示视频(≤5 分钟) — **待**(P3.4;P3.1 前置已完成)
 - [x] `docs/licenses.md`:Apache-2.0(ThinkingCap/MiniCPM/Honcho/Qwen3-Embedding;手册旧称 bge-m3 已替换)+ MIT(llama.cpp 等)+ **Gemma 单独标注** + 各 Python 依赖 — **已具备**(P3.5)
 - [x] 全部提示词/示例已去个人信息;仓库无任何真实隐私数据、无 API key — **基本具备**(演示前若真实采集须清库)
@@ -539,8 +539,8 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 ### 12.0 接手三步(不可跳过)
 
 1. 通读本节 §12 全文 + `STATUS.md`。
-2. 打开 `TASKBOARD.json`,只做 `false` / `blocked` 任务(当前只剩
-   **P3.4 / P3.2**;P3.1 已 `accept`,勿重跑)。
+2. 打开 `TASKBOARD.json`,只做 `false` / `blocked` / 合法恢复的 `doing`
+   任务(当前只剩 **P3.4 doing**;P3.1/P3.2 已 `accept`,勿重跑)。
 3. 把 `docs/AGENT_KICKOFF_PROMPT.md` 整段丢给执行 agent 作为系统指令。
 
 | 顺序 | 文件 | 用途 |
@@ -561,8 +561,8 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 
 **全链路已跑通并验收**(Mac 采集 → memoryd → AMD ROCm →
 Postgres/Honcho → agentd 带证据引用)。`TASKBOARD`:**G0+M+D 33/33
-accept**;Phase3 中 **P3.1/P3.3/P3.5/P3.6/P3.7 accept**;仅剩
-**P3.4/P3.2 false**。无遗留 `doing`。P3.1 正式 run:
+accept**;Phase3 中 **P3.1/P3.2/P3.3/P3.5/P3.6/P3.7 accept**;仅剩
+**P3.4 doing**(待正式物理拔网线成片)。P3.1 正式 run:
 `p31-w7900d-20260728T075653Z`,证据目录
 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`。
 
@@ -650,14 +650,14 @@ capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必�
 
 ### 12.4 未完成(接手主队列)
 
-执行优先级:**P3.4 视频 → P3.2 Grafana**。P3.1 已完成,不要因旧
-`blocked` 文案或旧端口重跑。其余可砍见 §1.5。
+执行优先级:**P3.4 正式视频**。P3.1/P3.2 已完成,不要因旧
+`blocked` 文案、旧端口或旧状态重跑。其余可砍见 §1.5。
 
 | ID | 状态 | 做什么 | 阻塞 |
 |---|---|---|---|
 | **P3.1** | **accept** | 正式 run、§2 表格、`[VERIFY]` 与 checksummed 原始证据已齐 | 历史 `:30147` SSH 阻塞已在 `:30189` replacement instance 解除 |
-| **P3.4** | false | ≤5min 演示视频,手册 §9 六幕,**含拔网线** | 无;P3.1 数字已齐,现在最高优先 |
-| **P3.2** | false | Grafana 一屏:tokens/s、VRAM、GPU util、事件率 | P3.1 前置已满足 |
+| **P3.4** | doing | ≤5min 演示视频,手册 §9 六幕,**含拔网线** | 六幕链路已演练;待正式物理拔线成片 |
+| **P3.2** | **accept** | Grafana 一屏:tokens/s、VRAM、GPU util、事件率 | `docs/assets/p32/grafana-rocm-live-20260802.png` |
 | — | 可砍 | P3.8 MarkItDown / P3.9 日报多 Agent UI / P3.10 Open WebUI / MCP / 音频 | 时间不够按 §1.5 砍 |
 
 **§10 提交清单仍待人工**:全员 AMD Developer Program 注册、Rules 通读、仓库是否公开、演示视频、服务器仅演示数据确认。`licenses.md` 已有。
@@ -670,8 +670,8 @@ capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必�
 | — | perceive 空泛 activity | P3.7 已缓解 |
 | — | P3.1 brain 消融曾未完成 | 已由 run `p31-w7900d-20260728T075653Z` 解除;勿重跑 |
 | 高 | P3.4 六幕视频尚未录成 | 先按 §9 完成≤5min成片,必须有物理拔网线镜头 |
-| 中 | P3.2 Grafana 尚未验收 | 复用已存在监控资产,做 tokens/s、VRAM、GPU util、事件率一屏 |
-| 中 | 服务器端口可能随 replacement instance 漂移 | 当前 `:30189`;每次先核对 `radeon-cloud` alias,旧 `:30147` 仅历史 |
+| — | P3.2 Grafana 尚未验收 | 已于 2026-08-02 完成一屏与实时门禁验收 |
+| 中 | 服务器端口可能随 replacement instance 漂移 | 当前 `36.150.116.206:31357`;每次先核对 `radeon-cloud` alias,旧端口仅历史 |
 | 中 | 网关偶发 `model=None` 400(~2%) | 待查(疑 Honcho health) |
 | 中 | 隧道单帧 ~12–15s | 决赛 LAN |
 | 低 | Mac ocrd=rapidocr vs 生产 paddleocr | 一行配置 |
@@ -684,9 +684,9 @@ brain(28GB)+Dolphin(10.6)+4 小模型(12) > 48GB → 共租时用
 
 ### 12.6 起服冒烟
 
-当前 alias 应指向 `root@36.150.116.200 -p 30189`。P3.1 harness 按安全
-策略退出后 gateway、sentinel、fast、embed、perceive、brain 全为
-`down`,VRAM 回到 28,016,640 B;后续 P3.4/P3.2 起服前先运行
+当前 alias 应指向 `root@36.150.116.206 -p 31357`。当前 P3.4 录制栈已
+常驻 gateway、sentinel、fast、embed、perceive、brain 与 exporter;
+实例重启或重新起服前先运行
 `rocm-smi --showmeminfo vram --showuse`、`rocm-smi --showpids verbose`
 和 `./server-stack.sh status`,再只起需要的角色。
 
@@ -715,11 +715,11 @@ GATEWAY_URL=http://127.0.0.1:14000/v1 uv run --project services/agentd python -m
 7. llama.cpp 视觉不支持 WebP → memoryd 已转 PNG。
 8. Docker `host.docker.internal` IPv6 → Honcho 用 IPv4 字面量。
 9. 模型在 overlay → `download-models.sh` 重建(wget+hf-mirror)。
-10. **下一最高优先:P3.4**,随后 P3.2;P3.1 正式矩阵勿重跑。
+10. **唯一剩余工程收尾:P3.4 正式成片**;P3.1/P3.2 勿重跑。
 
 ### 12.8 给后续 Agent 的一句话开工
 
-> 读完 §12 与 `STATUS.md` → 领 `TASKBOARD` 里的 P3.4,按 §9 录六幕
-> ≤5min 成片且必须拔网线 → 再完成 P3.2 一屏 → 严格遵守 git 作者与无
+> 读完 §12 与 `STATUS.md` → 继续 `TASKBOARD` 里的 P3.4,按 §9 录六幕
+> ≤5min 成片且必须拔网线 → 严格遵守 git 作者与无
 > AI trailer → 完成即 accept+push。不要重做 33+5 项已 accept 的工作,
 > 尤其不要重跑 P3.1;不要改产品叙事与五模型分层。

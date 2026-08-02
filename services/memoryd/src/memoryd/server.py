@@ -12,18 +12,24 @@ grounds). Health check at /health for docker/orchestration.
 from __future__ import annotations
 
 import asyncio
-import json
+import os
 from typing import Annotated
+from urllib.parse import urlsplit
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import JSONResponse
+import httpx
+from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
 
 from memoryd.config import Settings
+from memoryd.metrics import MemoryMetrics
 from memoryd.models import AudioMeta, DocMeta, FrameMeta, IngestAck
 from memoryd.pipeline import Pipeline
-from memoryd.search import SearchMode, SearchHit, search_timeline
+from memoryd.search import search_timeline
 from memoryd.stages import (
     GatewayEmbed,
+    GatewayPerceive,
+    GatewaySentinel,
+    OcrdClient,
+    RealNovelty,
     StubEmbed,
     StubNovelty,
     StubOcr,
@@ -33,18 +39,76 @@ from memoryd.stages import (
 from memoryd.storage import TimelineStore
 
 
+def _safe_url_origin(value: str) -> str:
+    """Return only scheme/host/port, never URL credentials or query data."""
+    parsed = urlsplit(value)
+    if not parsed.scheme or not parsed.hostname:
+        return "invalid"
+    try:
+        port = parsed.port
+    except ValueError:
+        return "invalid"
+    host = parsed.hostname.lower()
+    if ":" in host:
+        host = f"[{host}]"
+    port_suffix = f":{port}" if port is not None else ""
+    return f"{parsed.scheme.lower()}://{host}{port_suffix}"
+
+
+def _pipeline_identity(pipeline: object) -> str:
+    """Describe the pipeline that is actually wired into this app."""
+    if not isinstance(pipeline, Pipeline):
+        return "custom"
+    real_stage_types = (
+        GatewaySentinel,
+        OcrdClient,
+        RealNovelty,
+        GatewayPerceive,
+        GatewayEmbed,
+    )
+    stages = (
+        pipeline.sentinel,
+        pipeline.ocr,
+        pipeline.novelty,
+        pipeline.perceive,
+        pipeline.embed,
+    )
+    if all(
+        isinstance(stage, expected)
+        for stage, expected in zip(stages, real_stage_types, strict=True)
+    ) and isinstance(pipeline.store, TimelineStore):
+        return "real"
+    if any(
+        isinstance(
+            stage,
+            (StubSentinel, StubOcr, StubNovelty, StubPerceive, StubEmbed),
+        )
+        for stage in stages
+    ):
+        return "stub"
+    return "custom"
+
+
 def _make_embed(settings: Settings):
     """Use the real gateway-backed embed when a gateway is configured; fall back
     to the stub when the gateway isn't reachable (so dev without a GPU still
     works for the ingest path)."""
     try:
-        import httpx
         base = settings.gateway_url.rstrip("/").removesuffix("/v1")
         with httpx.Client(timeout=3.0) as c:
-            c.get(f"{base}/v1/models")
+            response = c.get(f"{base}/v1/models")
+            response.raise_for_status()
         return GatewayEmbed(settings.gateway_url)
-    except Exception:
+    except httpx.HTTPError:
         return StubEmbed()
+
+
+def _real_pipeline_enabled() -> bool:
+    return os.environ.get("MEMORYD_REAL_PIPELINE", "").strip() in (
+        "1",
+        "true",
+        "yes",
+    )
 
 
 def _default_pipeline(settings: Settings) -> Pipeline:
@@ -52,17 +116,16 @@ def _default_pipeline(settings: Settings) -> Pipeline:
     inference stack (M3.4): sentinel + ocrd + fast novelty + perceive + embed,
     all via the gateway / ocrd. Without it (default), the stub stages run except
     for embed, which auto-upgrades to GatewayEmbed when the gateway is up."""
-    import os
-    real = os.environ.get("MEMORYD_REAL_PIPELINE", "").strip() in ("1", "true", "yes")
-    if real:
-        from memoryd.stages import GatewayPerceive, GatewaySentinel, OcrdClient, RealNovelty
+    if _real_pipeline_enabled():
         return Pipeline(
             sentinel=GatewaySentinel(settings.gateway_url),
             ocr=OcrdClient(settings.ocr_url),
             novelty=RealNovelty(settings.gateway_url),
             perceive=GatewayPerceive(settings.gateway_url),
-            embed=_make_embed(settings),
-            store=TimelineStore(dsn=settings.timeline_db_url, data_root=settings.data_root),
+            embed=GatewayEmbed(settings.gateway_url),
+            store=TimelineStore(
+                dsn=settings.timeline_db_url, data_root=settings.data_root
+            ),
         )
     return Pipeline(
         sentinel=StubSentinel(),
@@ -70,9 +133,7 @@ def _default_pipeline(settings: Settings) -> Pipeline:
         novelty=StubNovelty(),
         perceive=StubPerceive(),
         embed=_make_embed(settings),
-        store=TimelineStore(
-            dsn=settings.timeline_db_url, data_root=settings.data_root
-        ),
+        store=TimelineStore(dsn=settings.timeline_db_url, data_root=settings.data_root),
     )
 
 
@@ -81,6 +142,7 @@ def create_app(
 ) -> FastAPI:
     settings = settings or Settings.from_env()
     pipeline = pipeline or _default_pipeline(settings)
+    metrics = MemoryMetrics()
 
     app = FastAPI(
         title="DejaView memoryd",
@@ -90,7 +152,20 @@ def create_app(
 
     @app.get("/health")
     async def health() -> dict[str, str]:
-        return {"status": "ok"}
+        return {
+            "status": "ok",
+            "pipeline": _pipeline_identity(pipeline),
+            "gateway_origin": _safe_url_origin(settings.gateway_url),
+            "database": urlsplit(settings.timeline_db_url).path.removeprefix("/"),
+            "data_root": str(settings.data_root),
+        }
+
+    @app.get("/metrics")
+    async def prometheus_metrics() -> Response:
+        return Response(
+            content=metrics.render_prometheus(),
+            media_type="text/plain; version=0.0.4; charset=utf-8",
+        )
 
     @app.post("/v1/ingest/frame", response_model=IngestAck, status_code=202)
     async def ingest_frame(
@@ -100,9 +175,12 @@ def create_app(
         try:
             meta_obj = FrameMeta.model_validate_json(meta)
         except Exception as exc:
-            raise HTTPException(status_code=422, detail=f"invalid meta JSON: {exc}") from exc
+            raise HTTPException(
+                status_code=422, detail=f"invalid meta JSON: {exc}"
+            ) from exc
         image_bytes = await file.read()
         ack = await pipeline.ingest_frame(image_bytes, meta_obj)
+        metrics.observe_frame(ack)
         # Keep 202 even on sentinel-block: the ingest call itself succeeded.
         return ack
 
@@ -116,7 +194,9 @@ def create_app(
         try:
             AudioMeta.model_validate_json(meta)
         except Exception as exc:
-            raise HTTPException(status_code=422, detail=f"invalid meta JSON: {exc}") from exc
+            raise HTTPException(
+                status_code=422, detail=f"invalid meta JSON: {exc}"
+            ) from exc
         await file.read()  # drain; not persisted in M3.2
         return IngestAck(accepted=True, note="audio stubbed: accepted, not transcribed")
 
@@ -129,7 +209,9 @@ def create_app(
         try:
             DocMeta.model_validate_json(meta)
         except Exception as exc:
-            raise HTTPException(status_code=422, detail=f"invalid meta JSON: {exc}") from exc
+            raise HTTPException(
+                status_code=422, detail=f"invalid meta JSON: {exc}"
+            ) from exc
         await file.read()
         return IngestAck(accepted=True, note="doc stubbed: accepted, not chunked")
 
@@ -145,7 +227,10 @@ def create_app(
             raise HTTPException(status_code=422, detail="`query` is required")
         mode = body.get("mode", "hybrid")
         if mode not in ("hybrid", "semantic", "exact"):
-            raise HTTPException(status_code=422, detail=f"mode must be hybrid|semantic|exact, got {mode}")
+            raise HTTPException(
+                status_code=422,
+                detail=f"mode must be hybrid|semantic|exact, got {mode}",
+            )
         k = int(body.get("k", 5))
         time_from = body.get("time_from")
         time_to = body.get("time_to")
@@ -158,7 +243,7 @@ def create_app(
                 raise HTTPException(
                     status_code=503,
                     detail="semantic/hybrid search requires the gateway-backed embed; "
-                           "gateway not reachable (start dev-stack.sh up embed)",
+                    "gateway not reachable (start dev-stack.sh up embed)",
                 )
             query_vec = await pipeline.embed.embed_query(query)
 
@@ -172,6 +257,11 @@ def create_app(
             time_to=time_to,
             query_vec=query_vec,
         )
-        return {"query": query, "mode": mode, "k": k, "hits": [h.to_dict() for h in hits]}
+        return {
+            "query": query,
+            "mode": mode,
+            "k": k,
+            "hits": [h.to_dict() for h in hits],
+        }
 
     return app
