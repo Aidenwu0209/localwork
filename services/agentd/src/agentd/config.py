@@ -32,6 +32,7 @@ class Settings:
     brain_model: str = "brain"     # logical name at the gateway for tool-calling
     radeon_gateway_url: str | None = None
     local_gateway_url: str = "http://127.0.0.1:4000/v1"
+    memoryd_url: str = "http://127.0.0.1:8090"
 
     @property
     def compute_radeon_gateway_url(self) -> str:
@@ -53,4 +54,5 @@ class Settings:
             brain_model=_env("AGENTD_BRAIN_MODEL", "brain"),
             radeon_gateway_url=_env("RADEON_GATEWAY_URL", gateway_url).rstrip("/"),
             local_gateway_url=_env("LOCAL_GATEWAY_URL", "http://127.0.0.1:4000/v1").rstrip("/"),
+            memoryd_url=_env("MEMORYD_URL", "http://127.0.0.1:8090").rstrip("/"),
         )

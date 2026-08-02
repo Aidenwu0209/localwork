@@ -17,15 +17,17 @@ from __future__ import annotations
 import json
 import logging
 import re
-from datetime import datetime
-from typing import Any
+from datetime import datetime, timezone
+from typing import Any, Callable
 from urllib.parse import urlsplit
 
+import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from agentd.config import Settings
+from agentd.product import ProductStoreProtocol, install_product_routes
 from agentd.router import BothBackendsFailed, ComputeFailure, ComputeRouter, RouteMetadata
 from agentd.tools import SPECS, dispatch
 
@@ -90,7 +92,12 @@ class ChatRequest(BaseModel):
 
 
 def create_app(
-    *, settings: Settings | None = None, router: ComputeRouter | None = None
+    *,
+    settings: Settings | None = None,
+    router: ComputeRouter | None = None,
+    product_store: ProductStoreProtocol | None = None,
+    product_client_factory: Callable[..., Any] = httpx.Client,
+    product_clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
 ) -> FastAPI:
     settings = settings or Settings.from_env()
     router = router or ComputeRouter(settings)
@@ -245,13 +252,14 @@ def create_app(
                     )
                 except json.JSONDecodeError:
                     args = {}
-                log.info("tool call: %s args=%s", name, args)
+                log.info("tool_call tool=%s", name)
                 try:
                     result = dispatch(settings, name, args, router=router)
-                    log.info("tool result: %s -> %s", name, str(result)[:120])
-                except Exception as exc:  # noqa: BLE001 - isolate tool failures
+                    count = result.get("count") if isinstance(result, dict) else None
+                    log.info("tool_result tool=%s status=success count=%s", name, count)
+                except Exception:  # noqa: BLE001 - isolate tool failures
                     result = {"error": {"code": "tool_failed"}}
-                    log.warning("tool %s failed", name)
+                    log.warning("tool_result tool=%s status=failed", name)
                 citation_allowlist.update(_citation_labels(result))
                 messages.append(
                     {
@@ -274,6 +282,24 @@ def create_app(
             citations=[],
         )
 
+    async def product_ask_chat(question: str) -> JSONResponse:
+        return await chat(
+            ChatRequest(
+                messages=[ChatMessage(role="user", content=question)],
+                temperature=0,
+                max_tokens=700,
+                stream=False,
+            )
+        )
+
+    install_product_routes(
+        app,
+        settings,
+        store=product_store,
+        client_factory=product_client_factory,
+        clock=product_clock,
+        ask_chat=product_ask_chat,
+    )
     return app
 
 

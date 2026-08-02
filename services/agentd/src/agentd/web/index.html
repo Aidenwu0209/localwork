@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>DejaView — Your local memory</title>
+  <link rel="stylesheet" href="/product.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to your memory</a>
+
+  <header class="topbar">
+    <div class="brand-block">
+      <a class="wordmark" href="/" aria-label="DejaView home">
+        <span class="brand-mark" aria-hidden="true">D</span>
+        <span>DejaView</span>
+      </a>
+      <p class="sovereignty-line"><span aria-hidden="true">⌂</span> <span class="sovereignty-full">Private by design · stays on this device</span><span class="sovereignty-compact">Local-only data</span></p>
+    </div>
+    <div class="status-strip" aria-label="System summary">
+      <span class="status-chip" id="overall-status"><i aria-hidden="true">?</i> System unknown</span>
+      <span class="status-chip" id="capture-status"><i aria-hidden="true">?</i> Capture unknown</span>
+      <span class="status-chip" id="compute-status"><i aria-hidden="true">?</i> Compute unknown</span>
+      <span class="last-check" id="last-checked">Not checked</span>
+    </div>
+  </header>
+
+  <nav class="view-nav" aria-label="Product views">
+    <a href="#timeline" aria-current="page">Timeline</a>
+    <a href="#ask">Ask memory</a>
+    <a href="#privacy">Privacy</a>
+    <a href="#profile">Profile</a>
+    <a class="demo-link" href="http://127.0.0.1:8120/">Open six-act demo <span aria-hidden="true">↗</span></a>
+  </nav>
+
+  <main id="main" class="workspace" tabindex="-1">
+    <section class="panel timeline-panel" id="timeline" aria-labelledby="timeline-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Observed activity</p>
+          <h1 id="timeline-title">Your timeline</h1>
+        </div>
+        <button class="icon-button" id="refresh-timeline" type="button" aria-label="Refresh timeline">↻</button>
+      </div>
+
+      <form class="filter-form" id="filter-form">
+        <div class="field-row">
+          <label for="date-from">From</label>
+          <input id="date-from" name="date_from" type="date">
+          <label for="date-to">To</label>
+          <input id="date-to" name="date_to" type="date">
+        </div>
+        <label for="app-filter">Application</label>
+        <input id="app-filter" name="app" type="text" maxlength="128" placeholder="e.g. Terminal">
+        <label for="timeline-query">Contains</label>
+        <div class="input-action">
+          <input id="timeline-query" name="query" type="search" maxlength="200" placeholder="Search captured activity">
+          <button type="submit">Filter</button>
+        </div>
+      </form>
+
+      <p class="notice" id="timeline-message" aria-live="polite">Loading recent activity…</p>
+      <div class="error-banner" id="timeline-error" role="alert" hidden></div>
+      <ol class="timeline-list" id="timeline-list" aria-label="Captured activity"></ol>
+      <button class="secondary-button load-more" id="load-more" type="button" hidden>Load earlier activity</button>
+    </section>
+
+    <section class="panel ask-panel" id="ask" aria-labelledby="ask-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Evidence-grounded recall</p>
+          <h2 id="ask-title">Ask your memory</h2>
+        </div>
+        <span class="local-badge"><span aria-hidden="true">●</span> Local data</span>
+      </div>
+      <p class="lede">Ask what you worked on, where you saw something, or how a task unfolded. Answers link back to visible evidence.</p>
+      <form id="ask-form" class="ask-form">
+        <label for="ask-question">Question</label>
+        <textarea id="ask-question" name="question" maxlength="2000" rows="4" placeholder="What was I working on before lunch?" required></textarea>
+        <div class="form-footer">
+          <span>Only verified memories are cited.</span>
+          <button class="primary-button" type="submit">Ask DejaView</button>
+        </div>
+      </form>
+      <div class="error-banner" id="ask-error" role="alert" hidden></div>
+      <article class="answer-card" id="answer-card" aria-live="polite" aria-busy="false">
+        <p class="answer-placeholder">Your answer will appear here with evidence you can inspect.</p>
+      </article>
+    </section>
+
+    <aside class="system-column" aria-label="System and privacy controls">
+      <section class="panel compact-panel" aria-labelledby="system-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Trust at a glance</p>
+            <h2 id="system-title">System</h2>
+          </div>
+          <button class="icon-button" id="refresh-status" type="button" aria-label="Refresh system status">↻</button>
+        </div>
+        <dl class="status-list" id="status-detail">
+          <div><dt>Database</dt><dd>Unknown</dd></div>
+          <div><dt>Memory service</dt><dd>Unknown</dd></div>
+          <div><dt>Capture heartbeat</dt><dd>Unknown</dd></div>
+          <div><dt>Answer engine</dt><dd>Not verified</dd></div>
+        </dl>
+        <p class="error-banner" id="status-error" role="alert" hidden></p>
+      </section>
+
+      <section class="panel compact-panel" id="privacy" aria-labelledby="privacy-title">
+        <p class="eyebrow">Visible decisions</p>
+        <h2 id="privacy-title">Privacy ledger</h2>
+        <p class="metric"><strong id="blocked-count">—</strong><span>captures blocked</span></p>
+        <p id="privacy-summary">Loading local privacy decisions…</p>
+        <p class="quiet-note">Blocked pixels are never exposed by this page.</p>
+        <p class="error-banner" id="privacy-error" role="alert" hidden></p>
+      </section>
+
+      <section class="panel compact-panel" id="profile" aria-labelledby="profile-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Evolving preferences</p>
+            <h2 id="profile-title">Profile projection</h2>
+          </div>
+          <span class="status-chip" id="profile-status"><i aria-hidden="true">?</i> Unknown</span>
+        </div>
+        <form id="profile-form">
+          <label for="profile-question">Ask about your patterns</label>
+          <textarea id="profile-question" maxlength="2000" rows="3" placeholder="How do I usually approach debugging?" required></textarea>
+          <button class="secondary-button" type="submit">Ask profile</button>
+        </form>
+        <div id="profile-answer" class="profile-answer" aria-live="polite"></div>
+        <div class="profile-controls">
+          <button class="text-button" id="pause-profile" type="button">Pause projection</button>
+          <button class="text-button" id="resume-profile" type="button">Resume projection</button>
+        </div>
+        <p class="error-banner" id="profile-error" role="alert" hidden></p>
+      </section>
+    </aside>
+  </main>
+
+  <div class="drawer-backdrop" id="evidence-backdrop" hidden></div>
+  <section class="evidence-drawer" id="evidence-drawer" role="dialog" aria-modal="true" aria-labelledby="evidence-title" hidden tabindex="-1">
+    <header>
+      <div>
+        <p class="eyebrow">Source evidence</p>
+        <h2 id="evidence-title">Captured moment</h2>
+      </div>
+      <button class="icon-button" id="close-evidence" type="button" aria-label="Close evidence">×</button>
+    </header>
+    <p class="notice" id="evidence-message" aria-live="polite">Loading evidence…</p>
+    <p class="error-banner" id="evidence-error" role="alert" hidden></p>
+    <figure class="evidence-figure" id="evidence-figure" hidden>
+      <div class="image-stage" id="image-stage">
+        <img id="evidence-image" alt="Captured screen evidence">
+        <div class="highlight-layer" id="highlight-layer" aria-hidden="true"></div>
+      </div>
+      <figcaption id="evidence-caption"></figcaption>
+    </figure>
+    <dl class="evidence-meta" id="evidence-meta"></dl>
+  </section>
+
+  <script type="module" src="/product.js"></script>
+</body>
+</html>

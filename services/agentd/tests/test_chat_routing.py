@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from unittest.mock import patch
 
@@ -176,6 +177,31 @@ def test_tool_dispatch_receives_the_same_router_used_for_brain_calls() -> None:
 
     assert response.status_code == 200
     assert dispatch.call_args.kwargs["router"] is router
+
+
+def test_tool_logs_never_include_arguments_or_result_content(caplog) -> None:
+    secret = "SYNTHETIC-PRIVATE-OCR-TITLE-PATH"
+    tool_call = {
+        "content": None,
+        "tool_calls": [
+            {
+                "id": "synthetic-tool",
+                "function": {
+                    "name": "search_timeline",
+                    "arguments": '{"query":"' + secret + '"}',
+                },
+            }
+        ],
+    }
+    router = ScriptedRouter([result(tool_call), result({"content": "No memory claim."})])
+    with caplog.at_level(logging.INFO, logger="agentd.server"), patch(
+        "agentd.server.dispatch", return_value={"answer": secret}
+    ):
+        response = post_chat(router)
+
+    assert response.status_code == 200
+    assert secret not in caplog.text
+    assert "tool=search_timeline" in caplog.text
 
 
 def test_dual_compute_failure_returns_only_sanitized_reasons() -> None:
