@@ -27,6 +27,8 @@ import asyncio
 import io
 import logging
 import time
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 import httpx
@@ -35,7 +37,7 @@ from PIL import Image
 
 from capture.permissions import check_screen_recording_permission
 from capture.screenshot import _scale_to_max_width
-from capture.uploader import upload_frame
+from capture.uploader import UploadOutcome, upload_frame
 from capture.url_probe import probe_browser_url
 from capture.windows import capture_window_png, get_active_window, list_windows
 
@@ -54,6 +56,53 @@ def _png_to_scaled_webp(png_bytes: bytes, config: "CaptureConfig") -> tuple[byte
 
 
 log = logging.getLogger("capture.agent")
+
+
+@dataclass
+class CaptureCounters:
+    stored: int = 0
+    merged: int = 0
+    blocked: int = 0
+    failed: int = 0
+
+    def record(self, outcome: UploadOutcome) -> None:
+        setattr(self, outcome.state, getattr(self, outcome.state) + 1)
+
+    def as_dict(self) -> dict[str, int]:
+        return {state: getattr(self, state) for state in ("stored", "merged", "blocked", "failed")}
+
+    def heartbeat_payload(self, device_id: str, client_ts: str) -> dict[str, str | int]:
+        return {"device_id": device_id, "client_ts": client_ts, **self.as_dict()}
+
+
+def should_commit_frame(outcome: UploadOutcome) -> bool:
+    return outcome.state in ("stored", "merged", "blocked")
+
+
+def apply_upload_outcome(
+    outcome: UploadOutcome,
+    *,
+    counters: CaptureCounters,
+    window_hashes: dict[str, object],
+    window_key: str,
+    frame_hash: object,
+    now: float,
+    last_upload_ts: float,
+) -> float:
+    """Record an outcome; dedup state advances only after a terminal commit."""
+    counters.record(outcome)
+    if not should_commit_frame(outcome):
+        return last_upload_ts
+    window_hashes[window_key] = frame_hash
+    return now
+
+
+async def _send_heartbeat(config: "CaptureConfig", counters: CaptureCounters, client: httpx.AsyncClient) -> None:
+    payload = counters.heartbeat_payload(config.device_id, datetime.now(timezone.utc).isoformat())
+    try:
+        await client.post(config.heartbeat_endpoint, json=payload)
+    except (httpx.HTTPError, OSError):
+        log.debug("capture heartbeat failed")
 
 # Distributed-notification names broadcast by loginwindow / ScreenSaverEngine.
 _SCREEN_LOCKED = "com.apple.screenIsLocked"
@@ -138,7 +187,7 @@ def _pump_runloop(timeout: float) -> None:
         pass
 
 
-async def run_agent(config: "CaptureConfig") -> None:
+async def run_agent(config: "CaptureConfig") -> int:
     """Main capture loop. Runs until cancelled (Ctrl-C / SIGTERM)."""
     logging.basicConfig(
         level=logging.INFO,
@@ -153,13 +202,11 @@ async def run_agent(config: "CaptureConfig") -> None:
 
     perm = check_screen_recording_permission()
     if not perm.granted:
-        # The permission module already printed guidance. Keep running so the
-        # user can grant permission and relaunch; the loop will keep producing
-        # black frames (rejected downstream) but won't crash.
         log.warning(
-            "running WITHOUT screen recording permission: frames will be black. "
-            "Grant permission and relaunch to capture real content."
+            "screen recording permission unavailable; capture will exit without "
+            "capturing. Grant permission and relaunch."
         )
+        return 2
     else:
         log.info("screen recording permission OK (%s)", perm.detail)
 
@@ -169,6 +216,9 @@ async def run_agent(config: "CaptureConfig") -> None:
     last_fg: tuple[str | None, str | None] = (None, None)  # foreground (app,title)
     last_periodic_ts: float = time.monotonic()
     last_upload_ts: float = 0.0
+    last_heartbeat_ts: float = time.monotonic()
+    had_upload_failure = False
+    counters = CaptureCounters()
     # Per-window dhash for dedup: keyed by "<owner>::<title>" so the same window
     # across cycles dedups against itself, but different windows never suppress
     # each other.
@@ -187,6 +237,9 @@ async def run_agent(config: "CaptureConfig") -> None:
                     continue
 
                 now = time.monotonic()
+                if now - last_heartbeat_ts >= 30.0:
+                    await _send_heartbeat(config, counters, client)
+                    last_heartbeat_ts = now
 
                 # Trigger: foreground change OR periodic timer. The window LIST
                 # is re-enumerated every cycle regardless, but we only capture
@@ -245,7 +298,7 @@ async def run_agent(config: "CaptureConfig") -> None:
                         "capturing window: %s/%s fg=%s size=%dx%d bytes=%d trigger=%s",
                         wi.owner, wi.title, wi.is_foreground, w, h, len(webp_bytes), trigger,
                     )
-                    await upload_frame(
+                    outcome = await upload_frame(
                         config,
                         webp_bytes=webp_bytes,
                         app=wi.owner,
@@ -254,15 +307,29 @@ async def run_agent(config: "CaptureConfig") -> None:
                         trigger=trigger,
                         client=client,
                     )
-                    window_hashes[key] = frame_hash
-                    last_upload_ts = time.monotonic()
+                    now = time.monotonic()
+                    last_upload_ts = apply_upload_outcome(
+                        outcome,
+                        counters=counters,
+                        window_hashes=window_hashes,
+                        window_key=key,
+                        frame_hash=frame_hash,
+                        now=now,
+                        last_upload_ts=last_upload_ts,
+                    )
+                    if outcome.state == "failed":
+                        had_upload_failure = True
+                    elif had_upload_failure:
+                        await _send_heartbeat(config, counters, client)
+                        last_heartbeat_ts = now
+                        had_upload_failure = False
                     captured += 1
                 log.info("cycle done: %d/%d windows captured (trigger=%s)",
                          captured, len(windows), trigger)
 
             except asyncio.CancelledError:
                 log.info("capture cancelled, exiting")
-                raise
+                return 0
             except Exception as exc:
                 # Never let an unexpected error kill the loop; log and continue.
                 log.exception("agent iteration failed (continuing): %s", exc)

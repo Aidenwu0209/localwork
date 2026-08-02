@@ -12,11 +12,12 @@ grounds). Health check at /health for docker/orchestration.
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 from typing import Annotated, TypeVar
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from memoryd.config import Settings
 from memoryd.metrics import MemoryMetrics
@@ -39,6 +40,24 @@ from memoryd.storage import TimelineStore
 
 
 MetaT = TypeVar("MetaT", bound=BaseModel)
+
+
+class CaptureHeartbeat(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    device_id: str = Field(min_length=1, max_length=128)
+    client_ts: datetime
+    stored: int = Field(ge=0)
+    merged: int = Field(ge=0)
+    blocked: int = Field(ge=0)
+    failed: int = Field(ge=0)
+
+    @field_validator("client_ts")
+    @classmethod
+    def _require_timezone(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("client_ts must include timezone")
+        return value
 
 
 def _validated_meta(meta: str, model: type[MetaT]) -> MetaT:
@@ -159,6 +178,20 @@ def create_app(
             content=metrics.render_prometheus(),
             media_type="text/plain; version=0.0.4; charset=utf-8",
         )
+
+    @app.post("/v1/capture/heartbeat")
+    async def capture_heartbeat(body: CaptureHeartbeat) -> dict[str, bool]:
+        accepted = metrics.observe_capture_heartbeat(
+            device_id=body.device_id,
+            client_ts=body.client_ts,
+            counters={
+                "stored": body.stored,
+                "merged": body.merged,
+                "blocked": body.blocked,
+                "failed": body.failed,
+            },
+        )
+        return {"accepted": accepted}
 
     @app.post("/v1/ingest/frame", response_model=IngestAck, status_code=202)
     async def ingest_frame(

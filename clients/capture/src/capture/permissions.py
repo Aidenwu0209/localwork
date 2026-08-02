@@ -124,8 +124,8 @@ def _print_permission_guidance(*, detail: str) -> None:
         "  4. Quit the app fully (Cmd+Q) and relaunch, then run capture again.",
         "",
         "After granting, the first non-black frame proves it worked.",
-        "Until then, capture will keep running but every frame is black and",
-        "useless to OCR — no crash, just no data.",
+        "Until then, capture will exit without capturing. Grant permission and",
+        "relaunch after the app has been authorized.",
         "=" * 72,
         "",
     ]

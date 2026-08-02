@@ -17,8 +17,9 @@ from __future__ import annotations
 
 import json
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import httpx
 
@@ -27,6 +28,16 @@ if TYPE_CHECKING:
 
 
 log = logging.getLogger("capture.uploader")
+
+UploadState = Literal["stored", "merged", "blocked", "failed"]
+
+
+@dataclass(frozen=True)
+class UploadOutcome:
+    state: UploadState
+    event_id: int | None = None
+    merged_into: int | None = None
+    error_code: str | None = None
 
 # Shapes memoryd's FrameMeta exactly (services/memoryd/src/memoryd/models.py).
 # Keep these keys in sync if memoryd's model changes.
@@ -60,8 +71,8 @@ async def upload_frame(
     url: str | None,
     trigger: str,
     client: httpx.AsyncClient | None = None,
-) -> bool:
-    """POST one frame; return True if memoryd accepted it (HTTP 2xx).
+) -> UploadOutcome:
+    """POST one frame and return a closed terminal outcome.
 
     `client` may be passed in so the caller reuses a pooled connection across
     frames. If omitted, a short-lived client is created for this call.
@@ -86,20 +97,32 @@ async def upload_frame(
 
     try:
         resp = await client.post(config.frame_endpoint, files=files, data=data)
-        if 200 <= resp.status_code < 300:
-            log.debug(
-                "frame uploaded: trigger=%s app=%s title=%r -> %s %s",
-                trigger, app, window_title, resp.status_code, resp.text[:200],
-            )
-            return True
-        log.warning(
-            "memoryd returned %s for frame (trigger=%s): %s",
-            resp.status_code, trigger, resp.text[:200],
-        )
-        return False
-    except (httpx.HTTPError, OSError) as exc:
-        log.debug("frame upload failed (dropped, not cached): %s", exc)
-        return False
+        if not 200 <= resp.status_code < 300:
+            return UploadOutcome(state="failed", error_code="http_error")
+        try:
+            body = resp.json()
+        except (ValueError, TypeError):
+            return UploadOutcome(state="failed", error_code="invalid_response")
+        return _parse_outcome(body)
+    except (httpx.HTTPError, OSError):
+        log.debug("frame upload failed (dropped, not cached)")
+        return UploadOutcome(state="failed", error_code="transport_error")
     finally:
         if owns_client:
             await client.aclose()
+
+
+def _parse_outcome(body: object) -> UploadOutcome:
+    if not isinstance(body, dict):
+        return UploadOutcome(state="failed", error_code="invalid_response")
+    state = body.get("processing_state")
+    accepted = body.get("accepted")
+    event_id = body.get("event_id")
+    merged_into = body.get("merged_into")
+    if state == "stored" and accepted is True and isinstance(event_id, int) and not isinstance(event_id, bool) and merged_into is None:
+        return UploadOutcome(state="stored", event_id=event_id)
+    if state == "merged" and accepted is True and event_id is None and isinstance(merged_into, int) and not isinstance(merged_into, bool):
+        return UploadOutcome(state="merged", merged_into=merged_into)
+    if state == "blocked" and accepted is False and event_id is None and merged_into is None:
+        return UploadOutcome(state="blocked")
+    return UploadOutcome(state="failed", error_code="invalid_response")

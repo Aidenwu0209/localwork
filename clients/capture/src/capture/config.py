@@ -81,6 +81,10 @@ class CaptureConfig:
     def frame_endpoint(self) -> str:
         return f"{self.memoryd_url.rstrip('/')}/v1/ingest/frame"
 
+    @property
+    def heartbeat_endpoint(self) -> str:
+        return f"{self.memoryd_url.rstrip('/')}/v1/capture/heartbeat"
+
     @classmethod
     def load(cls, path: str | os.PathLike[str] | None = None) -> "CaptureConfig":
         """Load config from `path`, or auto-discover it; fall back to defaults."""

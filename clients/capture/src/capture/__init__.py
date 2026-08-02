@@ -29,10 +29,12 @@ def main() -> None:
     )
     config = CaptureConfig.load()
     try:
-        asyncio.run(run_agent(config))
+        exit_code = asyncio.run(run_agent(config))
     except KeyboardInterrupt:
         # asyncio.run swallows the CancelledError; surface a clean exit.
-        pass
+        return
+    if exit_code:
+        raise SystemExit(exit_code)
 
 
 if __name__ == "__main__":

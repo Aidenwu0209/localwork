@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from threading import Lock
 from typing import TYPE_CHECKING
 
@@ -13,11 +14,23 @@ class MemoryMetrics:
     """Track frame-ingest outcomes without adding a Prometheus dependency."""
 
     _OUTCOMES = ("stored", "merged", "blocked")
+    _CAPTURE_OUTCOMES = ("stored", "merged", "blocked", "failed")
 
     def __init__(self) -> None:
         self._lock = Lock()
         self._ingest_counts = {outcome: 0 for outcome in self._OUTCOMES}
         self._timeline_events = 0
+        self._capture_heartbeats: dict[str, tuple[datetime, dict[str, int]]] = {}
+
+    def observe_capture_heartbeat(
+        self, *, device_id: str, client_ts: datetime, counters: dict[str, int]
+    ) -> bool:
+        with self._lock:
+            previous = self._capture_heartbeats.get(device_id)
+            if previous is not None and client_ts <= previous[0]:
+                return False
+            self._capture_heartbeats[device_id] = (client_ts, dict(counters))
+            return True
 
     def observe_frame(self, ack: IngestAck) -> None:
         outcome = ack.processing_state
@@ -31,6 +44,12 @@ class MemoryMetrics:
         with self._lock:
             counts = dict(self._ingest_counts)
             timeline_events = self._timeline_events
+            capture_counts = {outcome: 0 for outcome in self._CAPTURE_OUTCOMES}
+            last_heartbeat = 0.0
+            for client_ts, counters in self._capture_heartbeats.values():
+                for outcome in self._CAPTURE_OUTCOMES:
+                    capture_counts[outcome] += counters[outcome]
+                last_heartbeat = max(last_heartbeat, client_ts.timestamp())
 
         lines = [
             "# HELP dejaview_memory_ingest_total Frame ingests by final outcome.",
@@ -40,6 +59,11 @@ class MemoryMetrics:
             f'dejaview_memory_ingest_total{{outcome="{outcome}"}} {counts[outcome]}'
             for outcome in self._OUTCOMES
         )
+        lines.extend(
+            f'dejaview_capture_frames_total{{outcome="{outcome}"}} {capture_counts[outcome]}'
+            for outcome in self._CAPTURE_OUTCOMES
+        )
+        lines.append(f"dejaview_capture_last_heartbeat_unixtime {last_heartbeat}")
         lines.extend(
             [
                 "# HELP dejaview_timeline_events_total New timeline events persisted.",
