@@ -94,6 +94,10 @@ def create_app(*, settings: Settings | None = None) -> FastAPI:
             "model": settings.model_name,
             "brain_model": settings.brain_model,
             "gateway_origin": _safe_url_origin(settings.gateway_url),
+            "radeon_gateway_origin": _safe_url_origin(
+                settings.compute_radeon_gateway_url
+            ),
+            "local_gateway_origin": _safe_url_origin(settings.local_gateway_url),
             "honcho_origin": _safe_url_origin(settings.honcho_url),
             "database": urlsplit(settings.timeline_db_url).path.removeprefix("/"),
             "data_root": str(settings.data_root),

@@ -15,6 +15,8 @@ class AgentHealthTest(unittest.TestCase):
                 "https://gateway-user:gateway-secret@Example.COM:4443/v1"
                 "?api_key=do-not-return"
             ),
+            radeon_gateway_url="https://radeon-user:radeon-secret@Radeon.EXAMPLE:4444/v1",
+            local_gateway_url="http://local-user:local-secret@127.0.0.1:4000/v1",
             timeline_db_url=(
                 "postgresql://database-user:database-secret@127.0.0.1:5433/"
                 "dejaview_demo?sslmode=disable"
@@ -38,6 +40,8 @@ class AgentHealthTest(unittest.TestCase):
                 "model": "dejaview",
                 "brain_model": "brain",
                 "gateway_origin": "https://example.com:4443",
+                "radeon_gateway_origin": "https://radeon.example:4444",
+                "local_gateway_origin": "http://127.0.0.1:4000",
                 "honcho_origin": "http://127.0.0.1:8100",
                 "database": "dejaview_demo",
                 "data_root": str(Path("/tmp/dejaview-p34-data").resolve()),
