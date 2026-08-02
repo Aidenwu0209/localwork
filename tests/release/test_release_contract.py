@@ -79,6 +79,7 @@ class ReleaseContractTest(unittest.TestCase):
                 self.assertNotIn("--host 0.0.0.0", text)
                 self.assertIn("--host 127.0.0.1", text)
                 self.assertNotIn('--host "$HOST"', text)
+                self.assertNotIn("--detailed_debug", text)
 
     def test_gateway_host_environment_cannot_override_loopback(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

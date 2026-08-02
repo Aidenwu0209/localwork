@@ -14,5 +14,4 @@ CONFIG="$ROOT/server/litellm.yaml"
 
 exec uvx --from 'litellm[proxy]==1.93.0' litellm \
   --config "$CONFIG" \
-  --host 127.0.0.1 --port 4000 \
-  --detailed_debug
+  --host 127.0.0.1 --port 4000

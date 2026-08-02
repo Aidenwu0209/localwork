@@ -13,7 +13,7 @@ help:
 	@echo "doctor      read-only prerequisite and release-state checks"
 	@echo "test        run the offline first-party release test suite"
 	@echo "test-capture run the macOS-only capture client suite"
-	@echo "product-up  start local data, Honcho, ocrd, memoryd, and agentd"
+	@echo "product-up  start owned local privacy runtime, data, Honcho, ocrd, memoryd, and agentd"
 	@echo "product-down stop only DejaView-managed local services (data preserved)"
 	@echo "product-status show local process and endpoint status"
 	@echo "capture     run the foreground macOS capture client"
