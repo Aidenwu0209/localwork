@@ -534,8 +534,8 @@
       "depends": [
         "P3.12"
       ],
-      "status": false,
-      "note": ""
+      "status": "doing",
+      "note": "2026-08-02 认领:root;实施计划=docs/superpowers/plans/2026-08-02-p313-privacy-capture-hardening.md;测试驱动实现,不改 accepted ROCm/视频证据,不 stage third_party/honcho。"
     },
     {
       "id": "P3.14",
