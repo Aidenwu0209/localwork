@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -179,12 +179,43 @@ def test_explicit_stub_pipeline_is_degraded_and_rejects_frames() -> None:
     from fastapi.testclient import TestClient
     from memoryd.server import create_app
 
-    response = TestClient(create_app(settings=make_settings(allow_stub_pipeline=True))).get(
-        "/health"
+    settings = make_settings(allow_stub_pipeline=True)
+    pipeline = _default_pipeline(settings)
+    pipeline.ingest_frame = AsyncMock()
+    client = TestClient(create_app(settings=settings, pipeline=pipeline))
+
+    health = client.get("/health")
+    assert health.json()["status"] == "degraded"
+    assert health.json()["pipeline"] == "stub"
+    assert health.json()["accepting_frames"] is False
+
+    with patch(
+        "starlette.datastructures.UploadFile.read",
+        new=AsyncMock(side_effect=AssertionError("stub ingress read the frame")),
+    ) as read:
+        response = client.post(
+            "/v1/ingest/frame",
+            files={"file": ("frame.webp", b"private pixels", "image/webp")},
+            data={"meta": frame_meta().model_dump_json()},
+        )
+    assert response.status_code == 503
+    assert response.json() == {
+        "detail": {
+            "code": "pipeline_not_ready",
+            "accepted": False,
+            "reason": "stub_pipeline",
+        }
+    }
+    read.assert_not_awaited()
+    pipeline.ingest_frame.assert_not_awaited()
+
+    invalid_meta = client.post(
+        "/v1/ingest/frame",
+        files={"file": ("frame.webp", b"private pixels", "image/webp")},
+        data={"meta": "not-json"},
     )
-    assert response.json()["status"] == "degraded"
-    assert response.json()["pipeline"] == "stub"
-    assert response.json()["accepting_frames"] is False
+    assert invalid_meta.status_code == 422
+    pipeline.ingest_frame.assert_not_awaited()
 
 
 def test_sentinel_exception_audits_block_and_calls_nothing_downstream(tmp_path: Path) -> None:

@@ -87,6 +87,11 @@ def _pipeline_identity(pipeline: object) -> str:
     return "custom"
 
 
+def _accepting_frames(pipeline: object) -> bool:
+    """Whether the active pipeline is safe to receive frame pixels."""
+    return _pipeline_identity(pipeline) != "stub"
+
+
 def _default_pipeline(settings: Settings) -> Pipeline:
     """Wire real stages by default; stubs require an explicit unsafe opt-in."""
     if not settings.allow_stub_pipeline:
@@ -126,11 +131,11 @@ def create_app(
     @app.get("/health")
     async def health() -> dict[str, str | bool]:
         pipeline_identity = _pipeline_identity(pipeline)
-        is_stub = pipeline_identity == "stub"
+        accepting_frames = _accepting_frames(pipeline)
         return {
-            "status": "degraded" if is_stub else "ok",
+            "status": "ok" if accepting_frames else "degraded",
             "pipeline": pipeline_identity,
-            "accepting_frames": not is_stub,
+            "accepting_frames": accepting_frames,
             "gateway_origin": _safe_url_origin(settings.gateway_url),
             "database": urlsplit(settings.timeline_db_url).path.removeprefix("/"),
             "data_root": str(settings.data_root),
@@ -154,6 +159,15 @@ def create_app(
             raise HTTPException(
                 status_code=422, detail=f"invalid meta JSON: {exc}"
             ) from exc
+        if not _accepting_frames(pipeline):
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "code": "pipeline_not_ready",
+                    "accepted": False,
+                    "reason": "stub_pipeline",
+                },
+            )
         image_bytes = await file.read()
         ack = await pipeline.ingest_frame(image_bytes, meta_obj)
         metrics.observe_frame(ack)
