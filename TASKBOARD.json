@@ -1,7 +1,7 @@
 {
   "project": "DejaView",
   "board_version": 1,
-  "updated": "2026-07-28",
+  "updated": "2026-08-02",
   "authoritative_location": "/Users/wu/Projects/Aidenwu0209/localwork/TASKBOARD.json(仓库根,唯一权威;随每次 push 备份到 github.com/Aidenwu0209/localwork)",
   "instructions": [
     "状态机:false(未开始) -> doing(进行中) -> accept(完成且验收通过)。特殊态 blocked(被外部依赖卡住,note 必须写清缺什么)。",
@@ -498,6 +498,18 @@
       "depends": [],
       "status": "accept",
       "note": "2026-07-23 · 20/20 specific activity; verbatim⊆ocr 0 violations; thinking off for JSON"
+    },
+    {
+      "id": "P3.11",
+      "group": "phase3",
+      "title": "Grafana 系统自检:新鲜度+本机核心+算力路径+诚实故障态",
+      "steps": "增加本地 health exporter;Prometheus 采集组件状态;Grafana 首行显示 READY/DEGRADED/FAILED、数据新鲜度、本机核心与算力路径;保留 P3.2 全部 ROCm 验收门。",
+      "verify": "单元测试覆盖探针与状态机;compose 三服务健康;缺隧道/服务时不误报绿色;恢复正式隧道后 state=READY、exporter=1、GPU=1、roles=4、active=4;1280×720 截图入 docs/assets/p32/。",
+      "depends": [
+        "P3.2"
+      ],
+      "status": "doing",
+      "note": "2026-08-02 认领:按用户确认的 Grafana 自检改版执行;保留现有 P3.2 指标与五模型架构。"
     }
   ]
 }
