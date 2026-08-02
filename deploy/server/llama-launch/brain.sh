@@ -56,5 +56,6 @@ exec "$BIN" \
   -ngl 99 \
   -c "$CTX" -np 2 \
   --host 127.0.0.1 --port 8001 \
+  --metrics \
   --log-disable \
   --jinja

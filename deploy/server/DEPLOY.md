@@ -81,6 +81,62 @@ cd /root/dejaview-launch
 `server-stack.sh` 命令:`up <role...>` / `down [role...]` / `status`。
 brain 的量化档:`BRAIN_QUANT=Q8_0 ./brain.sh`(默认 Q6_K,共享 GPU 必须用 Q6_K)。
 
+### 3.1 同步并启用 P3.2 实时指标
+
+五个 launcher 必须使用当前仓库版本，才能带上 llama.cpp `--metrics`；ROCm
+exporter 也必须同步到服务器。先在 Mac 仓库根目录执行：
+
+```bash
+ssh radeon-cloud 'mkdir -p /root/dejaview-launch/monitoring'
+rsync -a deploy/server/llama-launch/ radeon-cloud:/root/dejaview-launch/
+rsync -a deploy/server/monitoring/ radeon-cloud:/root/dejaview-launch/monitoring/
+```
+
+随后在服务器先做 GPU/KFD 与 DejaView PID 只读清点，再只重启明确命名的
+DejaView 小模型角色，禁止广域 `pkill`、禁止碰 Dolphin 或未知 KFD 进程：
+
+```bash
+rocm-smi --showmeminfo vram --showuse
+rocm-smi --showpids verbose
+cd /root/dejaview-launch
+./server-stack.sh status
+for role in embed fast sentinel perceive; do
+  pidfile="/tmp/dejaview-$role.pid"
+  [[ -r "$pidfile" ]] || continue
+  pid="$(cat "$pidfile")"
+  kill -0 "$pid" 2>/dev/null || continue
+  command_line="$(tr '\0' ' ' <"/proc/$pid/cmdline")"
+  if [[ "$command_line" != *"llama-server"* ||
+        "$command_line" != *"--alias $role"* ]]; then
+    echo "$pidfile 指向非 DejaView PID $pid，停止操作" >&2
+    exit 1
+  fi
+  ps -fp "$pid"
+done
+./server-stack.sh down embed fast sentinel perceive
+./server-stack.sh up embed fast sentinel perceive
+if ss -H -ltnp 'sport = :9393' | grep -q .; then
+  echo "指标端口 :9393 已占用，先核对现有进程"
+  ss -H -ltnp 'sport = :9393'
+else
+  python3 monitoring/rocm_smi_exporter.py \
+    >/tmp/dejaview-rocm-exporter.log 2>&1 &
+  exporter_pid=$!
+  sleep 1
+  if ! kill -0 "$exporter_pid" 2>/dev/null; then
+    tail -50 /tmp/dejaview-rocm-exporter.log >&2
+    exit 1
+  fi
+  echo "$exporter_pid" >/tmp/dejaview-rocm-exporter.pid
+fi
+```
+
+Mac 侧 memoryd 也要在同步当前代码后，先用
+`pgrep -af 'python -m memoryd'`核对 PID，再只终止该已核对进程，并按
+`STATUS.md`原环境重启。新的 `/metrics` 响应使用 Prometheus 0.0.4
+Content-Type；Grafana/Prometheus 起服与隧道命令见
+`deploy/mac/monitoring/README.md`。
+
 ## 4. VRAM 预算(共享 GPU 编排)
 
 | 配置 | VRAM | 与 Dolphin(10.6GB) |

@@ -250,3 +250,31 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   pretty-JSON Grafana health output, and fail-closed queries; exporter parser
   tests cover valid, missing, and malformed `rocm-smi` output; memoryd metrics
   tests cover created/merged/blocked counters.
+
+## 2026-08-02 ([VERIFY] P3.4 remote-link failover requirement change)
+
+- **User-approved scope change:** Act 6 no longer requires a physical Ethernet
+  cable pull. The accepted fault injection is a visible software disconnect of
+  the already-attested Radeon SSH compute tunnel. The final video must still be
+  ≤5 minutes, contain all six acts, and show the second grounded daily report
+  finish through Local Metal fallback.
+- **Fail-closed implementation:** the stage resolves the live `:14000` listener,
+  reuses the exact formal-tunnel matcher (gateway + five role proof forwards +
+  ROCm exporter forward), sends `SIGTERM` only to that verified PID, waits for
+  process exit, and clears the connectivity cache. It does not alter Wi-Fi,
+  network interfaces, firewall state, or the remote model processes.
+- **[VERIFY] live fault injection:** the guarded endpoint terminated formal
+  tunnel PID `86405` and returned
+  `method=verified_ssh_tunnel_termination`; `/api/connectivity` then reported
+  `remote_radeon=false`, `local_metal=true`, and `mode=local_fallback`. The
+  versioned browser control repeated the test against PID `4473` and visibly
+  changed the page to `LINK DOWN · LOCAL READY` with
+  `RADEON LINK DISCONNECTED`.
+- **Cache regression found and closed:** the first browser click loaded an old
+  cached JavaScript asset and produced no POST despite the new HTML control.
+  Stage HTML/CSS/JS now return `Cache-Control: no-store`, and HTML references
+  versioned CSS/JS URLs. The behavior test first failed on the missing header
+  and version query, then passed after the fix.
+- **Status:** this verifies the revised disconnect mechanism, not the final
+  P3.4 acceptance. `TASKBOARD.json` remains `doing` until a real ≤5-minute video
+  artifact is inspected for all six acts and the completed Local Metal rerun.

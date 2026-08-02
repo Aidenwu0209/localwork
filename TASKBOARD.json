@@ -458,14 +458,14 @@
     {
       "id": "P3.4",
       "group": "phase3",
-      "title": "演示视频≤5分钟(手册§9六幕,含拔网线)",
+      "title": "演示视频≤5分钟(手册§9六幕,含远端计算链路故障切换)",
       "steps": "按手册 §9 分镜录制;存 docs/assets/ 或外部链接写入 README。",
-      "verify": "成片≤5min;六幕齐全;拔网线镜头可见。",
+      "verify": "成片≤5min;六幕齐全;页面可见地断开已验证 Radeon SSH 计算链路,随后 Local Metal fallback 完成第二次日报。",
       "depends": [
         "P3.1"
       ],
       "status": "doing",
-      "note": "2026-07-28 doing: P3.1 dependency accepted at 88e0a02; preparing the fail-closed six-act demo stage and a real ≤5 minute screen recording. Physical network-cable removal will be performed visibly by the user during Act 6; synthetic demo data only."
+      "note": "2026-08-02 doing (user-approved requirement change): P3.1 dependency accepted; six-act stage and isolated synthetic data are ready. Act 6 no longer requires a physical cable pull. The visible failover test may terminate only the exact attested Radeon SSH tunnel, must leave Wi-Fi untouched, and must prove the independently attested Local Metal path completes the second grounded daily report. Final accept still requires a real ≤5 minute recording artifact."
     },
     {
       "id": "P3.5",

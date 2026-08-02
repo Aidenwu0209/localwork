@@ -1,0 +1,64 @@
+{
+  "date": "2026-08-02",
+  "device_id": "demo-p34",
+  "plan": {
+    "sections": [
+      "Event Overview",
+      "Retriever Supplies",
+      "Focus: Event Details"
+    ],
+    "focus": "Event Overview"
+  },
+  "events": [
+    {
+      "id": 2,
+      "ts": "2026-08-02T16:25:37+08:00",
+      "hhmm": "16:25",
+      "app": "VS Code",
+      "window_title": "Synthetic ROCm kernel review",
+      "activity": "editing main.py in VS Code",
+      "ocr_excerpt": "main.py - dejaview-demo\nfrom fastapi import FastAPI\napp = FastAPI()\n@app.get(\"/health\")\ndef health():\nreturn {\"status\": \"ok\"}\n# TODO: wire pipeline stages here"
+    },
+    {
+      "id": 3,
+      "ts": "2026-08-02T16:25:38+08:00",
+      "hhmm": "16:25",
+      "app": "Chrome",
+      "window_title": "Synthetic local-first architecture notes",
+      "activity": "reading blog post about local-first architecture",
+      "ocr_excerpt": "https://blog.demo-acme.io/local-first\nWhy local-first matters\nPosted 2026-07-15 ·8 min read ·#142 shares\nLocal-first software keeps user data on the user's device. The cloud\nbecomes an optional sync target, not the source of truth.\n□oooo (l"
+    },
+    {
+      "id": 4,
+      "ts": "2026-08-02T16:25:39+08:00",
+      "hhmm": "16:25",
+      "app": "Preview",
+      "window_title": "Synthetic benchmark checklist",
+      "activity": "reading DejaView Architecture Overview in browser",
+      "ocr_excerpt": "https://docs.demo-acme.io/architecture\nDejaView Architecture Overview\nThe system is split into three planes: sensor (Mac/Win capture),\ndata-sovereignty (Mac, stateful), and compute (AMD server, stateless).\nAll inference runs on a single Rad"
+    }
+  ],
+  "validation": {
+    "citation_count": 3,
+    "cited_event_ids": [
+      2,
+      3,
+      4
+    ],
+    "invalid_event_ids": [],
+    "metadata_mismatches": [],
+    "factual_line_count": 3,
+    "uncited_factual_lines": [],
+    "pass": true
+  },
+  "citations_normalized": false,
+  "model_attempts": {
+    "planner": 1,
+    "writer": 1,
+    "reviewer": 1
+  },
+  "review": {
+    "decision": "pass",
+    "issues": []
+  }
+}

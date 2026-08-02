@@ -164,7 +164,7 @@ Do not copy AGPL code (OpenRecall is reference-only).
 
 ## Status & further reading
 
-**TASKBOARD:** G0+M+D **33/33 accept**. End-to-end pipeline verified; 54-min real-run acceptance passed. ROCm ablation, Grafana, README, licenses, sentinel, and perceive gates are accepted; only the ≤5-minute physical-cable demo video remains — see [`STATUS.md`](STATUS.md).
+**TASKBOARD:** G0+M+D **33/33 accept**. End-to-end pipeline verified; 54-min real-run acceptance passed. ROCm ablation, Grafana, README, licenses, sentinel, and perceive gates are accepted; only the ≤5-minute remote-link failover demo video remains — see [`STATUS.md`](STATUS.md).
 
 | Doc | Purpose |
 |---|---|

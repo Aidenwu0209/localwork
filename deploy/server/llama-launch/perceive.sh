@@ -14,5 +14,6 @@ exec "$BIN" \
   -ngl 99 \
   -c 16384 -np 2 \
   --host 127.0.0.1 --port 8002 \
+  --metrics \
   --log-disable \
   --jinja

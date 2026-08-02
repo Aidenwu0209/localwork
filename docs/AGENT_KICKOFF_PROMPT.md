@@ -29,7 +29,7 @@
   `docs/benchmarks.md` 结论。
 
 ## 任务优先级
-1. **P3.4** 演示视频 ≤5min(手册 §9 六幕 + 拔网线)
+1. **P3.4** 演示视频 ≤5min(手册 §9 六幕 + 可见断开 Radeon SSH 计算链路 → Local Metal fallback)
 2. **P3.2** Grafana 一屏(可与视频穿插;时间紧可砍成极简)
 
 领取:`false`/`blocked` 且 depends 全 accept → `doing` → 完成 verify → `accept` + note → commit + push。

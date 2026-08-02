@@ -17,11 +17,12 @@ from __future__ import annotations
 import json
 import logging
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from agentd.config import Settings
 from agentd.tools import SPECS, dispatch
@@ -45,6 +46,22 @@ ANSWER DISCIPLINE (mandatory):
 Be concise. Use the tools; do not guess."""
 
 MAX_TOOL_ROUNDS = 6  # cap the loop so a confused brain can't spin forever
+
+
+def _safe_url_origin(value: str) -> str:
+    """Return only scheme/host/port, never URL credentials or query data."""
+    parsed = urlsplit(value)
+    if not parsed.scheme or not parsed.hostname:
+        return "invalid"
+    try:
+        port = parsed.port
+    except ValueError:
+        return "invalid"
+    host = parsed.hostname.lower()
+    if ":" in host:
+        host = f"[{host}]"
+    port_suffix = f":{port}" if port is not None else ""
+    return f"{parsed.scheme.lower()}://{host}{port_suffix}"
 
 
 class ChatMessage(BaseModel):
@@ -71,13 +88,25 @@ def create_app(*, settings: Settings | None = None) -> FastAPI:
 
     @app.get("/health")
     async def health() -> dict[str, str]:
-        return {"status": "ok", "model": settings.model_name}
+        return {
+            "status": "ok",
+            "service": "agentd",
+            "model": settings.model_name,
+            "brain_model": settings.brain_model,
+            "gateway_origin": _safe_url_origin(settings.gateway_url),
+            "honcho_origin": _safe_url_origin(settings.honcho_url),
+            "database": urlsplit(settings.timeline_db_url).path.removeprefix("/"),
+            "data_root": str(settings.data_root),
+        }
 
     @app.get("/v1/models")
     async def list_models() -> dict:
-        return {"object": "list", "data": [
-            {"id": settings.model_name, "object": "model", "owned_by": "dejaview"}
-        ]}
+        return {
+            "object": "list",
+            "data": [
+                {"id": settings.model_name, "object": "model", "owned_by": "dejaview"}
+            ],
+        }
 
     @app.post("/v1/chat/completions")
     async def chat(req: ChatRequest) -> JSONResponse:
@@ -95,7 +124,6 @@ def create_app(*, settings: Settings | None = None) -> FastAPI:
             gateway_base = gateway_base + "/v1"
 
         round_idx = 0
-        finish_reason = "stop"
         while round_idx < MAX_TOOL_ROUNDS:
             round_idx += 1
             # Ask the brain.
@@ -116,7 +144,9 @@ def create_app(*, settings: Settings | None = None) -> FastAPI:
                     r.raise_for_status()
                     brain_resp = r.json()
             except httpx.HTTPStatusError as exc:
-                raise HTTPException(502, f"brain error: {exc.response.text[:300]}") from exc
+                raise HTTPException(
+                    502, f"brain error: {exc.response.text[:300]}"
+                ) from exc
             except (httpx.ReadTimeout, httpx.ConnectError) as exc:
                 raise HTTPException(504, f"brain unreachable: {exc}") from exc
 
@@ -131,32 +161,40 @@ def create_app(*, settings: Settings | None = None) -> FastAPI:
 
             # Append the assistant message (with tool_calls) to the conversation,
             # then execute each tool call and append a tool result message.
-            messages.append({
-                "role": "assistant",
-                "content": msg.get("content"),
-                "tool_calls": tool_calls,
-            })
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": msg.get("content"),
+                    "tool_calls": tool_calls,
+                }
+            )
             for tc in tool_calls:
                 fn = tc.get("function", {})
                 name = fn.get("name", "")
                 raw_args = fn.get("arguments", "{}")
                 try:
-                    args = json.loads(raw_args) if isinstance(raw_args, str) else (raw_args or {})
+                    args = (
+                        json.loads(raw_args)
+                        if isinstance(raw_args, str)
+                        else (raw_args or {})
+                    )
                 except json.JSONDecodeError:
                     args = {}
                 log.info("tool call: %s args=%s", name, args)
                 try:
                     result = dispatch(settings, name, args)
                     log.info("tool result: %s -> %s", name, str(result)[:120])
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001 - isolate tool failures
                     result = {"error": f"{type(exc).__name__}: {exc}"}
                     log.warning("tool %s failed: %s", name, exc)
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tc.get("id", ""),
-                    "name": name,
-                    "content": json.dumps(result, ensure_ascii=False, default=str),
-                })
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tc.get("id", ""),
+                        "name": name,
+                        "content": json.dumps(result, ensure_ascii=False, default=str),
+                    }
+                )
             # Loop back to the brain with the tool results.
 
         # Exceeded the round cap — return whatever the last brain message was.
@@ -169,17 +207,25 @@ def create_app(*, settings: Settings | None = None) -> FastAPI:
     return app
 
 
-def _chat_response(settings: Settings, content: str, *, finish_reason: str) -> JSONResponse:
-    import time, uuid
-    return JSONResponse({
-        "id": f"chatcmpl-{uuid.uuid4().hex[:24]}",
-        "object": "chat.completion",
-        "created": int(time.time()),
-        "model": settings.model_name,
-        "choices": [{
-            "index": 0,
-            "message": {"role": "assistant", "content": content},
-            "finish_reason": finish_reason,
-        }],
-        "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
-    })
+def _chat_response(
+    settings: Settings, content: str, *, finish_reason: str
+) -> JSONResponse:
+    import time
+    import uuid
+
+    return JSONResponse(
+        {
+            "id": f"chatcmpl-{uuid.uuid4().hex[:24]}",
+            "object": "chat.completion",
+            "created": int(time.time()),
+            "model": settings.model_name,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": content},
+                    "finish_reason": finish_reason,
+                }
+            ],
+            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+        }
+    )

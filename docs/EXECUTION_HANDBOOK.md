@@ -449,7 +449,7 @@ create table kb_chunks(id bigserial primary key, doc_id text, source_path text,
 | T3.2 | Grafana 大屏定稿 | 四实例指标+事件率一屏可见 |
 | T3.3 | MCP server 包装记忆查询(可砍) | Cursor 内可查询自己的时间线 |
 | T3.4 | README(双语)+双拓扑图+licenses.md+一键部署 | 干净机器按 README 可复现形态 A |
-| T3.5 | 演示视频(≤5 分钟,按第 9 节分镜,含拔网线镜头) | 成片 |
+| T3.5 | 演示视频(≤5 分钟,按第 9 节分镜,含远端计算链路故障切换) | 成片 |
 | T3.6 | Rules 核对+提交打包 | 提交清单(第 10 节)全勾 |
 
 ### Phase 4 · 提交(8/6)
@@ -479,7 +479,7 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 3. 打开银行登录页——哨兵当场拦截,审计日志出现"已拒绝记录",画面本身没入库;
 4. 问"上周三下午看的那个 ROCm PR 是哪个?"——回答附当时截图证据,命中文字用 bbox 高亮框出;
 5. 问"根据你对我的了解,我会更喜欢哪种方案?"——Honcho 画像作答;
-6. "生成今天的日报"——多 Agent 流水线过程可见;**拔网线,再问一遍,一切照常**。
+6. "生成今天的日报"——多 Agent 流水线过程可见;页面可见地**断开已验证的 Radeon SSH 计算链路**,再运行一遍,由独立验明的 Local Metal fallback 完成。Wi-Fi 不动,不伪造物理拔线。
 
 ---
 
@@ -562,7 +562,7 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 **全链路已跑通并验收**(Mac 采集 → memoryd → AMD ROCm →
 Postgres/Honcho → agentd 带证据引用)。`TASKBOARD`:**G0+M+D 33/33
 accept**;Phase3 中 **P3.1/P3.2/P3.3/P3.5/P3.6/P3.7 accept**;仅剩
-**P3.4 doing**(待正式物理拔网线成片)。P3.1 正式 run:
+**P3.4 doing**(待正式远端计算链路故障切换成片)。P3.1 正式 run:
 `p31-w7900d-20260728T075653Z`,证据目录
 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`。
 
@@ -656,7 +656,7 @@ capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必�
 | ID | 状态 | 做什么 | 阻塞 |
 |---|---|---|---|
 | **P3.1** | **accept** | 正式 run、§2 表格、`[VERIFY]` 与 checksummed 原始证据已齐 | 历史 `:30147` SSH 阻塞已在 `:30189` replacement instance 解除 |
-| **P3.4** | doing | ≤5min 演示视频,手册 §9 六幕,**含拔网线** | 六幕链路已演练;待正式物理拔线成片 |
+| **P3.4** | doing | ≤5min 演示视频,手册 §9 六幕,**含可见远端链路故障切换** | 六幕链路已演练;待正式成片 |
 | **P3.2** | **accept** | Grafana 一屏:tokens/s、VRAM、GPU util、事件率 | `docs/assets/p32/grafana-rocm-live-20260802.png` |
 | — | 可砍 | P3.8 MarkItDown / P3.9 日报多 Agent UI / P3.10 Open WebUI / MCP / 音频 | 时间不够按 §1.5 砍 |
 
@@ -669,7 +669,7 @@ capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必�
 | — | sentinel normal 误杀 | P3.6 已缓解(可再查 confidence 恒 0.5 语义) |
 | — | perceive 空泛 activity | P3.7 已缓解 |
 | — | P3.1 brain 消融曾未完成 | 已由 run `p31-w7900d-20260728T075653Z` 解除;勿重跑 |
-| 高 | P3.4 六幕视频尚未录成 | 先按 §9 完成≤5min成片,必须有物理拔网线镜头 |
+| 高 | P3.4 六幕视频尚未录成 | 先按 §9 完成≤5min成片,必须可见断开已验证 Radeon SSH 链路并由 Local Metal 完成第二次日报 |
 | — | P3.2 Grafana 尚未验收 | 已于 2026-08-02 完成一屏与实时门禁验收 |
 | 中 | 服务器端口可能随 replacement instance 漂移 | 当前 `36.150.116.206:31357`;每次先核对 `radeon-cloud` alias,旧端口仅历史 |
 | 中 | 网关偶发 `model=None` 400(~2%) | 待查(疑 Honcho health) |
@@ -720,6 +720,6 @@ GATEWAY_URL=http://127.0.0.1:14000/v1 uv run --project services/agentd python -m
 ### 12.8 给后续 Agent 的一句话开工
 
 > 读完 §12 与 `STATUS.md` → 继续 `TASKBOARD` 里的 P3.4,按 §9 录六幕
-> ≤5min 成片且必须拔网线 → 严格遵守 git 作者与无
+> ≤5min 成片且必须包含可见的远端计算链路故障切换 → 严格遵守 git 作者与无
 > AI trailer → 完成即 accept+push。不要重做 33+5 项已 accept 的工作,
 > 尤其不要重跑 P3.1;不要改产品叙事与五模型分层。

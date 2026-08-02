@@ -13,5 +13,7 @@ exec "$BIN" \
   -ngl 99 \
   -c 8192 -np 4 \
   --host 127.0.0.1 --port 8005 \
+  --metrics \
+  --chat-template-kwargs '{"enable_thinking":false}' \
   --log-disable \
   --jinja

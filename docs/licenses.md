@@ -102,7 +102,7 @@ Mirror of `docs/EXECUTION_HANDBOOK.md` §10. **Do not treat unchecked boxes as d
 | Rules & Conditions 通读 + 按规定提交 | **待** | Same; portal/format TBD by Rules at submit time |
 | 仓库公开、README 双语、两拓扑、快速开始可复现 | **部分具备** | README 双语 + 形态 A/B 拓扑 + 冒烟步骤已由 **P3.3** (`63b10d3`) 完成;仓库仍为 **private**,公开化留提交前 |
 | `docs/benchmarks.md` + Grafana 截图 | **待** | OCR A/B 已在 `benchmarks.md`;**ROCm 消融 = P3.1**(进行中);**Grafana = P3.2**(depends P3.1) |
-| 演示视频 ≤5 分钟 | **待** | **P3.4**(depends P3.1;手册 §9 六幕含拔网线) |
+| 演示视频 ≤5 分钟 | **待** | **P3.4**(depends P3.1;手册 §9 六幕含远端计算链路故障切换) |
 | `docs/licenses.md`(含 Gemma 单独标注) | **已具备** | 本文(P3.5) |
 | 提示词/示例去个人信息;无真实隐私/API key 入库 | **基本具备** | Honcho few-shot 已合成化(M2.3);`tests/assets` 全合成;演示前若跑过真实采集须清库 |
 | 比赛服务器仅演示数据、赛后可销毁重建 | **部分具备** | 算力端无状态 + `download-models.sh` 可重建权重;提交前仍须确认演示数据/清库流程 |

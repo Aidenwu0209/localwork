@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DejaView · Local Memory Flight Deck</title>
+    <link rel="stylesheet" href="/demo_stage.css?v=20260802-remote-failover" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <header class="masthead">
+      <div class="wordmark">
+        <span class="memory-mark">DV</span>
+        <div><strong>DejaView</strong><small>LOCAL MEMORY FLIGHT DECK</small></div>
+      </div>
+      <div class="sovereignty"><span class="pulse"></span><span>DATA SOVEREIGNTY</span><strong>THIS MAC</strong></div>
+      <div class="link-state" id="linkState">
+        <span class="signal-bars"><i></i><i></i><i></i></span>
+        <div><small>COMPUTE LINK</small><strong>CHECKING…</strong></div>
+      </div>
+    </header>
+
+    <div class="shell">
+      <nav class="acts" aria-label="Demo acts">
+        <div class="acts-label">SIX ACTS / ≤ 05:00</div>
+        <button class="act active" data-act="1"><span>01</span><strong>Radeon cockpit</strong><small>ROCm + five roles</small></button>
+        <button class="act" data-act="2"><span>02</span><strong>Memory grows</strong><small>Captured locally</small></button>
+        <button class="act" data-act="3"><span>03</span><strong>Privacy sentinel</strong><small>Pixels refused</small></button>
+        <button class="act" data-act="4"><span>04</span><strong>Grounded recall</strong><small>Evidence, not vibes</small></button>
+        <button class="act" data-act="5"><span>05</span><strong>User model</strong><small>Honcho preference</small></button>
+        <button class="act" data-act="6"><span>06</span><strong>Agentic daily</strong><small>Survives disconnect</small></button>
+        <div class="key-hint">← → move through acts</div>
+      </nav>
+
+      <main class="stage">
+        <section class="scene active" data-scene="1">
+          <div class="scene-kicker">ACT 01 · THE RESURRECTION ENGINE</div>
+          <h1>Your memory stays here.<br /><em>Radeon only thinks.</em></h1>
+          <p class="lede">Five logical roles, one stateless AMD compute node, zero personal timeline rows leaving this Mac.</p>
+          <div class="topology">
+            <article class="node local">
+              <span class="node-index">A</span><small>TRUST ZONE</small>
+              <h3>Mac / Windows</h3><p>screens · OCR · timeline · vectors · Honcho</p><b>STATEFUL · PRIVATE</b>
+            </article>
+            <div class="bridge"><span>LOGICAL NAMES</span><i></i><i></i><i></i><small>encrypted tunnel</small></div>
+            <article class="node radeon">
+              <span class="node-index">B</span><small>COMPUTE ZONE</small>
+              <h3>Radeon PRO W7900D</h3><p>HIP · gfx1100 · llama.cpp · ROCm</p><b>STATELESS · REPLACEABLE</b>
+            </article>
+          </div>
+          <div class="role-strip">
+            <span><b>brain</b>ThinkingCap 27B</span><span><b>perceive</b>Gemma4 E4B</span>
+            <span><b>sentinel</b>MiniCPM-V</span><span><b>fast</b>MiniCPM5 1B</span><span><b>embed</b>Qwen3 0.6B</span>
+          </div>
+          <a class="primary-link" href="http://127.0.0.1:3000/d/dejaview-rocm-live/dejaview-c2b7-radeon-rocm-live?kiosk" target="_blank">OPEN LIVE ROCm COCKPIT ↗</a>
+        </section>
+
+        <section class="scene" data-scene="2">
+          <div class="scene-kicker">ACT 02 · MEMORY FORMS QUIETLY</div>
+          <div class="scene-header">
+            <div><h2>A timeline that understands<br />what changed.</h2><p>Window-aware capture → OCR verbatim → semantic event.</p></div>
+            <div class="memory-controls">
+              <button class="run-button" id="memoryButton">INGEST 3 SAFE WINDOWS</button>
+              <div class="metric"><strong id="eventCount">—</strong><span>SAFE DEMO EVENTS</span></div>
+            </div>
+          </div>
+          <div class="timeline" id="timeline"><div class="empty-state">Loading isolated demo timeline…</div></div>
+        </section>
+
+        <section class="scene" data-scene="3">
+          <div class="scene-kicker danger">ACT 03 · PRIVACY BEFORE PERCEPTION</div>
+          <div class="scene-header">
+            <div><h2>The bank frame stops<br />at the first gate.</h2><p>A real banking fixture is submitted to memoryd for this proof.</p></div>
+            <button class="run-button danger-button" id="sentinelButton">RUN REAL SENTINEL</button>
+          </div>
+          <div class="sentinel-grid">
+            <article class="blocked-card">
+              <div class="shield">×</div><small>SENTINEL VERDICT</small>
+              <h3 id="sentinelDecision">READY</h3><p id="sentinelCategory">banking fixture</p>
+              <div class="confidence"><span>confidence</span><b id="sentinelConfidence">—</b></div>
+            </article>
+            <div class="privacy-proof">
+              <div><span>01</span><p>Frame reaches<br /><b>MiniCPM-V sentinel</b></p><i class="pending" id="classifyProof">WAITING</i></div>
+              <div><span>02</span><p>Pixels written<br /><b>to local disk</b></p><i class="pending" id="pixelsProof">WAITING</i></div>
+              <div><span>03</span><p>Matching event<br /><b>in the timeline</b></p><i class="pending" id="timelineProof">WAITING</i></div>
+              <div><span>04</span><p>Audit verdict<br /><b>persisted locally</b></p><i class="pending" id="auditProof">WAITING</i></div>
+            </div>
+          </div>
+          <div class="audit-line"><span>LIVE PROOF</span><code id="sentinelAudit">No prewritten verdict — press run.</code></div>
+        </section>
+
+        <section class="scene" data-scene="4">
+          <div class="scene-kicker">ACT 04 · GROUNDED RECALL</div>
+          <div class="question">“上周三下午看的那个 ROCm PR 是哪个？”</div>
+          <button class="run-button" id="recallButton">ASK DEJAVIEW</button>
+          <div class="recall-layout" id="recallResult"><div class="empty-state">The agent must return a real event citation before evidence appears.</div></div>
+        </section>
+
+        <section class="scene" data-scene="5">
+          <div class="scene-kicker honcho">ACT 05 · MEMORY BECOMES A MODEL OF YOU</div>
+          <h2>Facts answer “what.”<br /><em>Honcho answers “which one feels like me.”</em></h2>
+          <div class="question preference-q">“根据你对我的了解，我会更喜欢云端黑盒，还是本地、可检查、配置驱动的方案？”</div>
+          <button class="run-button honcho-button" id="preferenceButton">ASK HONCHO USER MODEL</button>
+          <article class="answer-card" id="preferenceResult"><div class="empty-state">The answer will use only the isolated synthetic profile.</div></article>
+        </section>
+
+        <section class="scene" data-scene="6">
+          <div class="scene-kicker">ACT 06 · AGENTS SURVIVE REMOTE LINK LOSS</div>
+          <div class="daily-head">
+            <div><h2>“生成今天的日报。”</h2><p>Planner → Retriever → Writer → citation gate → Reviewer.</p></div>
+            <div class="backend-badge" id="dailyBackend">AUTO ROUTE</div>
+          </div>
+          <button class="run-button" id="dailyButton">RUN AGENTIC DAILY</button>
+          <div class="agent-pipeline" id="agentPipeline">
+            <div><span>01</span><b>Planner</b><small>fast</small></div><i></i>
+            <div><span>02</span><b>Retriever</b><small>timeline</small></div><i></i>
+            <div><span>03</span><b>Writer</b><small>brain</small></div><i></i>
+            <div><span>04</span><b>Reviewer</b><small>fast</small></div>
+          </div>
+          <div class="daily-output">
+            <div class="trace-panel"><small>LIVE EXECUTION TRACE</small><div id="dailyTrace">Waiting for a run…</div></div>
+            <article class="report-panel"><small>GROUNDED REPORT</small><pre id="dailyReport">Every factual line must resolve to a real demo event id.</pre></article>
+          </div>
+          <div class="disconnect-callout">
+            <span>FAILOVER TEST</span>
+            <div><strong>断开已验证的 Radeon SSH 计算链路 → 再运行一次。</strong>
+            <small>The badge must switch to Local Metal fallback; Wi-Fi stays untouched.</small></div>
+            <button class="disconnect-button" id="disconnectButton">DISCONNECT RADEON LINK</button>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="/demo_stage.js?v=20260802-remote-failover"></script>
+  </body>
+</html>

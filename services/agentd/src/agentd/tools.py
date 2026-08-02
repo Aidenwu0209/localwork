@@ -16,9 +16,8 @@ answer with [event#id HH:MM app] citations (handbook §6.5 answer discipline).
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import httpx
 import psycopg
@@ -80,7 +79,10 @@ SPECS: list[dict] = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "question": {"type": "string", "description": "The question about the user"},
+                    "question": {
+                        "type": "string",
+                        "description": "The question about the user",
+                    },
                 },
                 "required": ["question"],
             },
@@ -120,7 +122,10 @@ SPECS: list[dict] = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "event_id": {"type": "integer", "description": "timeline_events.id"},
+                    "event_id": {
+                        "type": "integer",
+                        "description": "timeline_events.id",
+                    },
                     "highlight_text": {
                         "type": "string",
                         "description": "optional substring to locate in ocr_blocks and outline",
@@ -144,14 +149,14 @@ def search_timeline(
     query: str,
     mode: SearchMode = "hybrid",
     k: int = 5,
-    time_from: Optional[str] = None,
-    time_to: Optional[str] = None,
+    time_from: str | None = None,
+    time_to: str | None = None,
 ) -> dict[str, Any]:
     """Three-mode timeline search. Mirrors memoryd.search but standalone (agentd
     doesn't import memoryd — it's a separate service). Embeds the query with the
     Qwen3 instruction prefix on the semantic/hybrid paths."""
     k = max(1, min(k, 20))
-    query_vec: Optional[list[float]] = None
+    query_vec: list[float] | None = None
     if mode in ("semantic", "hybrid"):
         query_vec = embed_query(settings.gateway_url, query)
 
@@ -159,39 +164,67 @@ def search_timeline(
     hits: list[dict] = []
 
     if mode == "semantic":
-        hits = _semantic(settings.timeline_db_url, query_vec, k, time_clause, time_params)
+        hits = _semantic(
+            settings.timeline_db_url, query_vec, k, time_clause, time_params
+        )
     elif mode == "exact":
         hits = _exact(settings.timeline_db_url, query, k, time_clause, time_params)
     else:  # hybrid
-        sem = _semantic(settings.timeline_db_url, query_vec, k, time_clause, time_params) if query_vec else []
+        sem = (
+            _semantic(settings.timeline_db_url, query_vec, k, time_clause, time_params)
+            if query_vec
+            else []
+        )
         ex = _exact(settings.timeline_db_url, query, k, time_clause, time_params)
         hits = _blend(sem, ex, k)
 
     return {"query": query, "mode": mode, "k": k, "count": len(hits), "hits": hits}
 
 
-def query_user_model(settings: Settings, *, question: str) -> dict[str, Any]:
-    """Honcho dialectic. Uses the default dejaview/owner peer; session is
-    optional (Honcho will scope to all sessions if omitted)."""
+def query_user_model(
+    settings: Settings,
+    *,
+    question: str,
+    session_id: str | None = None,
+    workspace_id: str = "dejaview",
+    peer_id: str = "owner",
+) -> dict[str, Any]:
+    """Honcho dialectic. The normal product defaults to ``dejaview/owner``;
+    callers may select an isolated workspace and peer for synthetic demos."""
     base = settings.honcho_url.rstrip("/")
     with httpx.Client(timeout=httpx.Timeout(120.0, connect=10.0)) as client:
         # Ensure workspace/peer exist (idempotent; Honcho v3 wants client ids).
         for path, body in [
-            ("/v3/workspaces", {"id": "dejaview", "name": "dejaview"}),
-            ("/v3/workspaces/dejaview/peers", {"id": "owner", "name": "owner"}),
+            (
+                "/v3/workspaces",
+                {"id": workspace_id, "name": workspace_id},
+            ),
+            (
+                f"/v3/workspaces/{workspace_id}/peers",
+                {"id": peer_id, "name": peer_id},
+            ),
         ]:
             try:
                 client.post(f"{base}{path}", json=body)
             except httpx.HTTPStatusError:
                 pass  # 409 already exists is fine
+        payload: dict[str, Any] = {"query": question}
+        if session_id is not None:
+            payload["session_id"] = session_id
         r = client.post(
-            f"{base}/v3/workspaces/dejaview/peers/owner/chat",
-            json={"query": question},
+            f"{base}/v3/workspaces/{workspace_id}/peers/{peer_id}/chat",
+            json=payload,
         )
         r.raise_for_status()
         d = r.json()
     answer = d.get("content") or d.get("message") or d.get("response") or ""
-    return {"question": question, "answer": str(answer)[:2000]}
+    return {
+        "question": question,
+        "answer": str(answer)[:2000],
+        "session_id": session_id,
+        "workspace_id": workspace_id,
+        "peer_id": peer_id,
+    }
 
 
 def search_kb(settings: Settings, *, query: str, k: int = 5) -> dict[str, Any]:
@@ -223,7 +256,7 @@ def search_kb(settings: Settings, *, query: str, k: int = 5) -> dict[str, Any]:
 
 
 def fetch_screenshot(
-    settings: Settings, *, event_id: int, highlight_text: Optional[str] = None
+    settings: Settings, *, event_id: int, highlight_text: str | None = None
 ) -> dict[str, Any]:
     """Look up an event's screenshot path + locate highlight_text in its
     ocr_blocks (returns the bbox(es) so the UI can outline them)."""
@@ -242,7 +275,7 @@ def fetch_screenshot(
     if highlight_text:
         needle = highlight_text.lower()
         for b in blocks:
-            txt = (b.get("text") or "")
+            txt = b.get("text") or ""
             if needle and needle in txt.lower():
                 highlights.append({"text": txt, "bbox": b.get("bbox", [])})
     return {
@@ -260,7 +293,7 @@ def fetch_screenshot(
 # --- SQL helpers (mirror memoryd.search) -----------------------------------
 
 
-def _time_clause(time_from: Optional[str], time_to: Optional[str]) -> tuple[str, list]:
+def _time_clause(time_from: str | None, time_to: str | None) -> tuple[str, list]:
     parts: list[str] = []
     params: list = []
     if time_from:

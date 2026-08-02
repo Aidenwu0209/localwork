@@ -76,9 +76,7 @@ class StubSentinel:
     async def classify(self, image_bytes: bytes) -> SentinelVerdict:
         # Always allow: the stub exists to exercise the pipeline, not to test
         # privacy behaviour. The real sentinel is wired in M3.4 / T2.1.
-        return SentinelVerdict(
-            decision="allow", category="normal", confidence=0.5
-        )
+        return SentinelVerdict(decision="allow", category="normal", confidence=0.5)
 
 
 class StubOcr:
@@ -100,12 +98,16 @@ class StubNovelty:
         # stub. The real gate does Jaccard then `fast` (handbook §6.2 step 3).
         if prev_ocr_text is None or prev_window_key != current_window_key:
             return NoveltyVerdict(
-                novelty=1.0, delta="stub: first frame or window change",
-                merge_into_previous=False, tier="jaccard",
+                novelty=1.0,
+                delta="stub: first frame or window change",
+                merge_into_previous=False,
+                tier="jaccard",
             )
         return NoveltyVerdict(
-            novelty=0.0, delta="stub: same window, merging",
-            merge_into_previous=True, tier="jaccard",
+            novelty=0.0,
+            delta="stub: same window, merging",
+            merge_into_previous=True,
+            tier="jaccard",
         )
 
 
@@ -144,12 +146,12 @@ class GatewayEmbed:
     def __init__(self, gateway_url: str, *, timeout: float = 30.0) -> None:
         # Drop trailing /v1 if present so we control the path below.
         self._base = gateway_url.rstrip("/")
-        if self._base.endswith("/v1"):
-            self._base = self._base[:-3]
+        self._base = self._base.removesuffix("/v1")
         self._timeout = timeout
 
     def _embed_sync(self, text: str) -> list[float]:
         import httpx
+
         url = f"{self._base}/v1/embeddings"
         with httpx.Client(timeout=self._timeout) as client:
             r = client.post(url, json={"model": "embed", "input": text})
@@ -160,12 +162,14 @@ class GatewayEmbed:
     async def embed(self, text: str) -> list[float]:
         # Ingest path: plain text, no instruction prefix (handbook §6.5).
         import asyncio
+
         return await asyncio.to_thread(self._embed_sync, text)
 
     async def embed_query(self, query: str) -> list[float]:
         # Query path: instruction-aware prefix (handbook §6.5). This is what
         # search.semantic / search.hybrid must use on the user query.
         import asyncio
+
         prefixed = f"Instruct: 检索用户活动时间线\nQuery: {query}"
         return await asyncio.to_thread(self._embed_sync, prefixed)
 
@@ -185,8 +189,14 @@ import re
 import httpx
 
 # Sentinel taxonomy must match timeline_events.sentinel_audit.category CHECK.
-_SENTINEL_CATS = {"password_prompt", "banking_finance", "private_chat",
-                  "id_document", "adult", "normal"}
+_SENTINEL_CATS = {
+    "password_prompt",
+    "banking_finance",
+    "private_chat",
+    "id_document",
+    "adult",
+    "normal",
+}
 
 
 def _to_png_if_needed(image_bytes: bytes) -> tuple[bytes, str]:
@@ -201,8 +211,10 @@ def _to_png_if_needed(image_bytes: bytes) -> tuple[bytes, str]:
         if image_bytes[:3] == b"\xff\xd8\xff":
             return image_bytes, "image/jpeg"
         return image_bytes, "image/png"  # default assumption
-    from PIL import Image
     from io import BytesIO
+
+    from PIL import Image
+
     with Image.open(BytesIO(image_bytes)) as img:
         img = img.convert("RGB")
         buf = BytesIO()
@@ -251,14 +263,23 @@ class GatewaySentinel:
         b64 = base64.b64encode(image_bytes).decode("ascii")
         body = {
             "model": "sentinel",
-            "messages": [{"role": "user", "content": [
-                {"type": "text", "text": _SENTINEL_PROMPT},
-                {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}},
-            ]}],
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": _SENTINEL_PROMPT},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:{mime};base64,{b64}"},
+                        },
+                    ],
+                }
+            ],
             "max_tokens": 80,
             "temperature": 0.0,
             "chat_template_kwargs": {"enable_thinking": False},
         }
+
         def _call():
             # Retry on transient tunnel errors (image payload + SSH tunnel jitter).
             last = None
@@ -267,11 +288,14 @@ class GatewaySentinel:
                     with httpx.Client(timeout=self._timeout) as c:
                         r = c.post(f"{self._base}/v1/chat/completions", json=body)
                         r.raise_for_status()
-                        return r.json()["choices"][0]["message"].get("content", "") or ""
+                        return (
+                            r.json()["choices"][0]["message"].get("content", "") or ""
+                        )
                 except (httpx.ReadTimeout, httpx.ConnectError) as exc:
                     last = exc
                     continue
             raise last
+
         content = await asyncio.to_thread(_call)
         return _parse_sentinel_json(content)
 
@@ -314,12 +338,12 @@ def _extract_json_objects(content: str) -> list[str]:
     if not text:
         return []
     # Strip ```json ... ``` fences if present.
-    fenced = re.sub(r"```(?:json)?\s*", "", text, flags=re.I)
+    fenced = re.sub(r"```(?:json)?\s*", "", text, flags=re.IGNORECASE)
     fenced = fenced.replace("```", "")
     candidates: list[str] = []
     for blob in (text, fenced):
         candidates.append(blob)
-        for m in re.finditer(r"\{[^{}]*\}", blob, re.S):
+        for m in re.finditer(r"\{[^{}]*\}", blob, re.DOTALL):
             candidates.append(m.group(0))
     # De-dupe while preserving order.
     seen: set[str] = set()
@@ -359,8 +383,14 @@ def _parse_sentinel_json(content: str) -> SentinelVerdict:
         # Last-resort: scan free text for a known category token.
         lowered = (content or "").lower()
         category = "normal"
-        for cat in ("password_prompt", "banking_finance", "private_chat",
-                    "id_document", "adult", "normal"):
+        for cat in (
+            "password_prompt",
+            "banking_finance",
+            "private_chat",
+            "id_document",
+            "adult",
+            "normal",
+        ):
             if cat in lowered:
                 category = cat
                 break
@@ -388,16 +418,23 @@ class OcrdClient:
     ocrd is deterministic, not an LLM — memoryd reaches it directly via OCR_URL,
     NOT through the LiteLLM gateway."""
 
-    def __init__(self, ocr_url: str, *, timeout: float = 30.0) -> None:
+    def __init__(self, ocr_url: str, *, timeout: float = 180.0) -> None:
+        # PP-OCRv6 is deterministic but can take well over 30 seconds on a
+        # full document screenshot during the first few Metal/CPU passes.
+        # Keep the client fail-closed while allowing the measured local
+        # worst-case (~116 s) enough headroom.
         self._url = ocr_url.rstrip("/").removesuffix("/ocr") + "/ocr"
         self._timeout = timeout
 
     async def recognize(self, image_bytes: bytes) -> OcrResult:
         def _call():
             with httpx.Client(timeout=self._timeout) as c:
-                r = c.post(self._url, files={"file": ("frame.png", image_bytes, "image/png")})
+                r = c.post(
+                    self._url, files={"file": ("frame.png", image_bytes, "image/png")}
+                )
                 r.raise_for_status()
                 return r.json()
+
         data = await asyncio.to_thread(_call)
         return OcrResult(
             full_text=data.get("full_text", ""),
@@ -417,9 +454,15 @@ class RealNovelty:
     Only same-window frames are compared (app + window_title match).
     """
 
-    def __init__(self, gateway_url: str, *, timeout: float = 30.0,
-                 merge_threshold: float = 0.85, new_threshold: float = 0.5,
-                 fast_merge_novelty: float = 0.35) -> None:
+    def __init__(
+        self,
+        gateway_url: str,
+        *,
+        timeout: float = 30.0,
+        merge_threshold: float = 0.85,
+        new_threshold: float = 0.5,
+        fast_merge_novelty: float = 0.35,
+    ) -> None:
         self._base = gateway_url.rstrip("/").removesuffix("/v1")
         self._timeout = timeout
         self._merge = merge_threshold
@@ -436,23 +479,38 @@ class RealNovelty:
             return 0.0
         return len(sa & sb) / len(sa | sb)
 
-    async def assess(self, ocr_text, prev_ocr_text, prev_window_key, current_window_key):
+    async def assess(
+        self, ocr_text, prev_ocr_text, prev_window_key, current_window_key
+    ):
         # Different window -> always new (no comparison possible/useful).
         if prev_window_key != current_window_key or prev_ocr_text is None:
-            return NoveltyVerdict(novelty=1.0, delta="window change or first frame",
-                                  merge_into_previous=False, tier="jaccard")
+            return NoveltyVerdict(
+                novelty=1.0,
+                delta="window change or first frame",
+                merge_into_previous=False,
+                tier="jaccard",
+            )
         j = self._jaccard(ocr_text, prev_ocr_text)
         if j >= self._merge:
-            return NoveltyVerdict(novelty=1.0 - j, delta=f"jaccard {j:.2f} >= {self._merge}",
-                                  merge_into_previous=True, tier="jaccard")
+            return NoveltyVerdict(
+                novelty=1.0 - j,
+                delta=f"jaccard {j:.2f} >= {self._merge}",
+                merge_into_previous=True,
+                tier="jaccard",
+            )
         if j < self._new:
-            return NoveltyVerdict(novelty=1.0 - j, delta=f"jaccard {j:.2f} < {self._new}",
-                                  merge_into_previous=False, tier="jaccard")
+            return NoveltyVerdict(
+                novelty=1.0 - j,
+                delta=f"jaccard {j:.2f} < {self._new}",
+                merge_into_previous=False,
+                tier="jaccard",
+            )
         # Borderline -> tier 2 (fast model).
         novelty, delta = await self._fast_assess(ocr_text, prev_ocr_text)
         merge = novelty < self._fast_merge
-        return NoveltyVerdict(novelty=novelty, delta=delta,
-                              merge_into_previous=merge, tier="fast")
+        return NoveltyVerdict(
+            novelty=novelty, delta=delta, merge_into_previous=merge, tier="fast"
+        )
 
     async def _fast_assess(self, cur: str, prev: str) -> tuple[float, str]:
         # Truncate to keep the prompt small; novelty is about the gist, not the
@@ -465,21 +523,28 @@ class RealNovelty:
         )
         body = {
             "model": "fast",
-            "messages": [{"role": "user", "content": (
-                f"{prompt}\n\nPREVIOUS (truncated):\n{prev[:1200]}\n\n"
-                f"CURRENT (truncated):\n{cur[:1200]}"
-            )}],
+            "messages": [
+                {
+                    "role": "user",
+                    "content": (
+                        f"{prompt}\n\nPREVIOUS (truncated):\n{prev[:1200]}\n\n"
+                        f"CURRENT (truncated):\n{cur[:1200]}"
+                    ),
+                }
+            ],
             "max_tokens": 120,
             "temperature": 0.0,
             "chat_template_kwargs": {"enable_thinking": False},
         }
+
         def _call():
             with httpx.Client(timeout=self._timeout) as c:
                 r = c.post(f"{self._base}/v1/chat/completions", json=body)
                 r.raise_for_status()
                 return r.json()["choices"][0]["message"].get("content", "") or ""
+
         content = await asyncio.to_thread(_call)
-        m = re.search(r"\{[^{}]*\}", content, re.S)
+        m = re.search(r"\{[^{}]*\}", content, re.DOTALL)
         if m:
             try:
                 d = _json.loads(m.group(0))
@@ -513,7 +578,7 @@ Image is for layout/visual context only.
 # fallback itself uses "inspecting «…»" and must NOT match.
 _GENERIC_ACTIVITY_RE = re.compile(
     r"^\s*(working in|using|looking at the screen|browsing)\b[\w ._-]*$",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -528,25 +593,39 @@ class GatewayPerceive:
         self._base = gateway_url.rstrip("/").removesuffix("/v1")
         self._timeout = timeout
 
-    async def understand(self, image_bytes, ocr_full_text, app, window_title) -> PerceiveEvent:
+    async def understand(
+        self, image_bytes, ocr_full_text, app, window_title
+    ) -> PerceiveEvent:
         # Re-encode WebP -> PNG (llama.cpp vision only accepts PNG/JPEG).
         image_bytes, _mime = _to_png_if_needed(image_bytes)
         b64 = base64.b64encode(image_bytes).decode("ascii")
         body = {
             "model": "perceive",
-            "messages": [{"role": "user", "content": [
-                {"type": "text", "text": (
-                    f"{_PERCEIVE_PROMPT}\n\nAPP: {app}\nWINDOW TITLE: {window_title}\n"
-                    f"OCR TEXT:\n{ocr_full_text[:3000]}"
-                )},
-                {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
-            ]}],
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": (
+                                f"{_PERCEIVE_PROMPT}\n\nAPP: {app}\nWINDOW TITLE: {window_title}\n"
+                                f"OCR TEXT:\n{ocr_full_text[:3000]}"
+                            ),
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/png;base64,{b64}"},
+                        },
+                    ],
+                }
+            ],
             "max_tokens": 500,
             "temperature": 0.1,
             # Structured JSON is more reliable with thinking off (P3.7); activity
             # specificity is enforced by the prompt + non-generic fallback.
             "chat_template_kwargs": {"enable_thinking": False},
         }
+
         def _call():
             last = None
             for _ in range(3):
@@ -564,6 +643,7 @@ class GatewayPerceive:
                     last = exc
                     continue
             raise last
+
         content = await asyncio.to_thread(_call)
         return _parse_perceive_json(content, app, window_title, ocr_full_text)
 
@@ -613,7 +693,7 @@ def _parse_perceive_json(
     data: dict | None = None
     # Prefer the largest {...} blob (verbatim object is nested).
     candidates: list[str] = []
-    m = re.search(r"\{.*\}", content or "", re.S)
+    m = re.search(r"\{.*\}", content or "", re.DOTALL)
     if m:
         candidates.append(m.group(0))
     candidates.extend(_extract_json_objects(content or ""))
@@ -653,7 +733,9 @@ def _parse_perceive_json(
         verbatim=Verbatim(
             errors=_filter_verbatim_to_ocr(vb.get("errors", []), ocr_full_text),
             urls=_filter_verbatim_to_ocr(vb.get("urls", []), ocr_full_text),
-            identifiers=_filter_verbatim_to_ocr(vb.get("identifiers", []), ocr_full_text),
+            identifiers=_filter_verbatim_to_ocr(
+                vb.get("identifiers", []), ocr_full_text
+            ),
             numbers=_filter_verbatim_to_ocr(vb.get("numbers", []), ocr_full_text),
             quotes=_filter_verbatim_to_ocr(vb.get("quotes", []), ocr_full_text),
         ),

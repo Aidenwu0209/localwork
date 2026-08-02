@@ -1,0 +1,24 @@
+# P3.4-only Honcho override.
+#
+# The synthetic profile intentionally contains a small, fixed set of messages.
+# Honcho's production deriver batches until 1,024 tokens by default, so that
+# queue would remain pending indefinitely.  Flush the demo queue immediately
+# without changing the normal Honcho deployment or third_party/honcho.
+x-radeon-gateway: &radeon-gateway
+  DERIVER_MODEL_CONFIG__OVERRIDES__BASE_URL: http://host.docker.internal:14000/v1
+  SUMMARY_MODEL_CONFIG__OVERRIDES__BASE_URL: http://host.docker.internal:14000/v1
+  EMBEDDING_MODEL_CONFIG__OVERRIDES__BASE_URL: http://host.docker.internal:14000/v1
+  DIALECTIC_LEVELS__minimal__MODEL_CONFIG__OVERRIDES__BASE_URL: http://host.docker.internal:14000/v1
+  DIALECTIC_LEVELS__low__MODEL_CONFIG__OVERRIDES__BASE_URL: http://host.docker.internal:14000/v1
+  DIALECTIC_LEVELS__medium__MODEL_CONFIG__OVERRIDES__BASE_URL: http://host.docker.internal:14000/v1
+  DIALECTIC_LEVELS__high__MODEL_CONFIG__OVERRIDES__BASE_URL: http://host.docker.internal:14000/v1
+  DIALECTIC_LEVELS__max__MODEL_CONFIG__OVERRIDES__BASE_URL: http://host.docker.internal:14000/v1
+
+services:
+  honcho-api:
+    environment: *radeon-gateway
+
+  honcho-deriver:
+    environment:
+      <<: *radeon-gateway
+      DERIVER_FLUSH_ENABLED: "true"

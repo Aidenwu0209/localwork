@@ -21,7 +21,7 @@ model_list:
   - model_name: brain
     litellm_params: { model: openai/brain, api_base: http://127.0.0.1:8001/v1, api_key: "none" }
   - model_name: perceive
-    litellm_params: { model: openai/perceive, api_base: http://127.0.0.1:8002/v1, api_key: "none" }
+    litellm_params: { model: openai/perceive, api_base: http://127.0.0.1:8002/v1, api_key: "none", extra_body: { chat_template_kwargs: { enable_thinking: false } } }
   - model_name: sentinel
     litellm_params: { model: openai/sentinel, api_base: http://127.0.0.1:8003/v1, api_key: "none" }
   - model_name: fast

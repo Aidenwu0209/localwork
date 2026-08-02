@@ -15,5 +15,6 @@ exec "$BIN" \
   -c 8192 \
   --embedding --pooling last \
   --host 127.0.0.1 --port 8004 \
+  --metrics \
   --log-disable \
   --jinja
