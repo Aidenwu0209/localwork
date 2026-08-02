@@ -131,6 +131,7 @@ read_process_record() {
   [[ "$command" == *"$(project_path "$service")"* && "$command" == *"python -m $service"* ]] || return 1
   OWNED_PID="$pid"
   OWNED_TOKEN="$token"
+  OWNED_FINGERPRINT="$fingerprint"
 }
 
 read_owned_record() {
@@ -243,18 +244,24 @@ read_privacy_record() {
   if [[ "$expected" == sentinel ]]; then
     [[ "$command" == *"llama-server"* && "$command" == *"--alias sentinel"* && "$command" == *"--host 127.0.0.1"* && "$command" == *"--port 8003"* ]] || return 1
   else
-    [[ "$command" == *"uvx"* && "$command" == *"litellm"* && "$command" == *"--config"* && "$command" == *"server/litellm.yaml"* && "$command" == *"--host 127.0.0.1"* && "$command" == *"--port 4000"* && "$command" != *"--detailed_debug"* ]] || return 1
+    [[ "$command" == *"litellm"* && "$command" == *"--config"* && "$command" == *"server/litellm.yaml"* && "$command" == *"--host 127.0.0.1"* && "$command" == *"--port 4000"* && "$command" != *"--detailed_debug"* ]] || return 1
   fi
   PRIVACY_PID="$pid"
   PRIVACY_FINGERPRINT="$fingerprint"
 }
 
 privacy_listener_owned() {
-  local role="$1" port="$2" listener owner
+  local role="$1" port="$2" listener owner owner_fingerprint listener_fingerprint
   read_privacy_record "$role" || return 1
   owner="$PRIVACY_PID"
+  owner_fingerprint="$PRIVACY_FINGERPRINT"
   listener="$(listener_pid "$port")"
-  [[ -n "$listener" ]] && pid_is_descendant_or_self "$listener" "$owner"
+  listener_fingerprint="$(process_fingerprint "$listener")"
+  [[ -n "$listener_fingerprint" ]] || return 1
+  pid_is_descendant_or_self "$listener" "$owner" || return 1
+  [[ "$(process_fingerprint "$owner")" == "$owner_fingerprint" ]] || return 1
+  [[ "$(process_fingerprint "$listener")" == "$listener_fingerprint" ]] || return 1
+  [[ "$(listener_pid "$port")" == "$listener" ]]
 }
 
 privacy_stack_owned() {
@@ -286,7 +293,10 @@ port_is_listening() {
 }
 
 listener_pid() {
-  lsof -nP -t -iTCP:"$1" -sTCP:LISTEN 2>/dev/null | head -n 1
+  local port="$1" listeners
+  listeners="$(lsof -nP -t -iTCP:"$port" -sTCP:LISTEN 2>/dev/null)" || return 1
+  [[ -n "$listeners" && "$(printf '%s\n' "$listeners" | wc -l | tr -d ' ')" == 1 ]] || return 1
+  printf '%s\n' "$listeners"
 }
 
 pid_is_descendant_or_self() {
@@ -304,11 +314,16 @@ pid_is_descendant_or_self() {
 }
 
 service_listener_owned() {
-  local service="$1" port="$2" listener owner
+  local service="$1" port="$2" listener owner listener_fingerprint
   service_stop_authorized "$service" || return 1
   owner="$OWNED_PID"
   listener="$(listener_pid "$port")"
-  [[ -n "$listener" ]] && pid_is_descendant_or_self "$listener" "$owner"
+  listener_fingerprint="$(process_fingerprint "$listener")"
+  [[ -n "$listener_fingerprint" ]] || return 1
+  pid_is_descendant_or_self "$listener" "$owner" || return 1
+  [[ "$(process_fingerprint "$owner")" == "$OWNED_FINGERPRINT" ]] || return 1
+  [[ "$(process_fingerprint "$listener")" == "$listener_fingerprint" ]] || return 1
+  [[ "$(listener_pid "$port")" == "$listener" ]]
 }
 
 preflight_service_ports() {
