@@ -27,6 +27,20 @@ class SentinelFailClosedTest(unittest.TestCase):
         self.assertEqual(verdict.reason, "low_confidence")
         self.assertEqual(verdict.decision, "block")
 
+    def test_non_numeric_confidence_blocks_as_low_confidence(self):
+        for raw in (
+            '{"category":"normal","confidence":true}',
+            '{"category":"normal","confidence":false}',
+            '{"category":"normal","confidence":null}',
+            '{"category":"normal","confidence":"high"}',
+        ):
+            with self.subTest(raw=raw):
+                verdict = _parse_sentinel_json(raw)
+                self.assertEqual(
+                    (verdict.decision, verdict.confidence, verdict.reason),
+                    ("block", 0.0, "low_confidence"),
+                )
+
     def test_high_confidence_normal_allows(self):
         verdict = _parse_sentinel_json('{"category":"normal","confidence":0.70}')
         self.assertEqual(verdict.reason, "classified_normal")

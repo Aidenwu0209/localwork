@@ -379,10 +379,11 @@ def _parse_sentinel_json(
             reason="malformed_output",
         )
 
-    try:
-        confidence = float(parsed.get("confidence", 0.0))
-    except (TypeError, ValueError):
+    raw_confidence = parsed.get("confidence", 0.0)
+    if isinstance(raw_confidence, bool) or not isinstance(raw_confidence, (int, float)):
         confidence = 0.0
+    else:
+        confidence = float(raw_confidence)
     if not 0.0 <= confidence <= 1.0:
         confidence = 0.0
 
