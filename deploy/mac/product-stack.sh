@@ -13,6 +13,7 @@ SKIP_INFRA="${DEJAVIEW_SKIP_INFRA:-0}"
 SKIP_GATEWAY="${DEJAVIEW_SKIP_GATEWAY_CHECK:-0}"
 SKIP_PRIVACY_STACK="${DEJAVIEW_SKIP_PRIVACY_STACK:-0}"
 DEV_STACK_SCRIPT="${DEJAVIEW_DEV_STACK_SCRIPT:-$ROOT/deploy/mac/llama-launch/dev-stack.sh}"
+SETUP_HONCHO_SCRIPT="${DEJAVIEW_SETUP_HONCHO_SCRIPT:-$ROOT/deploy/mac/setup-honcho.sh}"
 DATA_COMPOSE=(docker compose -f "$ROOT/deploy/mac/compose.data.yml")
 HONCHO_COMPOSE=(docker compose -f "$ROOT/deploy/mac/compose.honcho.yml")
 STARTED=()
@@ -30,7 +31,48 @@ privacy_runtime_dir() { printf '%s/privacy\n' "$RUNTIME_DIR"; }
 privacy_marker() { printf '%s/privacy.product-owned\n' "$RUNTIME_DIR"; }
 
 service_tree_revision() {
-  git -C "$ROOT" rev-parse --verify "HEAD:services/$1" 2>/dev/null
+  local service="$1" source_root="${DEJAVIEW_SERVICE_SOURCE_ROOT:-$ROOT}"
+  if [[ "$source_root" == "$ROOT" ]]; then
+    git -C "$ROOT" ls-files -z -- "services/$service" |
+      python3 -c '
+import hashlib
+import os
+import sys
+
+root = sys.argv[1]
+paths = sorted(path for path in sys.stdin.buffer.read().split(b"\0") if path)
+if not paths:
+    raise SystemExit(1)
+digest = hashlib.sha256()
+for raw in paths:
+    path = raw.decode("utf-8")
+    digest.update(raw + b"\0")
+    with open(os.path.join(root, path), "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+print(digest.hexdigest())
+' "$ROOT"
+  else
+    (cd "$source_root" && find "services/$service" -type f -print0) |
+      python3 -c '
+import hashlib
+import os
+import sys
+
+root = sys.argv[1]
+paths = sorted(path for path in sys.stdin.buffer.read().split(b"\0") if path)
+if not paths:
+    raise SystemExit(1)
+digest = hashlib.sha256()
+for raw in paths:
+    path = raw.decode("utf-8")
+    digest.update(raw + b"\0")
+    with open(os.path.join(root, path), "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+print(digest.hexdigest())
+' "$source_root"
+  fi
 }
 
 process_command() { ps -p "$1" -o command= 2>/dev/null || true; }
@@ -159,6 +201,46 @@ raise SystemExit(0 if valid else 1)
 '
 }
 
+privacy_pidfile() { printf '%s/dejaview-%s.pid\n' "$(privacy_runtime_dir)" "$1"; }
+
+read_privacy_record() {
+  local expected="$1" pf pid fingerprint kind current
+  pf="$(privacy_pidfile "$expected")"
+  [[ -f "$pf" ]] || return 1
+  IFS='|' read -r pid fingerprint kind < "$pf" || return 1
+  [[ "$pid" =~ ^[0-9]+$ && "$kind" == "$expected" && -n "$fingerprint" ]] || return 1
+  kill -0 "$pid" 2>/dev/null || return 1
+  process_is_zombie "$pid" && return 1
+  current="$(process_fingerprint "$pid")"
+  [[ -n "$current" && "$current" == "$fingerprint" ]] || return 1
+  PRIVACY_PID="$pid"
+  PRIVACY_FINGERPRINT="$fingerprint"
+}
+
+privacy_stack_owned() {
+  local marker sentinel_pid sentinel_fingerprint gateway_pid gateway_fingerprint
+  marker="$(privacy_marker)"
+  [[ -f "$marker" ]] || return 1
+  IFS='|' read -r sentinel_pid sentinel_fingerprint gateway_pid gateway_fingerprint < "$marker" || return 1
+  read_privacy_record sentinel || return 1
+  [[ "$PRIVACY_PID" == "$sentinel_pid" && "$PRIVACY_FINGERPRINT" == "$sentinel_fingerprint" ]] || return 1
+  read_privacy_record gateway || return 1
+  [[ "$PRIVACY_PID" == "$gateway_pid" && "$PRIVACY_FINGERPRINT" == "$gateway_fingerprint" ]] || return 1
+}
+
+write_privacy_marker() {
+  local sentinel_pid sentinel_fingerprint gateway_pid gateway_fingerprint marker
+  read_privacy_record sentinel || return 1
+  sentinel_pid="$PRIVACY_PID"
+  sentinel_fingerprint="$PRIVACY_FINGERPRINT"
+  read_privacy_record gateway || return 1
+  gateway_pid="$PRIVACY_PID"
+  gateway_fingerprint="$PRIVACY_FINGERPRINT"
+  marker="$(privacy_marker)"
+  printf '%s|%s|%s|%s\n' "$sentinel_pid" "$sentinel_fingerprint" "$gateway_pid" "$gateway_fingerprint" > "$marker"
+  chmod 600 "$marker"
+}
+
 port_is_listening() {
   lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1
 }
@@ -169,9 +251,14 @@ preflight_service_ports() {
     echo "error: lsof is required to verify fixed service ports safely" >&2
     return 1
   fi
-  for pair in "ocrd:8006" "memoryd:8090" "agentd:8101"; do
+  for pair in "sentinel:8003" "ocrd:8006" "memoryd:8090" "agentd:8101"; do
     service="${pair%%:*}"; port="${pair#*:}"
-    if ! service_state "$service" && port_is_listening "$port"; then
+    if [[ "$service" == "sentinel" ]]; then
+      if port_is_listening "$port" && ! privacy_stack_owned; then
+        echo "error: port $port is occupied by an unowned privacy process; refusing to adopt or signal it" >&2
+        return 1
+      fi
+    elif ! service_state "$service" && port_is_listening "$port"; then
       echo "error: port $port is occupied by an unowned process; refusing to adopt or signal it" >&2
       return 1
     fi
@@ -186,7 +273,9 @@ start_privacy_stack() {
   fi
   export SENTINEL_GATEWAY_URL="${SENTINEL_GATEWAY_URL:-${LOCAL_GATEWAY_URL:-http://127.0.0.1:4000/v1}}"
   if gateway_has_owned_sentinel; then
-    return 0
+    if privacy_stack_owned; then return 0; fi
+    echo "error: privacy gateway is pre-existing or unowned; refusing to adopt it" >&2
+    return 1
   fi
   if port_is_listening 4000; then
     echo "error: privacy gateway port 4000 is occupied by an unowned process" >&2
@@ -202,21 +291,36 @@ start_privacy_stack() {
     return 1
   fi
   PRIVACY_STARTED=1
-  if ! gateway_has_owned_sentinel; then
+  if ! write_privacy_marker || ! gateway_has_owned_sentinel || ! privacy_stack_owned; then
     echo "error: owned privacy stack did not expose an owned sentinel role" >&2
-    stop_privacy_stack_current || true
+    rollback_privacy_started || true
     return 1
   fi
-  printf '%s\n' 'product-owned privacy runtime' > "$(privacy_marker)"
-  chmod 600 "$(privacy_marker)"
 }
 
-stop_privacy_stack_current() {
+rollback_privacy_started() {
   [[ "$SKIP_PRIVACY_STACK" == "1" ]] && return 0
-  [[ -f "$(privacy_marker)" || "$PRIVACY_STARTED" -eq 1 ]] || return 0
-  DEJAVIEW_RUNTIME_DIR="$(privacy_runtime_dir)" "$DEV_STACK_SCRIPT" down
+  [[ "$PRIVACY_STARTED" -eq 1 ]] || return 0
+  if ! DEJAVIEW_RUNTIME_DIR="$(privacy_runtime_dir)" "$DEV_STACK_SCRIPT" down; then
+    echo "error: failed to stop privacy stack started by this attempt" >&2
+    return 1
+  fi
   rm -f "$(privacy_marker)"
   PRIVACY_STARTED=0
+}
+
+stop_product_owned_privacy() {
+  [[ "$SKIP_PRIVACY_STACK" == "1" ]] && return 0
+  [[ -f "$(privacy_marker)" ]] || return 0
+  if ! privacy_stack_owned; then
+    echo "error: privacy ownership marker does not match the current dev stack; refusing to stop it" >&2
+    return 1
+  fi
+  if ! DEJAVIEW_RUNTIME_DIR="$(privacy_runtime_dir)" "$DEV_STACK_SCRIPT" down; then
+    echo "error: failed to stop product-owned privacy stack; marker retained" >&2
+    return 1
+  fi
+  rm -f "$(privacy_marker)"
 }
 
 stop_service() {
@@ -257,8 +361,12 @@ start_service() {
   local service="$1" port="$2" pf pid project
   pf="$(pidfile "$service")"
   if service_state "$service"; then
-    echo "$service already running (pid $OWNED_PID)"
-    return 0
+    if health_contract "$service" "http://127.0.0.1:${port}/health"; then
+      echo "$service already running (pid $OWNED_PID)"
+      return 0
+    fi
+    echo "error: $service is managed but its current health contract failed" >&2
+    return 1
   fi
   if [[ -f "$pf" ]]; then
     pid="$(raw_pid "$pf" 2>/dev/null || true)"
@@ -341,8 +449,11 @@ start_infra() {
 }
 
 preflight() {
-  "$ROOT/deploy/mac/setup-honcho.sh" --check >/dev/null
-  preflight_service_ports
+  if ! "$SETUP_HONCHO_SCRIPT" --check >/dev/null; then
+    echo "error: local Honcho setup verification failed" >&2
+    return 1
+  fi
+  if ! preflight_service_ports; then return 1; fi
   if [[ "$SKIP_GATEWAY" != "1" ]]; then
     export GATEWAY_URL="${GATEWAY_URL:-http://127.0.0.1:14000/v1}"
     export RADEON_GATEWAY_URL="${RADEON_GATEWAY_URL:-$GATEWAY_URL}"
@@ -360,22 +471,22 @@ preflight() {
 }
 
 cmd_up() {
-  preflight_service_ports
-  start_privacy_stack
+  if ! preflight_service_ports; then return 1; fi
+  if ! start_privacy_stack; then return 1; fi
   if ! preflight; then
-    stop_privacy_stack_current || true
+    rollback_privacy_started || true
     return 1
   fi
   if [[ "$SKIP_INFRA" != "1" ]]; then
     if ! start_infra; then
-      stop_privacy_stack_current || true
+      rollback_privacy_started || true
       return 1
     fi
   fi
   if ! start_service ocrd 8006 || ! start_service memoryd 8090 || ! start_service agentd 8101; then
     rollback_started
     rollback_infra || true
-    stop_privacy_stack_current || true
+    rollback_privacy_started || true
     return 1
   fi
   echo "DejaView product ready: http://127.0.0.1:8101/"
@@ -391,7 +502,7 @@ cmd_down() {
     "${HONCHO_COMPOSE[@]}" down || failures=$((failures + 1))
     "${DATA_COMPOSE[@]}" down || failures=$((failures + 1))
   fi
-  stop_privacy_stack_current || failures=$((failures + 1))
+  stop_product_owned_privacy || failures=$((failures + 1))
   (( failures == 0 )) || return 1
 }
 
@@ -413,7 +524,7 @@ cmd_status() {
   done
   if [[ "$SKIP_PRIVACY_STACK" != "1" ]]; then
     export SENTINEL_GATEWAY_URL="${SENTINEL_GATEWAY_URL:-${LOCAL_GATEWAY_URL:-http://127.0.0.1:4000/v1}}"
-    if gateway_has_owned_sentinel; then
+    if gateway_has_owned_sentinel && privacy_stack_owned; then
       echo "privacy gateway: owned sentinel role ready"
     else
       echo "privacy gateway: missing or invalid sentinel role"
@@ -421,8 +532,22 @@ cmd_status() {
     fi
   fi
   if [[ "$SKIP_INFRA" != "1" ]]; then
-    "${DATA_COMPOSE[@]}" ps
-    "${HONCHO_COMPOSE[@]}" ps
+    COMPOSE_COMMAND=("${DATA_COMPOSE[@]}")
+    COMPOSE_LABEL=data
+    if ! compose_state || [[ "$COMPOSE_ACTIVE" -ne 1 ]]; then
+      echo "data compose: missing or unhealthy"
+      failures=$((failures + 1))
+    else
+      echo "data compose: ready"
+    fi
+    COMPOSE_COMMAND=("${HONCHO_COMPOSE[@]}")
+    COMPOSE_LABEL=Honcho
+    if ! compose_state || [[ "$COMPOSE_ACTIVE" -ne 1 ]]; then
+      echo "Honcho compose: missing or unhealthy"
+      failures=$((failures + 1))
+    else
+      echo "Honcho compose: ready"
+    fi
   fi
   if (( failures == 0 )); then
     echo "READY: product runtime contracts verified"
