@@ -33,10 +33,23 @@ privacy_marker() { printf '%s/privacy.product-owned\n' "$RUNTIME_DIR"; }
 service_tree_revision() {
   local service="$1" source_root="${DEJAVIEW_SERVICE_SOURCE_ROOT:-$ROOT}"
   if [[ "$source_root" == "$ROOT" ]]; then
-    if ! git -C "$ROOT" ls-files --others --exclude-standard -z -- "services/$service" |
+    if ! git -C "$ROOT" ls-files --others --ignored --exclude-standard -z -- "services/$service" |
       python3 -c '
+import os
 import sys
-raise SystemExit(1 if any(sys.stdin.buffer.read().split(b"\0")) else 0)
+safe_dirs = {".venv", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+safe_suffixes = {".pyc", ".pyo", ".cache"}
+for raw in sys.stdin.buffer.read().split(b"\0"):
+    if not raw:
+        continue
+    path = raw.decode("utf-8")
+    base = os.path.basename(path)
+    if base == ".env" or base.startswith(".env."):
+        raise SystemExit(1)
+    parts = set(path.split("/"))
+    if parts & safe_dirs or os.path.splitext(path)[1] in safe_suffixes:
+        continue
+    raise SystemExit(1)
 '; then
       return 1
     fi

@@ -669,6 +669,63 @@ class ProductStackTest(unittest.TestCase):
             down = subprocess.run([script, "down"], env=env, capture_output=True, text=True)
             self.assertEqual(down.returncode, 0, down.stdout + down.stderr)
 
+    def test_status_rejects_replaced_privacy_listener(self) -> None:
+        for port in ("8003", "4000"):
+            with self.subTest(port=port), tempfile.TemporaryDirectory() as raw:
+                tmp = Path(raw)
+                env, _ = self._privacy_environment(tmp)
+                up = subprocess.run([SCRIPT, "up"], env=env, capture_output=True, text=True)
+                self.assertEqual(up.returncode, 0, up.stdout + up.stderr)
+                try:
+                    status = subprocess.run(
+                        [SCRIPT, "status"],
+                        env=env | {"DEJAVIEW_TEST_UNRELATED_PORT": port, "DEJAVIEW_TEST_LISTENER_PID": str(os.getpid())},
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertNotEqual(status.returncode, 0, status.stdout + status.stderr)
+                    self.assertEqual(status.stdout.count("NOT_READY:"), 1)
+                finally:
+                    subprocess.run([SCRIPT, "down"], env=env, capture_output=True, text=True)
+
+    def test_status_rejects_listener_pid_reuse_during_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            env = self._environment(tmp)
+            up = subprocess.run([SCRIPT, "up"], env=env, capture_output=True, text=True)
+            self.assertEqual(up.returncode, 0, up.stdout + up.stderr)
+            lsof = tmp / "bin" / "lsof"
+            lsof.write_text(
+                "#!/bin/sh\n"
+                'counter="$DEJAVIEW_RUNTIME_DIR/lsof-count"; n=$(cat "$counter" 2>/dev/null || echo 0); n=$((n+1)); echo "$n" > "$counter"\n'
+                'case "$*" in *"TCP:8006"*) [ "$n" -gt 1 ] && { case "$*" in *-t*) printf "%s\\n" "$DEJAVIEW_TEST_LISTENER_PID";; esac; exit 0; };; esac\n'
+                'file="$DEJAVIEW_RUNTIME_DIR/ocrd.pid"; [ -f "$file" ] || exit 1; case "$*" in *-t*) cut -d "|" -f1 "$file";; esac\n',
+                encoding="utf-8",
+            )
+            lsof.chmod(0o755)
+            try:
+                status = subprocess.run([SCRIPT, "status"], env=env | {"DEJAVIEW_TEST_LISTENER_PID": str(os.getpid())}, capture_output=True, text=True)
+                self.assertNotEqual(status.returncode, 0, status.stdout + status.stderr)
+                self.assertIn("NOT_READY", status.stdout)
+            finally:
+                subprocess.run([SCRIPT, "down"], env=env, capture_output=True, text=True)
+
+    def test_status_rejects_swapped_or_wrong_privacy_roles(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            env, _ = self._privacy_environment(tmp)
+            up = subprocess.run([SCRIPT, "up"], env=env, capture_output=True, text=True)
+            self.assertEqual(up.returncode, 0, up.stdout + up.stderr)
+            ps = tmp / "bin" / "ps"
+            ps.write_text("#!/bin/sh\ncase \"$*\" in *\"stat=\"*) echo S;; *\"lstart=\"*) echo 'Mon Aug 3 00:00:00 2026';; *\"command=\"*) echo 'llama-server --alias wrong --host 127.0.0.1 --port 8003';; esac\n", encoding="utf-8")
+            ps.chmod(0o755)
+            try:
+                status = subprocess.run([SCRIPT, "status"], env=env, capture_output=True, text=True)
+                self.assertNotEqual(status.returncode, 0, status.stdout + status.stderr)
+                self.assertIn("NOT_READY", status.stdout)
+            finally:
+                subprocess.run([SCRIPT, "down"], env=env, capture_output=True, text=True)
+
 
 if __name__ == "__main__":
     unittest.main()
