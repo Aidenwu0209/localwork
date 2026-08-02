@@ -191,13 +191,37 @@ import re
 import httpx
 
 # Sentinel taxonomy must match timeline_events.sentinel_audit.category CHECK.
-_SENTINEL_CATS = {
+_SENTINEL_CATEGORY_ENUM = (
     "password_prompt",
     "banking_finance",
     "private_chat",
     "id_document",
     "adult",
     "normal",
+)
+_SENTINEL_CATS = frozenset(_SENTINEL_CATEGORY_ENUM)
+_SENTINEL_RESPONSE_FORMAT = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "sentinel_verdict",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "enum": list(_SENTINEL_CATEGORY_ENUM),
+                },
+                "confidence": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                },
+            },
+            "required": ["category", "confidence"],
+            "additionalProperties": False,
+        },
+    },
 }
 
 
@@ -280,6 +304,7 @@ class GatewaySentinel:
             "max_tokens": 80,
             "temperature": 0.0,
             "chat_template_kwargs": {"enable_thinking": False},
+            "response_format": _SENTINEL_RESPONSE_FORMAT,
         }
 
         def _call():
