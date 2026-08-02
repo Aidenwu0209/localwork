@@ -18,10 +18,10 @@
       </a>
       <p class="sovereignty-line"><span aria-hidden="true">⌂</span> <span class="sovereignty-full">Private by design · stays on this device</span><span class="sovereignty-compact">Local-only data</span></p>
     </div>
-    <div class="status-strip" aria-label="System summary">
-      <span class="status-chip" id="overall-status"><i aria-hidden="true">?</i> System unknown</span>
-      <span class="status-chip" id="capture-status"><i aria-hidden="true">?</i> Capture unknown</span>
-      <span class="status-chip" id="compute-status"><i aria-hidden="true">?</i> Compute unknown</span>
+    <div class="status-strip" role="group" aria-label="System summary">
+      <span class="status-chip" id="overall-status" role="status" aria-live="polite"><i aria-hidden="true">?</i> System unknown</span>
+      <span class="status-chip" id="capture-status" role="status" aria-live="polite"><i aria-hidden="true">?</i> Capture unknown</span>
+      <span class="status-chip" id="compute-status" role="status" aria-live="polite"><i aria-hidden="true">?</i> Compute unknown</span>
       <span class="last-check" id="last-checked">Not checked</span>
     </div>
   </header>
@@ -122,17 +122,17 @@
             <p class="eyebrow">Evolving preferences</p>
             <h2 id="profile-title">Profile projection</h2>
           </div>
-          <span class="status-chip" id="profile-status"><i aria-hidden="true">?</i> Unknown</span>
+          <span class="status-chip" id="profile-status" role="status" aria-live="polite"><i aria-hidden="true">?</i> Unknown</span>
         </div>
         <form id="profile-form">
           <label for="profile-question">Ask about your patterns</label>
-          <textarea id="profile-question" maxlength="2000" rows="3" placeholder="How do I usually approach debugging?" required></textarea>
-          <button class="secondary-button" type="submit">Ask profile</button>
+          <textarea id="profile-question" maxlength="2000" rows="3" placeholder="How do I usually approach debugging?" required disabled></textarea>
+          <button class="secondary-button" id="ask-profile" type="submit" disabled>Ask profile</button>
         </form>
         <div id="profile-answer" class="profile-answer" aria-live="polite"></div>
         <div class="profile-controls">
-          <button class="text-button" id="pause-profile" type="button">Pause projection</button>
-          <button class="text-button" id="resume-profile" type="button">Resume projection</button>
+          <button class="text-button" id="pause-profile" type="button" disabled>Pause projection</button>
+          <button class="text-button" id="resume-profile" type="button" disabled>Resume projection</button>
         </div>
         <p class="error-banner" id="profile-error" role="alert" hidden></p>
       </section>
@@ -140,7 +140,7 @@
   </main>
 
   <div class="drawer-backdrop" id="evidence-backdrop" hidden></div>
-  <section class="evidence-drawer" id="evidence-drawer" role="dialog" aria-modal="true" aria-labelledby="evidence-title" hidden tabindex="-1">
+  <section class="evidence-drawer" id="evidence-drawer" role="dialog" aria-modal="true" aria-labelledby="evidence-title" aria-describedby="evidence-message" hidden tabindex="-1">
     <header>
       <div>
         <p class="eyebrow">Source evidence</p>
@@ -152,7 +152,7 @@
     <p class="error-banner" id="evidence-error" role="alert" hidden></p>
     <figure class="evidence-figure" id="evidence-figure" hidden>
       <div class="image-stage" id="image-stage">
-        <img id="evidence-image" alt="Captured screen evidence">
+        <img id="evidence-image" alt="">
         <div class="highlight-layer" id="highlight-layer" aria-hidden="true"></div>
       </div>
       <figcaption id="evidence-caption"></figcaption>

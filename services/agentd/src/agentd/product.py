@@ -321,6 +321,10 @@ def install_product_routes(
     async def product_javascript() -> FileResponse:
         return _web_asset("product.js", "text/javascript; charset=utf-8")
 
+    @app.get("/product-focus.mjs", include_in_schema=False)
+    async def product_focus_javascript() -> FileResponse:
+        return _web_asset("product-focus.mjs", "text/javascript; charset=utf-8")
+
     @app.get("/api/status")
     async def product_status() -> dict[str, Any]:
         return product.status()

@@ -1,3 +1,11 @@
+import {
+  evidenceImageAlt,
+  keepDialogFocus,
+  setDialogBackgroundInert,
+  setProfileControls,
+  shouldAnnounceStatus,
+} from "/product-focus.mjs";
+
 const state = {
   csrf: null,
   cursor: null,
@@ -7,6 +15,17 @@ const state = {
 };
 
 const byId = (id) => document.getElementById(id);
+const dialogBackground = [
+  document.querySelector(".topbar"),
+  document.querySelector(".view-nav"),
+  byId("main"),
+];
+const profileControls = {
+  ask: byId("ask-profile"),
+  pause: byId("pause-profile"),
+  question: byId("profile-question"),
+  resume: byId("resume-profile"),
+};
 const humanErrors = {
   answer_unavailable: "An answer is not available right now. Your timeline remains unchanged.",
   compute_unavailable: "The answer engine is offline. Try again after its status recovers.",
@@ -77,12 +96,15 @@ function stateLabel(raw) {
 
 function setStatusChip(element, label, rawState) {
   const status = stateLabel(rawState);
+  const announcement = `${label} ${status.text.toLowerCase()}`;
+  if (!shouldAnnounceStatus(element.dataset.announcement, announcement)) return;
+  element.dataset.announcement = announcement;
   element.dataset.state = status.value;
   element.replaceChildren();
   const icon = document.createElement("i");
   icon.setAttribute("aria-hidden", "true");
   icon.textContent = status.icon;
-  element.append(icon, document.createTextNode(` ${label} ${status.text.toLowerCase()}`));
+  element.append(icon, document.createTextNode(` ${announcement}`));
 }
 
 function setDefinitionList(element, rows) {
@@ -154,7 +176,7 @@ function renderTimelineItem(item) {
   when.textContent = formatWhen(item.ts);
   if (typeof item.ts === "string") when.dateTime = item.ts;
   header.append(app, when);
-  const title = document.createElement("h3");
+  const title = document.createElement("h2");
   title.textContent = typeof item.activity === "string" && item.activity ? item.activity : "Captured activity";
   const topics = document.createElement("p");
   topics.textContent = Array.isArray(item.topics) && item.topics.length ? item.topics.join(" · ") : "No topic labels";
@@ -272,10 +294,14 @@ async function loadProfileStatus() {
     const raw = body.enabled === false ? "offline" : body.paused ? "stale" : "ready";
     const label = body.enabled === false ? "Disabled" : body.paused ? "Paused" : "Active";
     setStatusChip(byId("profile-status"), label, raw);
-    byId("pause-profile").disabled = body.paused || body.enabled === false;
-    byId("resume-profile").disabled = !body.paused || body.enabled === false;
+    setProfileControls(profileControls, {
+      available: true,
+      enabled: body.enabled,
+      paused: body.paused,
+    });
   } catch (failure) {
     setStatusChip(byId("profile-status"), "Profile", "unknown");
+    setProfileControls(profileControls, { available: false });
     showError(error, failure.message);
   }
 }
@@ -359,8 +385,9 @@ async function openEvidence(url, trigger) {
   state.highlights = [];
   drawer.hidden = false;
   backdrop.hidden = false;
+  setDialogBackgroundInert(dialogBackground, true);
   document.body.classList.add("drawer-open");
-  drawer.focus();
+  byId("close-evidence").focus();
   try {
     const body = await api(url);
     const meta = byId("evidence-meta");
@@ -374,6 +401,11 @@ async function openEvidence(url, trigger) {
     state.highlights = Array.isArray(body.highlights) ? body.highlights : [];
     if (body.image?.available && typeof body.image.url === "string") {
       const image = byId("evidence-image");
+      image.alt = evidenceImageAlt({
+        eventId: body.event_id,
+        app: body.app,
+        captured: formatWhen(body.ts),
+      });
       image.onload = drawHighlights;
       image.onerror = () => showError(error, humanErrors.evidence_image_unavailable);
       image.src = body.image.url;
@@ -390,6 +422,7 @@ async function openEvidence(url, trigger) {
 function closeEvidence() {
   byId("evidence-drawer").hidden = true;
   byId("evidence-backdrop").hidden = true;
+  setDialogBackgroundInert(dialogBackground, false);
   document.body.classList.remove("drawer-open");
   byId("evidence-image").removeAttribute("src");
   if (state.evidenceTrigger) state.evidenceTrigger.focus();
@@ -398,24 +431,11 @@ function closeEvidence() {
 
 function trapDrawerFocus(event) {
   const drawer = byId("evidence-drawer");
-  if (drawer.hidden) return;
-  if (event.key === "Escape") {
-    event.preventDefault();
-    closeEvidence();
-    return;
-  }
-  if (event.key !== "Tab") return;
-  const focusable = [...drawer.querySelectorAll("button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex='-1'])")];
-  if (!focusable.length) return;
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault();
-    last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault();
-    first.focus();
-  }
+  keepDialogFocus(event, {
+    drawer,
+    activeElement: document.activeElement,
+    onEscape: closeEvidence,
+  });
 }
 
 byId("filter-form").addEventListener("submit", (event) => {
