@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 import httpx
+import pytest
 
 from memoryd.config import Settings
 from memoryd.honcho_projection import HonchoOutboxRow, HonchoProjectionWorker
@@ -165,6 +166,55 @@ def test_untrusted_outbox_payload_fails_closed_without_any_http() -> None:
     assert _worker(store, handler).run_once(now=datetime(2026, 8, 3, tzinfo=timezone.utc)) == 0
     assert requests == []
     assert store.sent == []
+    assert store.retries == [
+        (9, "invalid_projection_payload", datetime(2026, 8, 3, tzinfo=timezone.utc))
+    ]
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    (
+        ("schema", "1"),
+        ("event_id", 10),
+        ("occurred_at", "2026-08-03T15:30:00"),
+        ("app_context", 7),
+        ("activity", False),
+        ("topics", ["implementation", 3]),
+    ),
+)
+def test_wrong_projection_field_type_or_identity_never_reaches_honcho(
+    field: str, value: object
+) -> None:
+    row = _row()
+    row.payload[field] = value
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={})
+
+    store = FakeStore([row])
+    assert _worker(store, handler).run_once(now=datetime(2026, 8, 3, tzinfo=timezone.utc)) == 0
+    assert requests == []
+    assert store.retries == [
+        (9, "invalid_projection_payload", datetime(2026, 8, 3, tzinfo=timezone.utc))
+    ]
+
+
+def test_session_that_does_not_match_user_local_date_never_reaches_honcho() -> None:
+    row = _row()
+    row = HonchoOutboxRow(
+        event_id=row.event_id,
+        payload=row.payload,
+        session_id="dejaview-2026-08-03",
+        attempt_count=row.attempt_count,
+    )
+    requests: list[httpx.Request] = []
+    store = FakeStore([row])
+    assert _worker(store, lambda request: requests.append(request)).run_once(
+        now=datetime(2026, 8, 3, tzinfo=timezone.utc)
+    ) == 0
+    assert requests == []
     assert store.retries == [
         (9, "invalid_projection_payload", datetime(2026, 8, 3, tzinfo=timezone.utc))
     ]
