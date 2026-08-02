@@ -583,8 +583,8 @@
       "depends": [
         "P3.16"
       ],
-      "status": false,
-      "note": ""
+      "status": "doing",
+      "note": "2026-08-03 claimed: audit clean-clone/operator paths, add fail-closed doctor and first-party CI, reconcile docs/LICENSE/NOTICE, and prepare official English specification plus editable presentation artifacts."
     },
     {
       "id": "P3.18",
