@@ -67,6 +67,13 @@ The product stack will never adopt or kill an unowned listener. It will fail
 early with the exact occupied port and recovery instruction. Rollback and
 `product-down` stop only components started and owned by that product runtime.
 Local inference logging must not enable detailed request debugging by default.
+Before starting infrastructure or a child process, fixed application ports must
+be free or belong to the exact current product runtime. Readiness validates the
+current service-specific health JSON, not only HTTP 200. `product-status` prints
+one `READY` or `NOT_READY` summary and exits nonzero for any down, unowned,
+stale-source, unhealthy, or dependency-missing component. Managed PID records
+bind the process fingerprint to a current source revision so an older process
+cannot remain READY after the checkout changes.
 
 The live gate starts the current checkout, proves current health schemas, opens
 the daily UI, performs a synthetic Radeon recall with a validated citation and
@@ -117,4 +124,3 @@ P3.19 can move to `accept` only when all of the following are fresh:
 5. `docs/verification-log.md`, `STATUS.md`, bilingual README, handbook, licenses,
    video manifest, and TASKBOARD agree. Human-only submission gates remain
    unchecked and visible.
-

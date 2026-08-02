@@ -36,7 +36,10 @@
   Add tests that install a fake `dev-stack.sh`, record `up sentinel` and `down`,
   require `product-up` to start it before service processes, require failure
   rollback to call `down`, require repeated `up` to be idempotent, and require
-  `product-down` not to stop a pre-existing privacy stack.
+  `product-down` not to stop a pre-existing privacy stack. Add tests that
+  `status` exits nonzero with `NOT_READY` for any unowned service, rejects an
+  HTTP-200 legacy health payload, rejects a PID record whose source revision no
+  longer matches, and reports `READY` only when all current contracts pass.
 
 - [ ] **Step 2: Verify the tests fail for missing privacy lifecycle**
 
@@ -52,6 +55,10 @@
   `/v1/models` and role ownership; stop it only when the current product run
   created the marker. Roll back it after any later startup failure. An occupied
   unowned port remains a named error, never an adoption or signal target.
+  Preflight the fixed service ports before starting infrastructure. Bind each
+  PID record to the current service-tree revision and validate service-specific
+  health JSON rather than accepting an arbitrary HTTP 200. Emit one strict
+  `READY`/`NOT_READY` summary and a truthful status exit code.
 
 - [ ] **Step 4: Remove request-debug logging by default**
 
@@ -264,4 +271,3 @@
   Commit only intended files as `Aidenwu0209 <1418557225@qq.com>`, verify no AI
   trailer, push, and wait for both Linux and macOS jobs plus submission-check to
   pass on the exact pushed SHA before claiming completion.
-
