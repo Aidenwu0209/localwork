@@ -6,17 +6,17 @@
 
 ## 一句话现状
 
-**DejaView** = 全本地数字记忆体(赛道 AMD Hackathon Track 2 · Agentic AI)。比赛六幕、ROCm 证据与成熟产品加固 P3.12–P3.18 均已验收。截止 **2026-08-06 23:59 UTC+8**,当前进入人工提交窗口。
+**DejaView** = 全本地数字记忆体(赛道 AMD Hackathon Track 2 · Agentic AI)。比赛六幕、ROCm 证据与成熟产品加固 P3.12–P3.18 均已验收;用户新增的最终风险清零任务 P3.19 正在执行。截止 **2026-08-06 23:59 UTC+8**,当前进入人工提交窗口。
 
 | 状态 | 内容 |
 |---|---|
 | **已完成** | G0+M+D **33/33 accept**;**P3.1 ROCm 消融**;P3.3 README;P3.5 licenses;P3.6 哨兵;P3.7 perceive |
 | **P3.1 正式证据** | run `p31-w7900d-20260728T075653Z`;18 个 brain 量化×MTP×并发 cell + 3 个 perceive `-np` cell,均为 1 次 warm-up + 3 次实测;原始证据在 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`,截图在 `docs/assets/p31/p31-w7900d-20260728T075653Z/` |
 | **本次新增完成** | **P3.2 Grafana** 一屏验收;**P3.4 六幕视频** 2:37 成片;**P3.11 Grafana 系统自检**含 READY/DEGRADED/FAILED、数据新鲜度、本机核心与算力路径 |
-| **工程任务** | TASKBOARD 当前 **48/48 accept**;P3.12–P3.18 已验收;原始证据片 `dejaview-p34-six-act-20260802.mp4`,英文烧录字幕提交版 `dejaview-p34-six-act-20260802-en.mp4`;自检截图 `docs/assets/p32/grafana-selfcheck-20260802.png` |
+| **工程任务** | TASKBOARD 当前 **48/49 accept**,**P3.19 doing**;P3.1–P3.18 已验收且不重做;当前补齐3–5分钟英文主音轨视频、默认受管产品栈、提交包检查器与UI实拍复验 |
 | **产品化边界** | 单用户、屏幕记忆优先、隐私 fail-closed、真实 Radeon→Local Metal 降级、Honcho 自动成长、可点击证据产品页、干净机器复现 |
 
-**下一优先:人工提交**;AMD Developer Program、Rules、仓库可见性、服务器仅演示数据与最终平台/格式仍需队员本人确认。
+**下一优先:P3.19 风险清零 → 人工提交**;AMD Developer Program、Rules、仓库可见性、服务器仅演示数据与最终平台/格式仍需队员本人确认。
 
 ---
 
@@ -85,12 +85,13 @@ brain 按需启动。若出现 Dolphin/未知 KFD 共租,brain 用 Q6_K、先停
 | P3.16 | **accept** | 默认日常产品页;能力签名证据+CSRF+本地控制边界;四档无溢出;axe 0 violations;独立安全/UX 复审 PASS |
 | P3.17 | **accept** | 干净检出全套通过;幂等 Honcho setup、只读 doctor、第一方 CI、受管生命周期、LICENSE/NOTICE、双语文档、英文规格与可编辑 PPT 均完成 QA |
 | P3.18 | **accept** | CI 全绿 + 当前源码隔离 Radeon Recall/引用/受控证据图 + 发布/隐私/历史 live-flow 证据总验收 |
+| P3.19 | **doing** | 3–5分钟英文主音轨提交版 + 默认受管隐私/产品栈 + submission-check + 当前UI/运行复验 |
 
 ---
 
 ## 接手纪律(最短版)
 
-1. 勿重做 TASKBOARD 48 个已 accept 项,尤其不要重跑 P3.1 正式矩阵。
+1. 勿重做 TASKBOARD 48 个已 accept 项,尤其不要重跑 P3.1 正式矩阵;只做 P3.19。
 2. 起 GPU 前 `rocm-smi`,勿碰未知 KFD 进程;共租时勿 OOM Dolphin。
 3. commit 后检查无 `Co-authored-by`。
 4. 演示前清 timeline 库。

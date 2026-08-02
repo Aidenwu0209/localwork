@@ -213,8 +213,9 @@ Do not copy AGPL code (OpenRecall is reference-only).
 
 ## Status & further reading
 
-**TASKBOARD:** **48/48 accept**; P3.12–P3.18 mature-product hardening, release
-reproducibility, and the final evidence-bound end-to-end audit are accepted.
+**TASKBOARD:** **48/49 accept**; P3.12–P3.18 mature-product hardening, release
+reproducibility, and the evidence-bound end-to-end audit are accepted. P3.19 is
+the user-requested final contest-risk polish and is currently `doing`.
 The accepted evidence includes the end-to-end
 pipeline, ROCm ablation, Grafana, privacy/perceive gates, and the ≤5-minute
 remote-link failover demo — see [`STATUS.md`](STATUS.md).

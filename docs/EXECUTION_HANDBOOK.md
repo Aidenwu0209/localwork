@@ -566,7 +566,7 @@ sentinel 4×/16×压缩、novelty-gate 节流收益、EPYC ocrd 并发和完整�
 
 1. 通读本节 §12 全文 + `STATUS.md`。
 2. 打开 `TASKBOARD.json`,只做 `false` / `blocked` / 合法恢复的 `doing`
-   任务。当前 P3.1–P3.18 均已 `accept`,勿重做;后续只处理人工提交门槛。
+   任务。当前 P3.1–P3.18 均已 `accept`,勿重做;只执行用户新增的 P3.19 与后续人工提交门槛。
 3. 把 `docs/AGENT_KICKOFF_PROMPT.md` 整段丢给执行 agent 作为系统指令。
 
 | 顺序 | 文件 | 用途 |
@@ -587,8 +587,9 @@ sentinel 4×/16×压缩、novelty-gate 节流收益、EPYC ocrd 并发和完整�
 
 **全链路已跑通并验收**(Mac 采集 → memoryd → AMD ROCm →
 Postgres/Honcho → agentd 带证据引用)。`TASKBOARD`:**G0+M+D 33/33
-accept**;当前总计 **48/48 accept**,P3.17 干净复现/发布一致性与
-P3.18 最终证据化全链路验收均为 `accept`。P3.4 正式六幕成片为
+accept**;当前总计 **48/49 accept**,P3.17 干净复现/发布一致性与
+P3.18 最终证据化全链路验收均为 `accept`,P3.19 最终风险清零为
+`doing`。P3.4 正式六幕成片为
 `docs/assets/demo/dejaview-p34-six-act-20260802.mp4`(2:37),英文烧录字幕提交版为
 `docs/assets/demo/dejaview-p34-six-act-20260802-en.mp4`。P3.1 正式 run:
 `p31-w7900d-20260728T075653Z`,证据目录
@@ -680,8 +681,8 @@ capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必�
 
 ### 12.4 Phase 3 收尾状态
 
-比赛功能、ROCm、演示、发布复现与成熟产品最终验收均已完成。
-不要因旧 `blocked` 文案、旧端口或旧状态重跑已 accept 任务。
+比赛功能、ROCm、演示、发布复现与成熟产品最终验收均已完成;用户新增
+P3.19 只清理最终提交风险。不要因旧 `blocked` 文案、旧端口或旧状态重跑已 accept 任务。
 
 | ID | 状态 | 做什么 | 阻塞 |
 |---|---|---|---|
@@ -691,6 +692,7 @@ capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必�
 | **P3.12–P3.16** | **accept** | 成熟产品设计、隐私采集、真实降级、Honcho 闭环、日常产品页 | 新鲜测试与独立复审已入 verification-log |
 | **P3.17** | **accept** | 干净检出、doctor/quickstart/CI、LICENSE/NOTICE、双语发布一致性、英文规格与 PPT 均通过 QA | 证据见 verification-log |
 | **P3.18** | **accept** | CI 全绿;当前源码隔离 Radeon Recall/引用/受控证据图;发布、隐私与既有 live-flow 证据总验收 | 证据见 verification-log |
+| **P3.19** | **doing** | 有信息量的3–5分钟英文主音轨提交版;默认受管本地隐私/产品栈;submission-check;当前UI/运行复验 | 设计见 `docs/superpowers/specs/2026-08-03-final-contest-polish-design.md` |
 
 **§10 提交清单仍待人工**:全员 AMD Developer Program 注册、Rules 通读、仓库可见性、服务器仅演示数据、最终提交平台/格式确认。
 
@@ -754,10 +756,10 @@ make capture
 7. llama.cpp 视觉不支持 WebP → memoryd 已转 PNG。
 8. Docker `host.docker.internal` IPv6 → Honcho 用 IPv4 字面量。
 9. 模型在 overlay → `download-models.sh` 重建(wget+hf-mirror)。
-10. **P3.1–P3.18 已验收**。勿重跑已 accept 任务;只处理人工提交门槛。
+10. **P3.1–P3.18 已验收;P3.19 doing**。勿重跑已 accept 任务;只做风险清零与人工提交门槛。
 
 ### 12.8 给后续 Agent 的一句话开工
 
-> 读完 §12 与 `STATUS.md` → 以 `TASKBOARD` 核对 48/48 accept → 只处理人工提交门槛。
+> 读完 §12 与 `STATUS.md` → 以 `TASKBOARD` 核对 P3.19 doing → 执行最终风险清零。
 > 不要重做 48 项已 accept 的工作,尤其不要重跑 P3.1;
 > 不要改数字记忆体叙事与五个逻辑模型层级。

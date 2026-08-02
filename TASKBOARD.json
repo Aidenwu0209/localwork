@@ -601,6 +601,18 @@
       ],
       "status": "accept",
       "note": "2026-08-03 accept: exact commit 7eb9631 passed the GitHub first-party workflow (run 30766528216, both Linux offline-contract and macOS capture jobs green) and the same local make test suite passed: release 21, agentd 101, memoryd 82+6 subtests, capture 22, browser 9, Mac 20, server 46. A current-source agentd instance on an isolated port and synthetic dejaview_demo data completed a live Radeon brain recall for PR #1842 with one allowlisted event citation; compute reported radeon/brain/primary_ok, and capability-gated evidence metadata plus its 68,170-byte PNG returned 200 without path or OCR leakage. Accepted P3.13 allow/block, P3.14 fallback, and P3.15 Honcho proofs were audited rather than rerun. English specification, PPT, captioned 2:37 MP4/SRT, hashes, coordinate/credential scans, and human-only submission gates were reconciled in docs/verification-log.md."
+    },
+    {
+      "id": "P3.19",
+      "group": "productization",
+      "title": "最终比赛风险清零与成熟产品复验",
+      "steps": "把英文提交视频扩展为有信息量的3–5分钟英文主音轨版本;让默认产品栈可安全管理本地Sentinel与当前源码服务;增加机器可执行提交包检查;完成当前UI实拍复审并消除可控CI警告。",
+      "verify": "新视频180–300秒且音视频/字幕/hash/画面QA通过;make product-up/status/down对当前进程真实受管并完成合成Radeon recall→citation→evidence;桌面/移动UI与axe复验;submission-check、全量测试、干净检出和最终CI全绿;人工注册/官方PR/上传仍显式未勾选。",
+      "depends": [
+        "P3.18"
+      ],
+      "status": "doing",
+      "note": "2026-08-03 claimed by root after the user's explicit request to implement every remaining optimization and verify a mature product. Selected design: docs/superpowers/specs/2026-08-03-final-contest-polish-design.md. Accepted P3.1–P3.18 evidence remains immutable; work is limited to meaningful English 3–5-minute submission cut, managed default privacy/runtime lifecycle, executable submission contract, fresh current UI/runtime verification, and truthful human gates."
     }
   ]
 }
