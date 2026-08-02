@@ -204,7 +204,11 @@ def create_app(
                 corrected_citations = _validated_citations(
                     corrected.content, citation_allowlist
                 )
-                if corrected_citations is not None:
+                if (
+                    not corrected.message.get("tool_calls")
+                    and corrected.content.strip()
+                    and corrected_citations is not None
+                ):
                     return _chat_response(
                         settings,
                         corrected.content,
@@ -243,7 +247,7 @@ def create_app(
                     args = {}
                 log.info("tool call: %s args=%s", name, args)
                 try:
-                    result = dispatch(settings, name, args)
+                    result = dispatch(settings, name, args, router=router)
                     log.info("tool result: %s -> %s", name, str(result)[:120])
                 except Exception as exc:  # noqa: BLE001 - isolate tool failures
                     result = {"error": {"code": "tool_failed"}}

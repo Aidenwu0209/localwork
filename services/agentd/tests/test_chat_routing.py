@@ -144,6 +144,40 @@ def test_second_invalid_product_returns_safe_uncited_answer() -> None:
     assert len(router.calls) == 3
 
 
+def test_correction_that_returns_a_tool_call_returns_safe_uncited_answer() -> None:
+    router = ScriptedRouter(
+        [
+            result(TOOL_CALL),
+            result({"content": "Wrong id [event#99 09:18 Terminal]"}),
+            result(TOOL_CALL, backend="local_metal", reason="remote_timeout"),
+        ]
+    )
+    with patch("agentd.server.dispatch", return_value=TOOL_RESULT):
+        response = post_chat(router)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["choices"][0]["message"]["content"] == (
+        "I don't have sufficient verified evidence to answer that safely."
+    )
+    assert body["dejaview"]["citations"] == []
+    assert len(router.calls) == 3
+
+
+def test_tool_dispatch_receives_the_same_router_used_for_brain_calls() -> None:
+    router = ScriptedRouter(
+        [
+            result(TOOL_CALL),
+            result({"content": "Synthetic answer [event#42 09:18 Terminal]"}),
+        ]
+    )
+    with patch("agentd.server.dispatch", return_value=TOOL_RESULT) as dispatch:
+        response = post_chat(router)
+
+    assert response.status_code == 200
+    assert dispatch.call_args.kwargs["router"] is router
+
+
 def test_dual_compute_failure_returns_only_sanitized_reasons() -> None:
     router = ScriptedRouter([BothBackendsFailed("remote_timeout", "local_timeout")])
 

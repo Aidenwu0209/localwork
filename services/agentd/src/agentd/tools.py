@@ -24,6 +24,7 @@ import psycopg
 
 from agentd.config import Settings
 from agentd.embed import embed_query
+from agentd.router import ComputeRouter
 
 SearchMode = Literal["hybrid", "semantic", "exact"]
 
@@ -151,6 +152,7 @@ def search_timeline(
     k: int = 5,
     time_from: str | None = None,
     time_to: str | None = None,
+    router: ComputeRouter | None = None,
 ) -> dict[str, Any]:
     """Three-mode timeline search. Mirrors memoryd.search but standalone (agentd
     doesn't import memoryd — it's a separate service). Embeds the query with the
@@ -158,7 +160,7 @@ def search_timeline(
     k = max(1, min(k, 20))
     query_vec: list[float] | None = None
     if mode in ("semantic", "hybrid"):
-        query_vec = embed_query(settings.gateway_url, query)
+        query_vec = embed_query(router or ComputeRouter(settings), query)
 
     time_clause, time_params = _time_clause(time_from, time_to)
     hits: list[dict] = []
@@ -227,10 +229,16 @@ def query_user_model(
     }
 
 
-def search_kb(settings: Settings, *, query: str, k: int = 5) -> dict[str, Any]:
+def search_kb(
+    settings: Settings,
+    *,
+    query: str,
+    k: int = 5,
+    router: ComputeRouter | None = None,
+) -> dict[str, Any]:
     """Semantic search over kb_chunks (imported documents)."""
     k = max(1, min(k, 20))
-    vec = embed_query(settings.gateway_url, query)
+    vec = embed_query(router or ComputeRouter(settings), query)
     sql = """
         SELECT id, doc_id, source_path, chunk,
                (embedding <=> %s::vector) AS distance
@@ -382,17 +390,23 @@ def _blend(sem: list[dict], ex: list[dict], k: int) -> list[dict]:
 # --- Dispatch ---------------------------------------------------------------
 
 
-def dispatch(settings: Settings, name: str, arguments: dict) -> dict:
+def dispatch(
+    settings: Settings,
+    name: str,
+    arguments: dict,
+    *,
+    router: ComputeRouter | None = None,
+) -> dict:
     """Route a tool call from the brain to the right implementation. Raises
     ValueError for unknown tool names so the caller can surface a clean error."""
     if name not in NAMES:
         raise ValueError(f"unknown tool: {name}")
     if name == "search_timeline":
-        return search_timeline(settings, **arguments)
+        return search_timeline(settings, router=router, **arguments)
     if name == "query_user_model":
         return query_user_model(settings, **arguments)
     if name == "search_kb":
-        return search_kb(settings, **arguments)
+        return search_kb(settings, router=router, **arguments)
     if name == "fetch_screenshot":
         return fetch_screenshot(settings, **arguments)
     raise ValueError(f"unhandled tool: {name}")  # unreachable

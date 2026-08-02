@@ -35,7 +35,12 @@ class FixtureResponse:
     def raise_for_status(self) -> None:
         if self.status_code >= 400:
             request = httpx.Request("POST", "https://synthetic.invalid/v1/chat/completions")
-            raise httpx.HTTPStatusError("synthetic upstream", request=request, response=httpx.Response(self.status_code, request=request))
+            body = self._body if isinstance(self._body, (dict, list)) else None
+            raise httpx.HTTPStatusError(
+                "synthetic upstream",
+                request=request,
+                response=httpx.Response(self.status_code, request=request, json=body),
+            )
 
     def json(self) -> object:
         if isinstance(self._body, Exception):
@@ -104,6 +109,52 @@ def test_remote_timeout_uses_local_perceive_for_brain() -> None:
     assert client.posts[1][1]["model"] == "perceive"
 
 
+def test_remote_embedding_timeout_uses_local_embed_and_requires_1024_dimensions() -> None:
+    embedding = [0.25] * 1024
+    client = ScriptedClient(
+        {
+            "radeon": [httpx.ReadTimeout("synthetic timeout")],
+            "local": [FixtureResponse(body={"data": [{"embedding": embedding}]})],
+        }
+    )
+    router = ComputeRouter(settings(), client_factory=client, clock=lambda: 10.0)
+
+    result = router.embed("synthetic query")
+
+    assert result.embedding == embedding
+    assert result.route.as_dict() == {
+        "backend": "local_metal",
+        "physical_model": "embed",
+        "logical_model": "embed",
+        "degraded": True,
+        "reason": "remote_timeout",
+    }
+    assert client.posts[0][1] == {
+        "model": "embed",
+        "input": "Instruct: 检索用户活动时间线\nQuery: synthetic query",
+    }
+    assert client.posts[1][1]["model"] == "embed"
+
+
+def test_invalid_remote_embedding_shape_falls_back_but_invalid_local_embedding_fails_closed() -> None:
+    client = ScriptedClient(
+        {
+            "radeon": [FixtureResponse(body={"data": [{"embedding": [1.0] * 3}]})],
+            "local": [FixtureResponse(body={"data": [{"embedding": [1.0] * 1023}]})],
+        }
+    )
+    router = ComputeRouter(settings(), client_factory=client, clock=lambda: 10.0)
+
+    with pytest.raises(BothBackendsFailed) as failure:
+        router.embed("synthetic query")
+
+    assert failure.value.reasons == (
+        "remote_invalid_response_shape",
+        "local_invalid_response_shape",
+    )
+    assert [backend for backend, _body in client.posts] == ["radeon", "local"]
+
+
 @pytest.mark.parametrize(
     "remote_outcome",
     [
@@ -111,7 +162,7 @@ def test_remote_timeout_uses_local_perceive_for_brain() -> None:
         FixtureResponse(502),
         FixtureResponse(503),
         FixtureResponse(504),
-        FixtureResponse(404),
+        FixtureResponse(404, {"error": {"message": "model alias is unavailable"}}),
         FixtureResponse(body=ValueError("synthetic invalid json")),
         FixtureResponse(body={"choices": []}),
     ],
@@ -127,7 +178,7 @@ def test_retryable_or_invalid_remote_product_uses_local(remote_outcome: object) 
     assert client.posts[1][1]["chat_template_kwargs"] == {"enable_thinking": False}
 
 
-@pytest.mark.parametrize("status_code", [400, 401, 403])
+@pytest.mark.parametrize("status_code", [400, 401, 403, 404, 422, 451, 500, 418])
 def test_nonretryable_remote_status_never_crosses_to_local(status_code: int) -> None:
     client = ScriptedClient({"radeon": [FixtureResponse(status_code)], "local": [FixtureResponse()]})
     router = ComputeRouter(settings(), client_factory=client, clock=lambda: 10.0)
@@ -135,8 +186,37 @@ def test_nonretryable_remote_status_never_crosses_to_local(status_code: int) -> 
     with pytest.raises(ComputeFailure) as failure:
         router.chat("brain", [{"role": "user", "content": "synthetic"}])
 
-    assert failure.value.reason in {"caller_invalid_request", "authentication_failed", "policy_rejected"}
+    assert failure.value.reason in {
+        "caller_invalid_request",
+        "authentication_failed",
+        "policy_rejected",
+        "remote_http_error",
+    }
     assert [backend for backend, _body in client.posts] == ["radeon"]
+
+
+@pytest.mark.parametrize(
+    "tool_calls",
+    [
+        [None],
+        [{"id": "call-1", "function": None}],
+        [{"id": "call-1", "function": {"name": "", "arguments": "{}"}}],
+        [{"id": "call-1", "function": {"name": "search_timeline", "arguments": None}}],
+    ],
+)
+def test_malformed_remote_tool_call_product_uses_local(tool_calls: list[object]) -> None:
+    client = ScriptedClient(
+        {
+            "radeon": [FixtureResponse(body={"choices": [{"message": {"content": None, "tool_calls": tool_calls}}]})],
+            "local": [FixtureResponse()],
+        }
+    )
+    router = ComputeRouter(settings(), client_factory=client, clock=lambda: 10.0)
+
+    result = router.chat("brain", [{"role": "user", "content": "synthetic"}])
+
+    assert result.route.backend == "local_metal"
+    assert result.route.reason == "remote_invalid_response_shape"
 
 
 def test_dual_failure_exposes_only_stable_sanitized_reasons() -> None:

@@ -6,7 +6,8 @@ from typing import Self
 from unittest.mock import patch
 
 from agentd.config import Settings
-from agentd.tools import query_user_model
+from agentd.router import EmbeddingResult, RouteMetadata
+from agentd.tools import query_user_model, search_timeline
 
 
 class _Response:
@@ -30,6 +31,25 @@ class _Client:
     def post(self, url: str, *, json: dict) -> _Response:
         self.posts.append((url, json))
         return _Response()
+
+
+class _EmbeddingRouter:
+    def __init__(self) -> None:
+        self.queries: list[str] = []
+
+    def embed(self, query: str) -> EmbeddingResult:
+        self.queries.append(query)
+        return EmbeddingResult(
+            embedding=[0.5] * 1024,
+            route=RouteMetadata(
+                backend="local_metal",
+                physical_model="embed",
+                logical_model="embed",
+                degraded=True,
+                reason="remote_timeout",
+                latency_ms=3,
+            ),
+        )
 
 
 class QueryUserModelTest(unittest.TestCase):
@@ -60,6 +80,25 @@ class QueryUserModelTest(unittest.TestCase):
         self.assertEqual(chat_payload["session_id"], "p3-4-synthetic")
         self.assertEqual(result["workspace_id"], "dejaview-p34")
         self.assertEqual(result["peer_id"], "demo-owner")
+
+    def test_semantic_timeline_search_uses_the_injected_shared_router(self) -> None:
+        settings = Settings(
+            gateway_url="http://synthetic-legacy/v1",
+            timeline_db_url="postgresql://synthetic/dejaview",
+            honcho_url="http://synthetic-honcho",
+            data_root=Path("/tmp/agentd-tools-synthetic"),
+        )
+        router = _EmbeddingRouter()
+        with patch("agentd.tools._semantic", return_value=[]):
+            result = search_timeline(
+                settings,
+                query="synthetic semantic query",
+                mode="semantic",
+                router=router,  # type: ignore[arg-type]
+            )
+
+        self.assertEqual(router.queries, ["synthetic semantic query"])
+        self.assertEqual(result["count"], 0)
 
 
 if __name__ == "__main__":

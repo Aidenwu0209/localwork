@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import time
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -37,6 +38,14 @@ class RouteMetadata:
 class RouteResult:
     content: str
     message: dict[str, Any]
+    route: RouteMetadata
+
+
+@dataclass(frozen=True)
+class EmbeddingResult:
+    """A verified embedding and the backend that produced it."""
+
+    embedding: list[float]
     route: RouteMetadata
 
 
@@ -139,6 +148,32 @@ class ComputeRouter:
         circuit.open_until = 0.0
         return result
 
+    def embed(self, query: str) -> EmbeddingResult:
+        """Embed a query through the same role-scoped fallback contract."""
+        logical_model = "embed"
+        now = self._clock()
+        circuit = self._circuits.setdefault(logical_model, _CircuitState())
+        if circuit.open_until > now:
+            return self._local_embed_or_raise(query, "remote_circuit_open")
+
+        try:
+            result = self._call_embedding_backend(
+                backend="radeon",
+                gateway_url=self._settings.compute_radeon_gateway_url,
+                query=query,
+            )
+        except _BackendFailure as failure:
+            if not failure.retryable:
+                raise ComputeFailure(failure.reason) from None
+            circuit.failures += 1
+            if circuit.failures >= self._threshold:
+                circuit.open_until = now + self._cooldown
+            return self._local_embed_or_raise(query, failure.reason)
+
+        circuit.failures = 0
+        circuit.open_until = 0.0
+        return result
+
     def _local_or_raise(
         self,
         logical_model: str,
@@ -154,6 +189,19 @@ class ComputeRouter:
                 messages=messages,
                 fallback_reason=remote_reason,
                 **kwargs,
+            )
+        except _BackendFailure as failure:
+            raise BothBackendsFailed(remote_reason, failure.reason) from None
+
+    def _local_embed_or_raise(
+        self, query: str, remote_reason: str
+    ) -> EmbeddingResult:
+        try:
+            return self._call_embedding_backend(
+                backend="local_metal",
+                gateway_url=self._settings.local_gateway_url,
+                query=query,
+                fallback_reason=remote_reason,
             )
         except _BackendFailure as failure:
             raise BothBackendsFailed(remote_reason, failure.reason) from None
@@ -191,7 +239,13 @@ class ComputeRouter:
                 response = client.post(f"{base}/v1/chat/completions", json=body)
                 response.raise_for_status()
         except httpx.HTTPStatusError as exc:
-            raise _BackendFailure(*_status_failure(backend, exc.response.status_code)) from None
+            raise _BackendFailure(
+                *_status_failure(
+                    backend,
+                    exc.response.status_code,
+                    missing_model=_is_missing_model_response(exc.response),
+                )
+            ) from None
         except httpx.ReadTimeout:
             raise _BackendFailure(f"{_reason_prefix(backend)}_timeout", True) from None
         except httpx.ConnectError:
@@ -220,26 +274,96 @@ class ComputeRouter:
             ),
         )
 
+    def _call_embedding_backend(
+        self,
+        *,
+        backend: str,
+        gateway_url: str,
+        query: str,
+        fallback_reason: str | None = None,
+    ) -> EmbeddingResult:
+        body = {
+            "model": "embed",
+            "input": f"Instruct: 检索用户活动时间线\nQuery: {query}",
+        }
+        started = self._clock()
+        base = gateway_url.rstrip("/").removesuffix("/v1")
+        try:
+            with self._client_factory(
+                timeout=httpx.Timeout(self._timeout, connect=10.0)
+            ) as client:
+                response = client.post(f"{base}/v1/embeddings", json=body)
+                response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise _BackendFailure(
+                *_status_failure(
+                    backend,
+                    exc.response.status_code,
+                    missing_model=_is_missing_model_response(exc.response),
+                )
+            ) from None
+        except httpx.ReadTimeout:
+            raise _BackendFailure(f"{_reason_prefix(backend)}_timeout", True) from None
+        except httpx.ConnectError:
+            raise _BackendFailure(f"{_reason_prefix(backend)}_connection_error", True) from None
+        except httpx.TimeoutException:
+            raise _BackendFailure(f"{_reason_prefix(backend)}_timeout", True) from None
+        except httpx.HTTPError:
+            raise _BackendFailure(f"{_reason_prefix(backend)}_transport_error", True) from None
+
+        try:
+            product = response.json()
+        except (TypeError, ValueError):
+            raise _BackendFailure(f"{_reason_prefix(backend)}_invalid_json", True) from None
+        embedding = _validated_embedding(product, backend)
+        latency_ms = max(0, int((self._clock() - started) * 1000))
+        return EmbeddingResult(
+            embedding=embedding,
+            route=RouteMetadata(
+                backend=backend,
+                physical_model="embed",
+                logical_model="embed",
+                degraded=backend == "local_metal",
+                reason=fallback_reason or "primary_ok",
+                latency_ms=latency_ms,
+            ),
+        )
+
 
 def _reason_prefix(backend: str) -> str:
     return "remote" if backend == "radeon" else "local"
 
 
-def _status_failure(backend: str, status_code: int) -> tuple[str, bool]:
+def _status_failure(
+    backend: str, status_code: int, *, missing_model: bool = False
+) -> tuple[str, bool]:
     prefix = _reason_prefix(backend)
-    if status_code == 400:
+    if status_code in {400, 422}:
         return "caller_invalid_request", False
     if status_code == 401:
         return "authentication_failed", False
     if status_code in {403, 451}:
         return "policy_rejected", False
-    if status_code == 404:
+    if status_code == 404 and missing_model:
         return f"{prefix}_missing_model", True
     if status_code == 429:
         return f"{prefix}_rate_limited", True
     if status_code in {502, 503, 504}:
         return f"{prefix}_http_{status_code}", True
-    return f"{prefix}_http_error", True
+    return f"{prefix}_http_error", False
+
+
+def _is_missing_model_response(response: httpx.Response) -> bool:
+    """Recognise a 404 model alias rejection without surfacing its body."""
+    if response.status_code != 404:
+        return False
+    try:
+        product = response.json()
+    except (TypeError, ValueError):
+        return False
+    error = product.get("error") if isinstance(product, dict) else None
+    message = error.get("message") if isinstance(error, dict) else None
+    return isinstance(message, str) and "model" in message.casefold()
 
 
 def _validated_message(product: object, backend: str) -> tuple[dict[str, Any], str]:
@@ -257,6 +381,44 @@ def _validated_message(product: object, backend: str) -> tuple[dict[str, Any], s
         raise _BackendFailure(f"{_reason_prefix(backend)}_invalid_response_shape", True)
     if tool_calls is not None and not isinstance(tool_calls, list):
         raise _BackendFailure(f"{_reason_prefix(backend)}_invalid_response_shape", True)
+    if tool_calls is not None:
+        for tool_call in tool_calls:
+            if not isinstance(tool_call, dict):
+                raise _BackendFailure(
+                    f"{_reason_prefix(backend)}_invalid_response_shape", True
+                )
+            call_id = tool_call.get("id")
+            function = tool_call.get("function")
+            if (
+                not isinstance(call_id, str)
+                or not call_id
+                or not isinstance(function, dict)
+                or not isinstance(function.get("name"), str)
+                or not function["name"].strip()
+                or not isinstance(function.get("arguments"), str)
+            ):
+                raise _BackendFailure(
+                    f"{_reason_prefix(backend)}_invalid_response_shape", True
+                )
     if not isinstance(content, str) and not tool_calls:
         raise _BackendFailure(f"{_reason_prefix(backend)}_invalid_response_shape", True)
     return message, content or ""
+
+
+def _validated_embedding(product: object, backend: str) -> list[float]:
+    try:
+        embedding = product["data"][0]["embedding"]  # type: ignore[index]
+    except (IndexError, KeyError, TypeError):
+        raise _BackendFailure(f"{_reason_prefix(backend)}_invalid_response_shape", True) from None
+    if (
+        not isinstance(embedding, list)
+        or len(embedding) != 1024
+        or any(
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            for value in embedding
+        )
+    ):
+        raise _BackendFailure(f"{_reason_prefix(backend)}_invalid_response_shape", True)
+    return [float(value) for value in embedding]
