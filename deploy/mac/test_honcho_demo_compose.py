@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -21,23 +23,33 @@ BASE_URL_KEYS = {
 
 class HonchoDemoComposeTest(unittest.TestCase):
     def test_demo_services_route_every_model_role_through_radeon_tunnel(self) -> None:
-        result = subprocess.run(
-            [
-                "docker",
-                "compose",
-                "-f",
-                HERE / "compose.honcho.yml",
-                "-f",
-                HERE / "compose.honcho-demo.yml",
-                "config",
-                "--no-env-resolution",
-                "--format",
-                "json",
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+        # A clean checkout intentionally has no deploy/mac/honcho.env.  Compose
+        # still validates service-level env_file paths during `config`, so give
+        # this contract test an isolated copy of the public example instead of
+        # depending on a developer's private runtime file.
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            for name in ("compose.honcho.yml", "compose.honcho-demo.yml"):
+                shutil.copy2(HERE / name, temp_path / name)
+            shutil.copy2(HERE / "honcho.env.example", temp_path / "honcho.env")
+
+            result = subprocess.run(
+                [
+                    "docker",
+                    "compose",
+                    "-f",
+                    temp_path / "compose.honcho.yml",
+                    "-f",
+                    temp_path / "compose.honcho-demo.yml",
+                    "config",
+                    "--no-env-resolution",
+                    "--format",
+                    "json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
         services = json.loads(result.stdout)["services"]
 
         for service_name in ("honcho-api", "honcho-deriver"):
