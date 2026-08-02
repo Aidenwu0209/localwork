@@ -12,8 +12,8 @@
 |---|---|
 | **已完成** | G0+M+D **33/33 accept**;**P3.1 ROCm 消融**;P3.3 README;P3.5 licenses;P3.6 哨兵;P3.7 perceive |
 | **P3.1 正式证据** | run `p31-w7900d-20260728T075653Z`;18 个 brain 量化×MTP×并发 cell + 3 个 perceive `-np` cell,均为 1 次 warm-up + 3 次实测;原始证据在 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`,截图在 `docs/assets/p31/p31-w7900d-20260728T075653Z/` |
-| **本次新增完成** | **P3.2 Grafana** 一屏验收;**P3.4 六幕视频** 2:37 成片,含可见断开 Radeon SSH 计算链路与 Local Metal 第二次日报 |
-| **工程任务** | Phase 3 **P3.1–P3.7 全部 accept**;成片 `docs/assets/demo/dejaview-p34-six-act-20260802.mp4` |
+| **本次新增完成** | **P3.2 Grafana** 一屏验收;**P3.4 六幕视频** 2:37 成片;**P3.11 Grafana 系统自检**含 READY/DEGRADED/FAILED、数据新鲜度、本机核心与算力路径 |
+| **工程任务** | TASKBOARD 当前 **41/41 accept**;成片 `docs/assets/demo/dejaview-p34-six-act-20260802.mp4`;自检截图 `docs/assets/p32/grafana-selfcheck-20260802.png` |
 | **可砍** | MCP / 音频 / MarkItDown / 日报多 Agent UI |
 
 **下一优先:人工提交检查**(AMD Developer Program、Rules、仓库公开、服务器仅演示数据)。
@@ -74,12 +74,13 @@ exporter 已为 P3.4 录制常驻;若实例重启,先 `rocm-smi` +
 | P3.1 | **accept** | run `p31-w7900d-20260728T075653Z`;Q8/Q6/Q4×MTP×并发 + perceive `-np` 全矩阵;原始证据、hash、日志、rocm-smi 齐全 |
 | P3.4 | **accept** | 2:37 六幕成片;可见软件断开已验证远端链路,Local Metal 完成第二次引用日报 |
 | P3.2 | **accept** | Grafana 一屏 + 实时 fail-closed 门禁 + 截图已入仓 |
+| P3.11 | **accept** | Grafana 系统自检;缺服务/隧道不误绿;READY 实拍 + 13 tests |
 
 ---
 
 ## 接手纪律(最短版)
 
-1. 勿重做 33+5 已 accept 项,尤其不要重跑 P3.1 正式矩阵。
+1. 勿重做 TASKBOARD 41 个已 accept 项,尤其不要重跑 P3.1 正式矩阵。
 2. 起 GPU 前 `rocm-smi`,勿碰未知 KFD 进程;共租时勿 OOM Dolphin。
 3. commit 后检查无 `Co-authored-by`。
 4. 演示前清 timeline 库。

@@ -1,0 +1,34 @@
+{
+  "captured_at_utc": "2026-08-02T13:18:34Z",
+  "dashboard_uid": "dejaview-rocm-live",
+  "refresh": "5s",
+  "screenshot": {
+    "path": "docs/assets/p32/grafana-selfcheck-20260802.png",
+    "sha256": "75825f71e029809757d5333fcf3b47ca7573b60974b113ea94794cc06cd17bfd",
+    "width": 1280,
+    "height": 720,
+    "format": "png"
+  },
+  "fail_closed_preflight": {
+    "selfcheck_state": 0,
+    "compute_path_state": 1,
+    "database": 1,
+    "redis": 1,
+    "honcho": 1,
+    "ocrd": 1,
+    "memoryd": 0,
+    "agentd": 0,
+    "radeon_tunnel": 0,
+    "local_fallback": 1
+  },
+  "ready_capture": {
+    "selfcheck_state": 2,
+    "probe_age_seconds": 7.033205986022949,
+    "rocm_exporter_scrape_success": 1,
+    "gpu_series_count": 1,
+    "required_role_health": 4,
+    "required_roles_with_positive_tokens_per_second": 4,
+    "gpu_utilization_percent": 100,
+    "vram_used_percent": 77.17164318167941
+  }
+}

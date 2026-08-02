@@ -508,8 +508,8 @@
       "depends": [
         "P3.2"
       ],
-      "status": "doing",
-      "note": "2026-08-02 认领:按用户确认的 Grafana 自检改版执行;保留现有 P3.2 指标与五模型架构。"
+      "status": "accept",
+      "note": "2026-08-02 accept:新增隐私安全 health exporter + Prometheus 自检采集 + Grafana READY/DEGRADED/FAILED 首行;RED→GREEN 覆盖状态机、五模型校验、thinking=false Local Metal 冒烟、30s 缓存、compose 与 fail-closed UI 共 13 tests。真实缺服务/隧道预检 state=0 且 Local fallback=1;恢复正式七转发隧道与 real memoryd/agentd 后 state=2、fresh=7.32s、exporter=1、GPU=1、roles=4、active=4。证据=docs/assets/p32/grafana-selfcheck-20260802.{png,json};PNG 1280×720 sha256=75825f71e029809757d5333fcf3b47ca7573b60974b113ea94794cc06cd17bfd。"
     }
   ]
 }

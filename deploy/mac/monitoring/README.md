@@ -1,7 +1,8 @@
 # DejaView ROCm live dashboard
 
-This stack is local-only: Grafana and Prometheus bind to loopback, llama.cpp and
-`rocm-smi` stay on the AMD server, and memoryd stays on the Mac.
+This stack is local-only: Grafana and Prometheus bind to loopback, a private
+health exporter runs only on the Compose network, llama.cpp and `rocm-smi` stay
+on the AMD server, and all stateful services stay on the Mac.
 
 ## 1. Enable real exporters
 
@@ -68,6 +69,7 @@ BRAIN_QUANT=Q6_K ./server-stack.sh up brain
 ```bash
 ssh -f -N \
   -o ExitOnForwardFailure=yes \
+  -L 14000:127.0.0.1:4000 \
   -L 18001:127.0.0.1:8001 \
   -L 18002:127.0.0.1:8002 \
   -L 18003:127.0.0.1:8003 \
@@ -102,6 +104,8 @@ open http://127.0.0.1:3000/d/dejaview-rocm-live/dejaview-radeon-rocm-live
 
 The dashboard refreshes every five seconds and shows:
 
+- an overall `READY / DEGRADED / FAILED` self-check, probe freshness, the six
+  required Mac-side services, and the verified Radeon/Local Metal compute path;
 - the ROCm exporter's own `dejaview_rocm_exporter_scrape_success` value, not
   merely a successful HTTP response;
 - exactly one Radeon GPU series (`GPU series count · must be 1`);
@@ -113,15 +117,22 @@ The dashboard refreshes every five seconds and shows:
 - active/deferred request pressure. The `brain` role remains optional and is
   intentionally excluded from the four-role gates.
 
-If a tunnel or exporter is down, the corresponding gate is red (or shows no
-data for non-gated charts) rather than fabricating a healthy value. Stop the
-local view with `make monitoring-down`.
+The private exporter probes only ports and sanitized health/model contracts. It
+does not read timeline rows, screenshots, credentials, or `.env` files. Its
+Local Metal proof is a cached two-token `fast` inference every 30 seconds with
+`chat_template_kwargs.enable_thinking=false`.
+
+`READY` requires database, Redis, Honcho, PP-OCRv6, real-pipeline memoryd,
+agentd, and the five-name Radeon gateway tunnel. When the Mac core is complete
+but Radeon is unavailable, a verified Local Metal response is `DEGRADED`.
+Missing Mac services or both compute paths is `FAILED`. Missing GPU/VRAM data is
+gray, never green. Stop the local view with `make monitoring-down`.
 
 ## P3.2 acceptance gate
 
 `make monitoring-up` now waits for Prometheus `/-/ready` and Grafana's database
-health, rather than only waiting for their containers to start. That confirms
-the local view is running; it does **not** prove the forwarded AMD metrics are
+health, and Prometheus waits for the private health exporter. That confirms the
+local view is running; it does **not** prove the forwarded AMD metrics are
 valid. Before accepting a live capture, query Prometheus and retain the results
 with the dashboard screenshot:
 
@@ -134,8 +145,13 @@ curl -fsSG http://127.0.0.1:9090/api/v1/query \
   --data-urlencode 'query=sum(up{job="llama",role=~"perceive|sentinel|embed|fast"} or vector(0))'
 curl -fsSG http://127.0.0.1:9090/api/v1/query \
   --data-urlencode 'query=count(max by (role) ((llamacpp:predicted_tokens_seconds{job="llama",role=~"perceive|sentinel|embed|fast"} > 0) or (llamacpp:prompt_tokens_seconds{job="llama",role=~"perceive|sentinel|embed|fast"} > 0))) or vector(0)'
+curl -fsSG http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=dejaview_selfcheck_state'
+curl -fsSG http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=time() - max(dejaview_selfcheck_last_probe_unixtime)'
 ```
 
-The four values must be `1`, `1`, `4`, and `4`, respectively. Also retain live
-GPU/VRAM values and a non-zero memory-pipeline rate; a `200` from `/metrics`
-alone is not evidence of ROCm exporter health.
+The first four accepted values must remain `1`, `1`, `4`, and `4`; the system
+self-check must be `2` and probe age must be at most 15 seconds. Also retain
+live GPU/VRAM values. Event rate may legitimately be zero while capture is idle;
+a `200` from `/metrics` alone is not evidence of ROCm exporter health.

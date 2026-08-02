@@ -1,8 +1,30 @@
 name: dejaview-monitoring
 
 services:
+  health-exporter:
+    image: python:3.12-alpine
+    command:
+      - python
+      - /app/health_exporter.py
+      - --host
+      - host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./monitoring/health_exporter.py:/app/health_exporter.py:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9400/health | grep -q '\"status\": \"ok\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:v3.2.1
+    depends_on:
+      health-exporter:
+        condition: service_healthy
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus

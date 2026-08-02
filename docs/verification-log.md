@@ -315,3 +315,38 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
 - **Conclusion:** all P3.4 verify conditions are satisfied. The task moves from
   `doing` to `accept` in the same commit as the inspected video, manifest,
   narration, README link, status update, and this `[VERIFY]` record.
+
+## 2026-08-02 ([VERIFY] P3.11 Grafana system self-check — accept)
+
+- **Privacy-safe active probes:** the new private Compose-network exporter uses
+  only standard-library TCP/HTTP checks. It validates database, Redis, Honcho,
+  PP-OCRv6, `memoryd pipeline=real`, agentd, all five logical names through the
+  Radeon tunnel, and a two-token Local Metal `fast` response with
+  `chat_template_kwargs.enable_thinking=false`. It reads no timeline rows,
+  screenshots, credentials, or `.env` files. The Local Metal inference is
+  cached for 30 seconds.
+- **Fail-closed proof before restoration:** with memoryd, agentd, and `:14000`
+  absent, Prometheus reported `dejaview_selfcheck_state=0`; database, Redis,
+  Honcho, and OCR were `1`; missing memoryd/agentd/Radeon were `0`; the real
+  Local Metal probe was `1`. The dashboard rendered `FAILED`, `FAILED (<6)`,
+  and `LOCAL FALLBACK`; GPU and VRAM were gray `NO DATA`, not green.
+- **Restored READY proof:** after establishing the exact gateway + five-role +
+  ROCm exporter SSH forwards and starting real-pipeline memoryd plus agentd,
+  fresh Prometheus queries returned self-check **2**, age **7.32 s**, ROCm
+  exporter **1**, GPU series **1**, required role health **4/4**, and required
+  roles with positive tokens/s **4/4**. The same window showed GPU **100%** and
+  VRAM **77.2%**.
+- **UI QA:** the accepted 1280×720 PNG shows a single non-duplicated status per
+  card, short untruncated gate titles, all four accepted P3.2 trend panels, and
+  idle memory outcomes as zero instead of an ambiguous green/no-data state.
+  Evidence: `docs/assets/p32/grafana-selfcheck-20260802.png`, SHA-256
+  `75825f71e029809757d5333fcf3b47ca7573b60974b113ea94794cc06cd17bfd`;
+  machine-readable evidence is the adjacent JSON file.
+- **Fresh verification:** `python3 -m unittest discover -s
+  deploy/mac/monitoring -p 'test_*.py' -v` ran **13 tests, 0 failures**;
+  exporter byte-compilation, Compose config, JSON parsing, PNG inspection, and
+  `git diff --check` all passed. Health exporter, Prometheus, and Grafana all
+  reported healthy.
+- **Conclusion:** every P3.11 verify condition is satisfied; the task moves from
+  `doing` to `accept` with the exporter, dashboard, tests, documentation, and
+  retained evidence in the same commit.

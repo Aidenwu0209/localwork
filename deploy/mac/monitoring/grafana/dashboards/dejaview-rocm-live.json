@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Live local view of llama.cpp throughput, Radeon ROCm utilization, VRAM, and DejaView timeline ingestion. Five-second scrape grain; no cloud telemetry.",
+  "description": "Local DejaView system self-check plus live llama.cpp throughput, Radeon ROCm utilization, VRAM, and memory ingestion. Fail-closed, five-second refresh, no cloud telemetry.",
   "editable": false,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -15,13 +15,399 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "READY requires six local-core services and the verified Radeon tunnel. Local Metal alone is DEGRADED.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "FAILED"
+                },
+                "1": {
+                  "color": "orange",
+                  "index": 1,
+                  "text": "DEGRADED"
+                },
+                "2": {
+                  "color": "green",
+                  "index": 2,
+                  "text": "READY"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "noValue": "FAILED",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 2
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "max(dejaview_selfcheck_state) or vector(0)",
+          "legendFormat": "DejaView",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "系统状态",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Age of the latest completed self-check probe cycle. More than 30 seconds is stale.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "from": 0,
+                "to": 15,
+                "result": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "FRESH"
+                }
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 15.000001,
+                "to": 30,
+                "result": {
+                  "color": "orange",
+                  "index": 1,
+                  "text": "AGING"
+                }
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 30.000001,
+                "to": 1000000000,
+                "result": {
+                  "color": "red",
+                  "index": 2,
+                  "text": "STALE"
+                }
+              },
+              "type": "range"
+            }
+          ],
+          "noValue": "STALE",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 15
+              },
+              {
+                "color": "red",
+                "value": 30
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "time() - max(dejaview_selfcheck_last_probe_unixtime) or vector(999999)",
+          "legendFormat": "probe age",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "数据新鲜度",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Database, Redis, Honcho, PP-OCRv6, memoryd real pipeline, and agentd.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "6": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "OK (6/6)"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "from": 0,
+                "to": 5,
+                "result": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "FAILED (<6)"
+                }
+              },
+              "type": "range"
+            }
+          ],
+          "noValue": "FAILED",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 6
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(dejaview_component_up{component=~\"database|redis|honcho|ocrd|memoryd|agentd\"}) or vector(0)",
+          "legendFormat": "healthy local services",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "本机核心",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Radeon requires all five logical models through the tunnel. Local fallback is a cached real fast-model smoke.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "NONE"
+                },
+                "1": {
+                  "color": "orange",
+                  "index": 1,
+                  "text": "LOCAL FALLBACK"
+                },
+                "2": {
+                  "color": "green",
+                  "index": 2,
+                  "text": "RADEON"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "noValue": "NONE",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 2
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "max(dejaview_compute_path_state) or vector(0)",
+          "legendFormat": "active compute",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "算力路径",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "decimals": 1,
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "color": "gray",
+                  "index": 0,
+                  "text": "NO DATA"
+                }
+              },
+              "type": "special"
+            }
+          ],
           "max": 100,
           "min": 0,
           "thresholds": {
@@ -41,15 +427,16 @@
               }
             ]
           },
-          "unit": "percent"
+          "unit": "percent",
+          "noValue": "NO DATA"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 4,
         "x": 0,
-        "y": 0
+        "y": 3
       },
       "id": 1,
       "options": {
@@ -76,8 +463,9 @@
           "refId": "A"
         }
       ],
-      "title": "Radeon GPU util",
-      "type": "stat"
+      "title": "GPU",
+      "type": "stat",
+      "description": "Live Radeon GPU utilization. Missing telemetry is not healthy."
     },
     {
       "datasource": {
@@ -90,7 +478,19 @@
             "mode": "thresholds"
           },
           "decimals": 1,
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "color": "gray",
+                  "index": 0,
+                  "text": "NO DATA"
+                }
+              },
+              "type": "special"
+            }
+          ],
           "max": 100,
           "min": 0,
           "thresholds": {
@@ -110,15 +510,16 @@
               }
             ]
           },
-          "unit": "percent"
+          "unit": "percent",
+          "noValue": "NO DATA"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 4,
         "x": 4,
-        "y": 0
+        "y": 3
       },
       "id": 2,
       "options": {
@@ -145,8 +546,9 @@
           "refId": "A"
         }
       ],
-      "title": "VRAM used",
-      "type": "stat"
+      "title": "VRAM",
+      "type": "stat",
+      "description": "Live Radeon VRAM use. Missing telemetry is not healthy."
     },
     {
       "datasource": {
@@ -194,10 +596,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 4,
         "x": 8,
-        "y": 0
+        "y": 3
       },
       "id": 3,
       "options": {
@@ -224,8 +626,9 @@
           "refId": "A"
         }
       ],
-      "title": "ROCm exporter scrape success",
-      "type": "stat"
+      "title": "ROCm采集",
+      "type": "stat",
+      "description": "ROCm exporter must return a valid rocm-smi scrape, not merely HTTP 200."
     },
     {
       "datasource": {
@@ -287,10 +690,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 4,
         "x": 12,
-        "y": 0
+        "y": 3
       },
       "id": 4,
       "options": {
@@ -317,8 +720,211 @@
           "refId": "A"
         }
       ],
-      "title": "GPU series count · must be 1",
-      "type": "stat"
+      "title": "GPU数量",
+      "type": "stat",
+      "description": "Exactly one Radeon GPU series is required."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "4": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "OK (4/4)"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "FAILED (<4)"
+                },
+                "to": 3
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 5,
+                "result": {
+                  "color": "red",
+                  "index": 2,
+                  "text": "BAD (>4)"
+                },
+                "to": 1000000
+              },
+              "type": "range"
+            }
+          ],
+          "max": 4,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 4
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 16,
+        "y": 3
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(up{job=\"llama\",role=~\"perceive|sentinel|embed|fast\"} or vector(0))",
+          "legendFormat": "healthy roles",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "常驻模型",
+      "type": "stat",
+      "description": "Required resident roles: perceive, sentinel, embed, and fast."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "4": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "OK (4/4)"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "FAILED (<4)"
+                },
+                "to": 3
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 5,
+                "result": {
+                  "color": "red",
+                  "index": 2,
+                  "text": "BAD (>4)"
+                },
+                "to": 1000000
+              },
+              "type": "range"
+            }
+          ],
+          "max": 4,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 4
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 20,
+        "y": 3
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "count(max by (role) ((llamacpp:predicted_tokens_seconds{job=\"llama\",role=~\"perceive|sentinel|embed|fast\"} > 0) or (llamacpp:prompt_tokens_seconds{job=\"llama\",role=~\"perceive|sentinel|embed|fast\"} > 0))) or vector(0)",
+          "legendFormat": "roles with tokens/s > 0",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "活跃吞吐",
+      "type": "stat",
+      "description": "Recording gate: all four required roles have positive tokens/s."
     },
     {
       "datasource": {
@@ -377,10 +983,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
+        "h": 6,
         "w": 16,
         "x": 0,
-        "y": 4
+        "y": 6
       },
       "id": 5,
       "options": {
@@ -415,7 +1021,7 @@
           "refId": "B"
         }
       ],
-      "title": "llama.cpp throughput · tokens / second",
+      "title": "模型吞吐 · tokens/s",
       "type": "timeseries"
     },
     {
@@ -475,10 +1081,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
+        "h": 6,
         "w": 8,
         "x": 16,
-        "y": 4
+        "y": 6
       },
       "id": 6,
       "options": {
@@ -499,13 +1105,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (outcome) (rate(dejaview_memory_ingest_total{job=\"memoryd\"}[1m])) * 60",
+          "expr": "sum by (outcome) (rate(dejaview_memory_ingest_total{job=\"memoryd\"}[1m])) * 60 or vector(0)",
           "legendFormat": "{{outcome}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Memory pipeline outcomes",
+      "title": "记忆流水线 · events/min",
       "type": "timeseries"
     },
     {
@@ -567,10 +1173,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 12,
         "x": 0,
-        "y": 13
+        "y": 12
       },
       "id": 7,
       "options": {
@@ -605,7 +1211,7 @@
           "refId": "B"
         }
       ],
-      "title": "Radeon pressure",
+      "title": "Radeon 压力",
       "type": "timeseries"
     },
     {
@@ -666,10 +1272,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 12,
         "x": 12,
-        "y": 13
+        "y": 12
       },
       "id": 8,
       "options": {
@@ -704,208 +1310,8 @@
           "refId": "B"
         }
       ],
-      "title": "llama.cpp request pressure",
+      "title": "请求压力",
       "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 0,
-          "mappings": [
-            {
-              "options": {
-                "4": {
-                  "color": "green",
-                  "index": 0,
-                  "text": "OK (4/4)"
-                }
-              },
-              "type": "value"
-            },
-            {
-              "options": {
-                "from": 0,
-                "result": {
-                  "color": "red",
-                  "index": 1,
-                  "text": "FAILED (<4)"
-                },
-                "to": 3
-              },
-              "type": "range"
-            },
-            {
-              "options": {
-                "from": 5,
-                "result": {
-                  "color": "red",
-                  "index": 2,
-                  "text": "BAD (>4)"
-                },
-                "to": 1000000
-              },
-              "type": "range"
-            }
-          ],
-          "max": 4,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 4
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 16,
-        "y": 0
-      },
-      "id": 9,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "sum(up{job=\"llama\",role=~\"perceive|sentinel|embed|fast\"} or vector(0))",
-          "legendFormat": "healthy roles",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Required role health · must be 4",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 0,
-          "mappings": [
-            {
-              "options": {
-                "4": {
-                  "color": "green",
-                  "index": 0,
-                  "text": "OK (4/4)"
-                }
-              },
-              "type": "value"
-            },
-            {
-              "options": {
-                "from": 0,
-                "result": {
-                  "color": "red",
-                  "index": 1,
-                  "text": "FAILED (<4)"
-                },
-                "to": 3
-              },
-              "type": "range"
-            },
-            {
-              "options": {
-                "from": 5,
-                "result": {
-                  "color": "red",
-                  "index": 2,
-                  "text": "BAD (>4)"
-                },
-                "to": 1000000
-              },
-              "type": "range"
-            }
-          ],
-          "max": 4,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 4
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 20,
-        "y": 0
-      },
-      "id": 10,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "count(max by (role) ((llamacpp:predicted_tokens_seconds{job=\"llama\",role=~\"perceive|sentinel|embed|fast\"} > 0) or (llamacpp:prompt_tokens_seconds{job=\"llama\",role=~\"perceive|sentinel|embed|fast\"} > 0))) or vector(0)",
-          "legendFormat": "roles with tokens/s > 0",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Required roles with tokens/s > 0 · must be 4",
-      "type": "stat"
     }
   ],
   "refresh": "5s",
@@ -927,6 +1333,6 @@
   "timezone": "browser",
   "title": "DejaView · Radeon ROCm Live",
   "uid": "dejaview-rocm-live",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
