@@ -756,6 +756,25 @@ class ProductStackTest(unittest.TestCase):
                 dotenv.chmod(0o600)
                 subprocess.run([script, "down"], env=env, capture_output=True, text=True)
 
+    def test_production_root_ignored_path_matrix(self) -> None:
+        rejected = ("logs/evil.py", "plugin.so", "hook.pth", "run.sh", "config.json", "templates/x", "static/x")
+        for relative in rejected:
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as raw:
+                tmp = Path(raw); repo = tmp / "repo"; script = repo / "deploy" / "mac" / "product-stack.sh"
+                script.parent.mkdir(parents=True); shutil.copy2(SCRIPT, script)
+                for service in ("ocrd", "memoryd", "agentd"):
+                    source = repo / "services" / service / "src" / service; source.mkdir(parents=True); (source / "__init__.py").write_text("", encoding="utf-8")
+                (repo / ".gitignore").write_text("services/ocrd/**\n!services/ocrd/src/\n!services/ocrd/src/ocrd/\n!services/ocrd/src/ocrd/__init__.py\n", encoding="utf-8")
+                subprocess.run(["git", "init", "-q", repo], check=True); subprocess.run(["git", "-C", repo, "add", "."], check=True); subprocess.run(["git", "-C", repo, "-c", "user.name=t", "-c", "user.email=t@x", "commit", "-qm", "x"], check=True)
+                env = self._environment(tmp); setup = tmp / "setup"; setup.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8"); setup.chmod(0o755); env |= {"DEJAVIEW_SETUP_HONCHO_SCRIPT": str(setup)}
+                self.assertEqual(subprocess.run([script, "up"], env=env, capture_output=True, text=True).returncode, 0)
+                path = repo / "services" / "ocrd" / relative; path.parent.mkdir(parents=True, exist_ok=True); path.write_text("x\n", encoding="utf-8")
+                try:
+                    status = subprocess.run([script, "status"], env=env, capture_output=True, text=True)
+                    self.assertNotEqual(status.returncode, 0, relative)
+                finally:
+                    subprocess.run([script, "down"], env=env, capture_output=True, text=True)
+
 
 if __name__ == "__main__":
     unittest.main()
