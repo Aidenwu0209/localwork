@@ -13,10 +13,10 @@
 | **已完成** | G0+M+D **33/33 accept**;**P3.1 ROCm 消融**;P3.3 README;P3.5 licenses;P3.6 哨兵;P3.7 perceive |
 | **P3.1 正式证据** | run `p31-w7900d-20260728T075653Z`;18 个 brain 量化×MTP×并发 cell + 3 个 perceive `-np` cell,均为 1 次 warm-up + 3 次实测;原始证据在 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`,截图在 `docs/assets/p31/p31-w7900d-20260728T075653Z/` |
 | **本次新增完成** | **P3.2 Grafana** 一屏验收;**P3.4 六幕视频** 2:37 成片;**P3.11 Grafana 系统自检**含 READY/DEGRADED/FAILED、数据新鲜度、本机核心与算力路径 |
-| **工程任务** | TASKBOARD 当前 **42/48 accept**,P3.12 成熟产品设计已验收,P3.13–P3.18 待实施;成片 `docs/assets/demo/dejaview-p34-six-act-20260802.mp4`;自检截图 `docs/assets/p32/grafana-selfcheck-20260802.png` |
+| **工程任务** | TASKBOARD 当前 **43/48 accept**,P3.12 设计与 P3.13 隐私/采集加固已验收,P3.14–P3.18 待实施;成片 `docs/assets/demo/dejaview-p34-six-act-20260802.mp4`;自检截图 `docs/assets/p32/grafana-selfcheck-20260802.png` |
 | **产品化边界** | 单用户、屏幕记忆优先、隐私 fail-closed、真实 Radeon→Local Metal 降级、Honcho 自动成长、可点击证据产品页、干净机器复现 |
 
-**下一优先:P3.13 隐私门与采集可靠性加固**;人工提交检查(AMD Developer Program、Rules、服务器仅演示数据)仍需队员本人完成。
+**下一优先:P3.14 真实 Radeon→Local Metal agent 路由**;人工提交检查(AMD Developer Program、Rules、服务器仅演示数据)仍需队员本人完成。
 
 ---
 
@@ -35,7 +35,7 @@
 | 数据层 | `make data-up` | pg :5433 / redis :6380 |
 | Honcho | `docker compose -f deploy/mac/compose.honcho.yml up -d` | :8100 |
 | ocrd | `cd services/ocrd && uv run python -m ocrd` | :8006 |
-| memoryd | `MEMORYD_REAL_PIPELINE=1 GATEWAY_URL=http://127.0.0.1:14000/v1 uv run --project services/memoryd python -m memoryd` | :8090 |
+| memoryd | `SENTINEL_GATEWAY_URL=http://127.0.0.1:4000/v1 GATEWAY_URL=http://127.0.0.1:14000/v1 uv run --project services/memoryd python -m memoryd` | :8090 |
 | agentd | `GATEWAY_URL=http://127.0.0.1:14000/v1 uv run --project services/agentd python -m agentd` | :8101 |
 | capture | `cd clients/capture && CAPTURE_DEVICE_ID=<id> uv run python -m capture` | — |
 | 隧道 | `ssh -f -N -L 14000:127.0.0.1:4000 radeon-cloud` | Mac :14000 |
@@ -76,7 +76,8 @@ exporter 已为 P3.4 录制常驻;若实例重启,先 `rocm-smi` +
 | P3.2 | **accept** | Grafana 一屏 + 实时 fail-closed 门禁 + 截图已入仓 |
 | P3.11 | **accept** | Grafana 系统自检;缺服务/隧道不误绿;READY 实拍 + 13 tests |
 | P3.12 | **accept** | 成熟产品设计与 P3.13–P3.18 验收矩阵;基线 80 tests |
-| P3.13–P3.18 | false | 隐私/采集→真实降级→Honcho→产品页→复现→全链路验收 |
+| P3.13 | **accept** | Sentinel fail-closed + strict schema;默认 real/Stub 503;审计 reason;真实 processing_state;audio/doc 501;capture outcome/heartbeat/权限退出;127 tests + live synthetic proof |
+| P3.14–P3.18 | false | 真实降级→Honcho→产品页→复现→全链路验收 |
 
 ---
 

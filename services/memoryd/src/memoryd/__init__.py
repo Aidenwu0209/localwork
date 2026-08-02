@@ -3,17 +3,16 @@
 Per handbook §6.2, each frame flows through:
   sentinel -> ocrd -> novelty gate -> perceive -> embed -> timeline store -> Honcho
 
-M3.2 ships the skeleton: FastAPI with the three ingest endpoints
-(`/v1/ingest/{frame,audio,doc}`) and a pluggable pipeline where every stage is a
-Protocol backed by a stub. Real inference backends are wired in M3.4 (sentinel /
-perceive / embed via the gateway) and M5.1 (ocrd). The stubs return canned but
-schema-correct results so the ingest path and audit log can be exercised end to
-end before any GPU is involved.
+The production wiring uses real Sentinel, OCR, novelty, perceive, and embed
+stages by default. Stub stages remain available only through the explicit
+`MEMORYD_ALLOW_STUB_PIPELINE=true` test opt-in; that mode reports degraded and
+rejects frame pixels. Frame ingest is supported, while audio and document
+routes return an honest HTTP 501 until their durable pipelines exist.
 
-Privacy invariant (handbook §0): ingested media is held in memory only, written
-to disk solely under DATA_ROOT as the final store step, and a blocked sentinel
-decision never reaches OCR. This file enforces neither yet; the stubs make it
-trivially auditable.
+Privacy invariant (handbook §0): ingested media is held in memory until the
+final allowed store step under DATA_ROOT. A blocked or uncertain Sentinel
+decision writes metadata-only audit state and never reaches OCR, screenshot
+storage, timeline, or downstream models.
 """
 
 from memoryd.server import create_app

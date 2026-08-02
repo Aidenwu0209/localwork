@@ -88,7 +88,8 @@ targeted:
 pgrep -af 'python -m memoryd'
 # After visually verifying the DejaView PID:
 kill <verified-memoryd-pid>
-MEMORYD_REAL_PIPELINE=1 GATEWAY_URL=http://127.0.0.1:14000/v1 \
+SENTINEL_GATEWAY_URL=http://127.0.0.1:4000/v1 \
+  GATEWAY_URL=http://127.0.0.1:14000/v1 \
   nohup uv run --project services/memoryd python -m memoryd \
   >/tmp/dejaview-memoryd.log 2>&1 &
 echo $! >/tmp/dejaview-memoryd.pid

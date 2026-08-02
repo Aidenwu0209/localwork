@@ -1,6 +1,6 @@
 # DejaView
 
-> Continuously perceives your screen and turns digital life into **queryable memory with evidence**; uses Honcho psychological modeling to understand *who you are*; a privacy sentinel gates *what must never be remembered*. **AI inference runs 100% on Radeon PRO W7900D (ROCm)**; data stays on your own devices. Audio and document ingest are not supported in the current service.
+> Continuously perceives your screen and turns digital life into **queryable memory with evidence**; uses Honcho psychological modeling to understand *who you are*; a privacy sentinel gates *what must never be remembered*. **Primary agentic compute runs on Radeon PRO W7900D (ROCm) after a device-local Sentinel privacy gate**; data stays on your own devices, with Local Metal available for verified fallback. Audio and document ingest are not supported in the current service.
 
 Product codename: **DejaView** (déjà vu + view — your machine has “seen this before”).  
 中文叙事名:**全本地数字记忆体** · [中文 README](README.zh.md)

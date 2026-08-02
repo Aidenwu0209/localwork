@@ -695,8 +695,10 @@ cd /Users/wu/Projects/Aidenwu0209/localwork
 make data-up
 docker compose -f deploy/mac/compose.honcho.yml up -d
 ssh -f -N -L 14000:127.0.0.1:4000 radeon-cloud
+./deploy/mac/llama-launch/dev-stack.sh up sentinel
 cd services/ocrd && nohup uv run python -m ocrd > /tmp/ocrd.log 2>&1 &
-MEMORYD_REAL_PIPELINE=1 GATEWAY_URL=http://127.0.0.1:14000/v1 \
+SENTINEL_GATEWAY_URL=http://127.0.0.1:4000/v1 \
+  GATEWAY_URL=http://127.0.0.1:14000/v1 \
   nohup uv run --project services/memoryd python -m memoryd > /tmp/memoryd.log 2>&1 &
 cd clients/capture && CAPTURE_DEVICE_ID=dev uv run python -m capture
 GATEWAY_URL=http://127.0.0.1:14000/v1 uv run --project services/agentd python -m agentd

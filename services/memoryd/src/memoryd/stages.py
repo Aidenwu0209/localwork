@@ -1,12 +1,9 @@
 """Pluggable pipeline stages (handbook §6.2).
 
-Each stage is a Protocol with a stub implementation. M3.2 wires the stubs so the
-ingest path runs end to end; M3.4 swaps sentinel/perceive/embed for real
-gateway-backed implementations and M5.1 swaps OCR for the ocrd microservice.
-
-The stubs return canned but schema-correct results, so the FastAPI layer, the
-audit log, and the timeline write path can all be exercised before any model is
-loaded.
+Each stage is a Protocol with real and synthetic implementations. Production
+wiring uses gateway-backed Sentinel/novelty/perceive/embed plus the ocrd
+microservice. Schema-correct stubs exist only for explicit offline tests; the
+HTTP service rejects frame ingest while a stub pipeline is active.
 """
 
 from __future__ import annotations

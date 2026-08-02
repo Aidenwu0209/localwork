@@ -151,7 +151,7 @@ ssh -f -N \
   radeon-cloud
 
 # Pre-start the independently verified Local Metal fallback.
-./deploy/mac/llama-launch/dev-stack.sh up fast perceive
+./deploy/mac/llama-launch/dev-stack.sh up fast perceive sentinel
 ```
 
 The stage refuses to start unless `lsof` + `ps` prove that the `:14000`
@@ -165,10 +165,11 @@ only when the dev-stack fast/perceive/gateway pidfiles, their command lines,
 and their listeners all agree; locally, `brain` is deliberately mapped to the
 same on-device perceive model.
 
-Start each local service from the repository root in its own terminal. Do not
-omit `MEMORYD_REAL_PIPELINE=1`: the recording stage checks the actual wired
-pipeline and refuses a stub, a local-`:4000` gateway, the regular database, or
-the regular data root.
+Start each local service from the repository root in its own terminal. The
+production memory pipeline is real by default; only the explicit
+`MEMORYD_ALLOW_STUB_PIPELINE=true` test opt-in enables stubs, and that mode
+rejects frames. Keep the raw-frame Sentinel on local `:4000`; only frames it
+allows may continue through the Radeon compute tunnel.
 
 ```bash
 # Terminal A — deterministic PP-OCRv6 service (formal take; never rapidocr)
@@ -178,7 +179,7 @@ OCR_BACKEND=paddleocr uv run --project services/ocrd python -m ocrd
 DEJAVIEW_DEMO_MODE=1 \
 TIMELINE_DB_URL=postgresql://dejaview:dejaview@127.0.0.1:5433/dejaview_demo \
 DATA_ROOT=/tmp/dejaview-p34-data \
-MEMORYD_REAL_PIPELINE=1 \
+SENTINEL_GATEWAY_URL=http://127.0.0.1:4000/v1 \
 GATEWAY_URL=http://127.0.0.1:14000/v1 \
 OCR_URL=http://127.0.0.1:8006 \
 uv run --project services/memoryd python -m memoryd

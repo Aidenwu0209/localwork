@@ -379,3 +379,55 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   placeholder/contradiction scan and `git diff --check` passed.
 - **Conclusion:** P3.12 satisfies its design-only verify contract. Production
   code remains unchanged; P3.13 is the next claimable task.
+
+## 2026-08-03 ([VERIFY] P3.13 privacy gate and capture reliability — accept)
+
+- **Fail-closed production path:** `memoryd` now wires the complete real
+  Sentinel/OCR/novelty/perceive/embed pipeline by default. Raw frames use the
+  separate local `SENTINEL_GATEWAY_URL`; malformed, unknown, low-confidence,
+  or unavailable Sentinel results return `processing_state=blocked` after one
+  metadata-only audit and before OCR, screenshot, timeline, or downstream
+  model calls. Stub stages require explicit test opt-in, report `degraded`, and
+  reject frame ingest with HTTP 503 before reading pixels.
+- **Live model-contract defect found and closed:** the local MiniCPM-V initially
+  returned `{"category":"normal"}` without confidence, so the correct strict
+  parser blocked normal frames. A strict OpenAI JSON Schema now requires the
+  six-category enum and numeric confidence in every Sentinel response while
+  retaining `chat_template_kwargs.enable_thinking=false`; missing confidence
+  still fails closed. A live synthetic normal fixture then returned
+  `normal/1.0/classified_normal`, while the banking fixture returned
+  `banking_finance/sensitive_category` and remained blocked.
+- **Auditable ingest contract:** every frame response is exactly `stored`,
+  `merged`, or `blocked`; sentinel audits persist one of seven closed reason
+  codes. The idempotent local migration added `reason NOT NULL` plus the
+  relation-scoped CHECK constraint, backfilled 81 legacy audit rows without
+  reading their contents, and a second execution updated zero rows. Valid
+  audio/document metadata returns HTTP 501 with `stored=false`; malformed
+  metadata returns a stable sanitized error without reflecting input.
+- **Capture reliability:** the macOS client parses structured terminal
+  outcomes, advances dedup state only for stored/merged/blocked, never writes a
+  retry queue, and keeps monotonic stored/merged/blocked/failed counters.
+  Metadata-only heartbeats continue while the screen is locked; client resets
+  cannot make Prometheus `_total` decrease. Missing screen-recording permission
+  exits with code 2 before observer, HTTP client, or capture initialization.
+- **[VERIFY] live synthetic privacy proof:** an isolated worktree `memoryd`
+  reported `pipeline=real` and `accepting_frames=true`. The normal fixture was
+  stored with one timeline row and one WebP. The banking fixture returned 202
+  with `processing_state=blocked`; its exact timestamp had **0 timeline rows**,
+  and the isolated screenshot root still contained only the normal fixture.
+  The synthetic device had two audits: one `allow/classified_normal` and one
+  `block/sensitive_category`. Audio and document probes both returned 501;
+  heartbeat metrics exported synthetic counts 1/2/3/4 for
+  stored/merged/blocked/failed.
+- **Fresh regression:** **127 first-party tests passed, 0 failures**: memoryd
+  35, capture 17, agentd/P3.4 25, monitoring 13, P3.1 contracts 32,
+  Mac/server gateway launchers 2, ROCm exporter 2, and Honcho demo compose 1.
+  Compose configuration and `git diff --check` also passed. The only warnings
+  were existing FastAPI/TestClient and startup-event deprecations.
+- **Cleanup:** the exact synthetic device rows used by this verification were
+  deleted and both timeline/audit remaining counts were zero. Temporary model
+  roles and isolated memoryd were stopped. The generated temporary screenshot
+  directory was moved to the macOS Trash rather than permanently erased.
+- **Conclusion:** P3.13 meets its implementation and live synthetic acceptance
+  criteria and moves from `doing` to `accept`. P3.14 is next; accepted ROCm,
+  Grafana, video, license, and five-model evidence were not modified or rerun.

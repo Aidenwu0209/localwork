@@ -45,7 +45,7 @@ class Settings:
     timeline_db_url: str  # postgresql://... dejaview db
     redis_url: str
 
-    # Single portable root for all user artifacts (screenshots/audio/docs).
+    # Single portable root for supported user artifacts (currently screenshots).
     data_root: Path
 
     # Honcho throttling (handbook §6.2 step 6): batch activity lines into one

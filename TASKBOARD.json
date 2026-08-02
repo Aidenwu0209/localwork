@@ -529,13 +529,13 @@
       "id": "P3.13",
       "group": "productization",
       "title": "隐私门与采集可靠性加固",
-      "steps": "Sentinel malformed/unknown/低置信/不可用全部 fail-closed;默认禁用 Stub 隐私门;block 严格不 OCR/不落盘/不入时间线;capture 区分 stored/merged/blocked/dropped 并导出丢帧指标;audio/doc 未实现时诚实拒绝。",
+      "steps": "Sentinel malformed/unknown/低置信/不可用全部 fail-closed;默认禁用 Stub 隐私门;block 严格不 OCR/不落盘/不入时间线;capture 区分 stored/merged/blocked/failed 并导出丢帧指标;audio/doc 未实现时诚实拒绝。",
       "verify": "测试覆盖解析失败、模型失败、block 短路、响应状态和上传失败;合成敏感帧在 DB/文件系统均为零痕迹;无虚假 accepted=true。",
       "depends": [
         "P3.12"
       ],
-      "status": "doing",
-      "note": "2026-08-02 认领:root;实施计划=docs/superpowers/plans/2026-08-02-p313-privacy-capture-hardening.md;测试驱动实现,不改 accepted ROCm/视频证据,不 stage third_party/honcho。"
+      "status": "accept",
+      "note": "2026-08-03 验收:Sentinel strict JSON schema+fail-closed;默认 real pipeline/Stub 503;审计 reason 幂等迁移;stored/merged/blocked API;audio/doc 501;capture structured outcome+锁屏 heartbeat+权限 exit 2;127 first-party tests PASS。合成 normal stored、banking blocked 且 blocked 时间点 0 timeline/0 screenshot;合成行与临时文件已清理。证据=docs/verification-log.md [VERIFY] P3.13。"
     },
     {
       "id": "P3.14",

@@ -9,11 +9,14 @@
      (end_ts advances, no new row).
 
 Requires the full dev stack up: dev-stack.sh up embed fast sentinel perceive,
-plus ocrd (cd services/ocrd && uv run python -m ocrd) and memoryd running with
-MEMORYD_REAL_PIPELINE=1.
+plus ocrd (cd services/ocrd && uv run python -m ocrd). Production memoryd uses
+real stages by default; keep raw-frame Sentinel local with
+SENTINEL_GATEWAY_URL and route only allowed compute through GATEWAY_URL.
 
 Run:
-    MEMORYD_REAL_PIPELINE=1 uv run python services/memoryd/scripts/run_m34_pipeline.py
+    SENTINEL_GATEWAY_URL=http://127.0.0.1:4000/v1 \
+      GATEWAY_URL=http://127.0.0.1:14000/v1 \
+      uv run python services/memoryd/scripts/run_m34_pipeline.py
 """
 from __future__ import annotations
 

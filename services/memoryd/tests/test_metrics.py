@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from memoryd.config import Settings
@@ -70,10 +69,9 @@ class MemoryMetricsTest(unittest.TestCase):
             embed=GatewayEmbed(settings.gateway_url),
             store=TimelineStore(settings.timeline_db_url, settings.data_root),
         )
-        with patch.dict("os.environ", {"MEMORYD_REAL_PIPELINE": "0"}):
-            response = TestClient(create_app(settings=settings, pipeline=pipeline)).get(
-                "/health"
-            )
+        response = TestClient(create_app(settings=settings, pipeline=pipeline)).get(
+            "/health"
+        )
         self.assertEqual(
             response.json(),
             {
@@ -89,7 +87,7 @@ class MemoryMetricsTest(unittest.TestCase):
         self.assertNotIn("gateway-user", response.text)
         self.assertNotIn("api_key", response.text)
 
-    def test_health_does_not_trust_real_pipeline_environment_flag(self) -> None:
+    def test_health_reports_injected_stub_pipeline(self) -> None:
         settings = Settings(
             gateway_url="http://127.0.0.1:4000/v1",
             ocr_url="http://127.0.0.1:8006",
@@ -107,10 +105,9 @@ class MemoryMetricsTest(unittest.TestCase):
             embed=StubEmbed(),
             store=TimelineStore(settings.timeline_db_url, settings.data_root),
         )
-        with patch.dict("os.environ", {"MEMORYD_REAL_PIPELINE": "1"}):
-            response = TestClient(create_app(settings=settings, pipeline=pipeline)).get(
-                "/health"
-            )
+        response = TestClient(create_app(settings=settings, pipeline=pipeline)).get(
+            "/health"
+        )
         self.assertEqual(response.json()["pipeline"], "stub")
         self.assertEqual(response.json()["status"], "degraded")
         self.assertIs(response.json()["accepting_frames"], False)
