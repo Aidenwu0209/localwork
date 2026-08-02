@@ -79,6 +79,11 @@ def should_commit_frame(outcome: UploadOutcome) -> bool:
     return outcome.state in ("stored", "merged", "blocked")
 
 
+def recovery_pending(*, had_upload_failure: bool, heartbeat_accepted: bool) -> bool:
+    """Keep a recovery heartbeat pending until memoryd explicitly accepts it."""
+    return had_upload_failure and not heartbeat_accepted
+
+
 def apply_upload_outcome(
     outcome: UploadOutcome,
     *,
@@ -97,12 +102,25 @@ def apply_upload_outcome(
     return now
 
 
-async def _send_heartbeat(config: "CaptureConfig", counters: CaptureCounters, client: httpx.AsyncClient) -> None:
+async def _send_heartbeat(
+    config: "CaptureConfig", counters: CaptureCounters, client: httpx.AsyncClient
+) -> bool:
+    """Send a metadata-only heartbeat and report explicit server acceptance."""
     payload = counters.heartbeat_payload(config.device_id, datetime.now(timezone.utc).isoformat())
     try:
-        await client.post(config.heartbeat_endpoint, json=payload)
+        response = await client.post(config.heartbeat_endpoint, json=payload)
     except (httpx.HTTPError, OSError):
         log.debug("capture heartbeat failed")
+        return False
+    if not 200 <= response.status_code < 300:
+        log.debug("capture heartbeat rejected")
+        return False
+    try:
+        body = response.json()
+    except (ValueError, TypeError):
+        log.debug("capture heartbeat returned invalid response")
+        return False
+    return isinstance(body, dict) and body.get("accepted") is True
 
 # Distributed-notification names broadcast by loginwindow / ScreenSaverEngine.
 _SCREEN_LOCKED = "com.apple.screenIsLocked"
@@ -320,9 +338,12 @@ async def run_agent(config: "CaptureConfig") -> int:
                     if outcome.state == "failed":
                         had_upload_failure = True
                     elif had_upload_failure:
-                        await _send_heartbeat(config, counters, client)
+                        heartbeat_accepted = await _send_heartbeat(config, counters, client)
                         last_heartbeat_ts = now
-                        had_upload_failure = False
+                        had_upload_failure = recovery_pending(
+                            had_upload_failure=had_upload_failure,
+                            heartbeat_accepted=heartbeat_accepted,
+                        )
                     captured += 1
                 log.info("cycle done: %d/%d windows captured (trigger=%s)",
                          captured, len(windows), trigger)

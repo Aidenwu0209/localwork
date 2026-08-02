@@ -21,6 +21,7 @@ class MemoryMetrics:
         self._ingest_counts = {outcome: 0 for outcome in self._OUTCOMES}
         self._timeline_events = 0
         self._capture_heartbeats: dict[str, tuple[datetime, dict[str, int]]] = {}
+        self._capture_totals = {outcome: 0 for outcome in self._CAPTURE_OUTCOMES}
 
     def observe_capture_heartbeat(
         self, *, device_id: str, client_ts: datetime, counters: dict[str, int]
@@ -29,6 +30,14 @@ class MemoryMetrics:
             previous = self._capture_heartbeats.get(device_id)
             if previous is not None and client_ts <= previous[0]:
                 return False
+            previous_counters = previous[1] if previous is not None else None
+            for outcome in self._CAPTURE_OUTCOMES:
+                current = counters[outcome]
+                last = previous_counters[outcome] if previous_counters is not None else 0
+                # A lower value is a client restart, so its new absolute
+                # counter contributes from zero without reducing this server
+                # counter.
+                self._capture_totals[outcome] += current - last if current >= last else current
             self._capture_heartbeats[device_id] = (client_ts, dict(counters))
             return True
 
@@ -44,11 +53,9 @@ class MemoryMetrics:
         with self._lock:
             counts = dict(self._ingest_counts)
             timeline_events = self._timeline_events
-            capture_counts = {outcome: 0 for outcome in self._CAPTURE_OUTCOMES}
+            capture_counts = dict(self._capture_totals)
             last_heartbeat = 0.0
-            for client_ts, counters in self._capture_heartbeats.values():
-                for outcome in self._CAPTURE_OUTCOMES:
-                    capture_counts[outcome] += counters[outcome]
+            for client_ts, _counters in self._capture_heartbeats.values():
                 last_heartbeat = max(last_heartbeat, client_ts.timestamp())
 
         lines = [

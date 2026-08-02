@@ -119,9 +119,23 @@ def _parse_outcome(body: object) -> UploadOutcome:
     accepted = body.get("accepted")
     event_id = body.get("event_id")
     merged_into = body.get("merged_into")
-    if state == "stored" and accepted is True and isinstance(event_id, int) and not isinstance(event_id, bool) and merged_into is None:
+    if (
+        state == "stored"
+        and accepted is True
+        and isinstance(event_id, int)
+        and not isinstance(event_id, bool)
+        and event_id > 0
+        and merged_into is None
+    ):
         return UploadOutcome(state="stored", event_id=event_id)
-    if state == "merged" and accepted is True and event_id is None and isinstance(merged_into, int) and not isinstance(merged_into, bool):
+    if (
+        state == "merged"
+        and accepted is True
+        and event_id is None
+        and isinstance(merged_into, int)
+        and not isinstance(merged_into, bool)
+        and merged_into > 0
+    ):
         return UploadOutcome(state="merged", merged_into=merged_into)
     if state == "blocked" and accepted is False and event_id is None and merged_into is None:
         return UploadOutcome(state="blocked")

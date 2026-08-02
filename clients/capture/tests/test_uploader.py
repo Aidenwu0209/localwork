@@ -80,6 +80,32 @@ def test_upload_failures_are_stable_and_body_free() -> None:
         assert "secret" not in repr(outcome)
 
 
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"accepted": True, "processing_state": "stored", "event_id": 0, "merged_into": None},
+        {"accepted": True, "processing_state": "stored", "event_id": -1, "merged_into": None},
+        {"accepted": True, "processing_state": "stored", "event_id": True, "merged_into": None},
+        {"accepted": True, "processing_state": "merged", "event_id": None, "merged_into": 0},
+        {"accepted": True, "processing_state": "merged", "event_id": None, "merged_into": -1},
+        {"accepted": True, "processing_state": "merged", "event_id": None, "merged_into": True},
+    ],
+)
+def test_upload_rejects_nonpositive_or_boolean_terminal_ids(body: dict[str, object]) -> None:
+    outcome = asyncio.run(
+        upload_frame(
+            CaptureConfig(device_id="synthetic-device"),
+            webp_bytes=b"synthetic",
+            app=None,
+            window_title=None,
+            url=None,
+            trigger="change",
+            client=FixtureClient(FixtureResponse(202, body)),  # type: ignore[arg-type]
+        )
+    )
+    assert (outcome.state, outcome.error_code) == ("failed", "invalid_response")
+
+
 def test_upload_outcome_is_frozen() -> None:
     outcome = UploadOutcome(state="stored", event_id=1)
     with pytest.raises(FrozenInstanceError):

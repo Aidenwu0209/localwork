@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from memoryd.config import Settings
@@ -48,3 +49,54 @@ def test_heartbeat_rejects_nonmetadata_invalid_values() -> None:
     }
     response = app.post("/v1/capture/heartbeat", json=invalid)
     assert response.status_code == 422
+    assert response.json() == {"detail": {"code": "invalid_heartbeat"}}
+    assert "SENSITIVE" not in response.text
+
+
+@pytest.mark.parametrize("counter", [True, False, "1"])
+def test_heartbeat_rejects_coerced_counter_values(counter: object) -> None:
+    app = client()
+    payload = {
+        "device_id": "synthetic-device",
+        "client_ts": "2026-08-03T00:00:00+00:00",
+        "stored": counter, "merged": 0, "blocked": 0, "failed": 0,
+    }
+    response = app.post("/v1/capture/heartbeat", json=payload)
+    assert response.status_code == 422
+    assert response.json() == {"detail": {"code": "invalid_heartbeat"}}
+
+
+def test_heartbeat_rejects_malformed_json_without_reflecting_input() -> None:
+    app = client()
+    response = app.post(
+        "/v1/capture/heartbeat",
+        content=b'{"window_title":"SENSITIVE-HEARTBEAT"',
+        headers={"content-type": "application/json"},
+    )
+    assert response.status_code == 422
+    assert response.json() == {"detail": {"code": "invalid_heartbeat"}}
+    assert "SENSITIVE-HEARTBEAT" not in response.text
+
+
+def test_heartbeat_totals_are_monotonic_across_client_restart_and_devices() -> None:
+    app = client()
+    initial = {
+        "device_id": "synthetic-device",
+        "client_ts": "2026-08-03T00:00:00+00:00",
+        "stored": 10, "merged": 0, "blocked": 0, "failed": 0,
+    }
+    restarted = {**initial, "client_ts": "2026-08-03T00:01:00+00:00", "stored": 1}
+    duplicate = dict(restarted)
+    older = {**initial, "stored": 999}
+    second_device = {
+        **restarted,
+        "device_id": "synthetic-device-2",
+        "stored": 2,
+    }
+    assert app.post("/v1/capture/heartbeat", json=initial).json() == {"accepted": True}
+    assert app.post("/v1/capture/heartbeat", json=restarted).json() == {"accepted": True}
+    assert app.post("/v1/capture/heartbeat", json=duplicate).json() == {"accepted": False}
+    assert app.post("/v1/capture/heartbeat", json=older).json() == {"accepted": False}
+    assert app.post("/v1/capture/heartbeat", json=second_device).json() == {"accepted": True}
+    metrics = app.get("/metrics").text
+    assert 'dejaview_capture_frames_total{outcome="stored"} 13' in metrics

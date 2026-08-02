@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import Annotated, TypeVar
 from urllib.parse import urlsplit
 
-from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from memoryd.config import Settings
@@ -47,10 +47,10 @@ class CaptureHeartbeat(BaseModel):
 
     device_id: str = Field(min_length=1, max_length=128)
     client_ts: datetime
-    stored: int = Field(ge=0)
-    merged: int = Field(ge=0)
-    blocked: int = Field(ge=0)
-    failed: int = Field(ge=0)
+    stored: Annotated[int, Field(strict=True, ge=0)]
+    merged: Annotated[int, Field(strict=True, ge=0)]
+    blocked: Annotated[int, Field(strict=True, ge=0)]
+    failed: Annotated[int, Field(strict=True, ge=0)]
 
     @field_validator("client_ts")
     @classmethod
@@ -180,7 +180,13 @@ def create_app(
         )
 
     @app.post("/v1/capture/heartbeat")
-    async def capture_heartbeat(body: CaptureHeartbeat) -> dict[str, bool]:
+    async def capture_heartbeat(request: Request) -> dict[str, bool]:
+        try:
+            body = CaptureHeartbeat.model_validate(await request.json())
+        except Exception as exc:
+            raise HTTPException(
+                status_code=422, detail={"code": "invalid_heartbeat"}
+            ) from exc
         accepted = metrics.observe_capture_heartbeat(
             device_id=body.device_id,
             client_ts=body.client_ts,
