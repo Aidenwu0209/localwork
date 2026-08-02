@@ -431,3 +431,39 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
 - **Conclusion:** P3.13 meets its implementation and live synthetic acceptance
   criteria and moves from `doing` to `accept`. P3.14 is next; accepted ROCm,
   Grafana, video, license, and five-model evidence were not modified or rerun.
+
+## 2026-08-03 — P3.14 real Radeon to Local Metal agent routing
+
+- **[VERIFY] Shared router:** ordinary agentd questions, semantic embeddings,
+  and all daily-report model stages now use one Radeon-first compute router.
+  A Local Metal `brain` request physically uses `perceive`; response/audit
+  metadata records backend, physical/logical model, degraded state, stable
+  reason, and latency. Fast requests set `enable_thinking=false` on both paths.
+- **[VERIFY] Classified fallback:** retry crosses backends only for connection,
+  timeout, 429, 502–504, a verified missing-model 404, invalid JSON, or an
+  invalid product shape. Caller errors, authentication, policy rejection, 422,
+  500, and unclassified HTTP errors do not cross backends. A per-role circuit
+  suppresses repeated remote failures and probes again after cooldown.
+- **[VERIFY] Grounding:** event ids, times, and apps returned by this request's
+  tools form the only citation allowlist. An invalid first answer receives one
+  correction request; invalid/empty/tool-calling correction output becomes a
+  safe evidence-insufficient answer. Malformed tool calls and non-finite or
+  non-1024-dimensional embeddings are rejected before use.
+- **[VERIFY] Truthful UI:** the daily badge is `BACKEND UNVERIFIED` while a run
+  is active. Only a completed report pins the actual writer route; failures are
+  shown as failures. Connectivity health can no longer preselect or overwrite
+  the current run's backend claim.
+- **Fresh regression:** agentd and P3.4 suites passed **63 tests** with zero
+  failures; the only warnings were existing FastAPI/TestClient and startup-event
+  deprecations. Independent final review passed with no remaining findings.
+- **Live synthetic route probes:** with both real gateways available, a small
+  `brain` request completed on Radeon as `primary_ok` (physical `brain`). The
+  exact verification tunnel was then stopped; the same logical request
+  completed on Local Metal as `degraded=true`, reason
+  `remote_connection_error`, physical `perceive`. With both configured paths
+  unreachable, the router returned `remote_connection_error` and
+  `local_connection_error` without endpoint or upstream-body data. The Radeon
+  SSH tunnel was restored afterward and all five logical roles were visible.
+- **Conclusion:** P3.14 moves from `doing` to `accept`. P3.15 remains in
+  progress; accepted benchmark, video, Grafana, and privacy evidence were not
+  rerun or relabeled.

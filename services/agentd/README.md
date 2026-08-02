@@ -9,23 +9,32 @@ questions via tool-calling against:
 - the **knowledge base** (search_kb — imported documents)
 - **screenshot evidence** (fetch_screenshot — image path + highlighted bbox)
 
-## Status
+## Runtime contract
 
-- **M7.1 (this commit):** the four tools + their OpenAI function-calling specs +
-  a dispatch router. Each tool is a plain callable, unit-tested against the live
-  timeline DB / Honcho / gateway. `embed.py` adds the Qwen3 instruction prefix
-  on the query side (handbook §6.5).
-- **M7.2 (next):** the `/v1/chat/completions` endpoint that runs the brain
-  (logical name `brain` at the gateway) in a tool-calling loop and formats
-  answers with `[event#id HH:MM app]` citations.
+`/v1/chat/completions` runs the brain tool loop and returns OpenAI-compatible
+`choices` plus a top-level `dejaview` object with the backend that actually
+completed the answer. Every memory citation is checked against event ids,
+timestamps, and apps returned by this request's tools. One invalid answer gets
+one correction attempt; a second invalid answer fails closed with an
+evidence-insufficient response.
+
+The same compute router is used by ordinary questions, semantic embeddings,
+and the daily-report agents. It tries Radeon first and uses Local Metal only
+for classified availability or invalid-product failures. Local `brain`
+physically uses the `perceive` model and is reported as such. Both paths failing
+returns a sanitized 503; a model registration or health probe alone never
+counts as success.
 
 ## Run
 
 ```bash
-# gateway (server or Mac dev) + Honcho + DB must be up
-uv run python -m agentd     # M7.2 serves 127.0.0.1:8101
+# Radeon tunnel + Local Metal gateway + Honcho + DB
+RADEON_GATEWAY_URL=http://127.0.0.1:14000/v1 \
+LOCAL_GATEWAY_URL=http://127.0.0.1:4000/v1 \
+uv run python -m agentd     # serves 127.0.0.1:8101
 ```
 
-Config from `.env`: `GATEWAY_URL`, `TIMELINE_DB_URL`, `HONCHO_URL`, `DATA_ROOT`.
-The brain is reached via the gateway's logical `brain` name (server: real 27B
-on :8001; Mac dev: E4B dual-mapped).
+Config from `.env`: `RADEON_GATEWAY_URL`, `LOCAL_GATEWAY_URL`, legacy
+`GATEWAY_URL`, `TIMELINE_DB_URL`, `HONCHO_URL`, and `DATA_ROOT`. The Radeon
+`brain` is ThinkingCap-27B; the Local Metal fallback is the physical
+`perceive` model and is never labeled as ThinkingCap.

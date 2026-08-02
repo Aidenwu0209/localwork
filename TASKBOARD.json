@@ -546,8 +546,8 @@
       "depends": [
         "P3.13"
       ],
-      "status": "doing",
-      "note": "Implementation plan: docs/superpowers/plans/2026-08-03-p314-agent-fallback.md"
+      "status": "accept",
+      "note": "2026-08-03 验收:问答/日报统一 Radeon-first router;Local brain 真实映射 perceive;封闭 retry+circuit recovery;embed 1024 finite;引用 request allowlist+一次纠正;双端失败去密;运行中 backend 未验证、完成后显示实际 route。63 tests PASS;真实合成探针证明 Radeon primary、断隧道 Local Metal fallback、双端明确失败，随后隧道已恢复。证据=docs/verification-log.md [VERIFY] P3.14。"
     },
     {
       "id": "P3.15",

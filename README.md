@@ -26,7 +26,9 @@ Microsoft Recall nearly crashed on privacy; Rewind.ai pivoted away — this prod
 
 ## Dual topology
 
-Same codebase and compose stack; switch with `GATEWAY_URL` / profiles (see `docs/EXECUTION_HANDBOOK.md` §2.2).  
+Same codebase and compose stack. Stateful services use `GATEWAY_URL`; agentd
+uses `RADEON_GATEWAY_URL` first and `LOCAL_GATEWAY_URL` for a verified fallback
+(see `docs/EXECUTION_HANDBOOK.md` §2.2).
 **Topology A** below is the path a stranger can smoke today. **Topology B** is the all-in-one AMD box for judge reproduction / demo day.
 
 ### Topology A — Mac data sovereignty + AMD stateless compute
@@ -119,7 +121,9 @@ GATEWAY_URL=http://127.0.0.1:14000/v1 \
 cd clients/capture && CAPTURE_DEVICE_ID=dev uv run python -m capture
 
 # 5. agentd Q&A (start brain on server first if needed: ./server-stack.sh up brain)
-GATEWAY_URL=http://127.0.0.1:14000/v1 uv run --project services/agentd python -m agentd
+RADEON_GATEWAY_URL=http://127.0.0.1:14000/v1 \
+LOCAL_GATEWAY_URL=http://127.0.0.1:4000/v1 \
+uv run --project services/agentd python -m agentd
 curl -s http://127.0.0.1:8101/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"messages":[{"role":"user","content":"What GPU errors have I hit recently? Cite the events."}]}'
@@ -132,7 +136,7 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 | Tunnel | `ssh -L 14000:…:4000` | Mac `:14000` → server `:4000` |
 | ocrd | `uv run python -m ocrd` | `:8006` |
 | memoryd | `SENTINEL_GATEWAY_URL=… GATEWAY_URL=… python -m memoryd` | `:8090` |
-| agentd | `python -m agentd` | `:8101` |
+| agentd | `RADEON_GATEWAY_URL=… LOCAL_GATEWAY_URL=… python -m agentd` | `:8101` |
 | capture | `python -m capture` | — |
 
 ---
