@@ -1,0 +1,89 @@
+1
+00:00:00,000 --> 00:00:07,500
+DejaView is not an ordinary retrieval-augmented chatbot.
+It is a sovereign, local digital memory.
+
+2
+00:00:07,500 --> 00:00:14,500
+Screens, text, timelines, vectors, and the user model stay on this Mac.
+The Radeon server supplies stateless compute only.
+
+3
+00:00:14,500 --> 00:00:22,500
+ACT 1 — Five logical roles run on an AMD Radeon PRO W7900D:
+brain, perceive, sentinel, fast, and embed, routed through LiteLLM.
+
+4
+00:00:22,500 --> 00:00:31,000
+rocm-smi identifies the gfx1100 GPU. Grafana shows utilization,
+VRAM, per-role throughput, and the memory-event rate on one screen.
+
+5
+00:00:31,000 --> 00:00:41,500
+ACT 2 — Three safe synthetic windows enter the real pipeline.
+The Sentinel decides first; PP-OCRv6 extracts verbatim text and boxes.
+
+6
+00:00:41,500 --> 00:00:52,000
+Perceive creates specific semantics; embed stores 1,024-D vectors.
+The timeline grows from one seed to four events, all on this Mac.
+
+7
+00:00:52,000 --> 00:01:00,000
+ACT 3 — A bank-login screen is blocked at the first privacy gate.
+The result is BLOCKED, with an audit reference.
+
+8
+00:01:00,000 --> 00:01:08,000
+Zero screenshot files and zero timeline rows are created.
+Rejected pixels never enter searchable memory.
+
+9
+00:01:08,000 --> 00:01:16,500
+ACT 4 — The user asks which ROCm pull request was viewed
+last Wednesday afternoon. DejaView answers: PR #1842.
+
+10
+00:01:16,500 --> 00:01:25,000
+The answer includes event ID, time, application, source screenshot,
+and text bounding boxes: verifiable memory, not a model guess.
+
+11
+00:01:25,000 --> 00:01:33,500
+ACT 5 — Honcho answers a different question:
+not “What did I see?”, but “Which approach is more like me?”
+
+12
+00:01:33,500 --> 00:01:42,000
+Nine isolated synthetic conclusions favor local, inspectable,
+configuration-driven workflows. No real user data is used.
+
+13
+00:01:42,000 --> 00:01:52,000
+ACT 6 — Planner, Retriever, Writer, and Reviewer generate today's report.
+Retriever is limited to today's three events.
+
+14
+00:01:52,000 --> 00:02:02,000
+The brain model writes on Radeon ROCm; Reviewer validates every citation.
+The first evidence-backed report completes successfully.
+
+15
+00:02:02,000 --> 00:02:09,500
+Now the exact attested Radeon SSH compute link is disconnected visibly.
+Wi-Fi stays connected; no physical cable pull is simulated.
+
+16
+00:02:09,500 --> 00:02:17,000
+The product reports LINK DOWN and LOCAL READY.
+The remote brain route is no longer available.
+
+17
+00:02:17,000 --> 00:02:27,500
+The same report runs again on independently verified Local Metal fallback.
+Planner, Retriever, Writer, and Reviewer all complete.
+
+18
+00:02:27,500 --> 00:02:37,200
+All three citations pass again. Remote compute can disappear;
+local memory, agent workflow, and data sovereignty survive.

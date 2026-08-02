@@ -213,7 +213,7 @@ historical context and its former blocked status is superseded by this run.
 |---|---|
 | Run / time | `p31-w7900d-20260728T075653Z`; 2026-07-28 07:57–08:28 UTC |
 | GPU | AMD Radeon PRO W7900D, gfx1100; **51,522,830,336 B = 47.98 GiB** VRAM; assigned KFD GPU ID `60148` |
-| Host | `u-4695-e6d1476b`; 2× AMD EPYC 9334, **128** logical CPUs; **1007.56 GiB** RAM |
+| Host | authorized replacement Radeon instance; 2× AMD EPYC 9334, **128** logical CPUs; **1007.56 GiB** RAM |
 | OS / ROCm / driver | Linux 6.8.0-79-generic; ROCm **7.2.1**; AMDGPU driver **6.14.14** |
 | llama.cpp | commit `76f46ad29d61fd8c1401e8221842934bf62a6064`; Release build with `GGML_HIP=ON`, `AMDGPU_TARGETS=gfx1100` |
 | Binary identity | `/root/llama.cpp/build/bin/llama-server`; SHA256 `90d82cee630d8340b0f1f629e4675a23b7189b49f2d9869ed6efb424cfdeb55f` |

@@ -20,6 +20,11 @@ class ReleaseContractTest(unittest.TestCase):
             "scripts/doctor.sh",
             "scripts/test-first-party.sh",
             "deploy/mac/product-stack.sh",
+            "docs/submission/PROJECT_SPECIFICATION.md",
+            "docs/submission/DejaView-Project-Specification.docx",
+            "docs/submission/DejaView-Track2-Presentation.pptx",
+            "docs/assets/demo/dejaview-p34-six-act-20260802-en.mp4",
+            "docs/assets/demo/dejaview-p34-six-act-20260802-en.srt",
         ):
             with self.subTest(relative=relative):
                 self.assertTrue((ROOT / relative).is_file(), relative)
@@ -46,9 +51,20 @@ class ReleaseContractTest(unittest.TestCase):
             ROOT / "README.md",
             ROOT / "README.zh.md",
             ROOT / "STATUS.md",
+            ROOT / "TASKBOARD.json",
             ROOT / "deploy/server/DEPLOY.md",
+            ROOT / "docs/AGENT_KICKOFF_PROMPT.md",
+            ROOT / "docs/EXECUTION_HANDBOOK.md",
+            ROOT / "docs/benchmarks.md",
+            ROOT / "docs/verification-log.md",
+            ROOT / "docs/submission/PROJECT_SPECIFICATION.md",
+            ROOT / "services/memoryd/scripts/seed_fixtures.py",
         ]
-        forbidden = re.compile(r"36\.150\.116\.|\bu-\d{4,}-[0-9a-f]+\b")
+        forbidden = re.compile(
+            r"36\.150\.116\."
+            r"|\bu-\d{4,}-[0-9a-f]+\b"
+            r"|\broot@\d{1,3}(?:\.\d{1,3}){3}\b"
+        )
         for path in public_docs:
             with self.subTest(path=path.name):
                 self.assertIsNone(forbidden.search(path.read_text(encoding="utf-8")))

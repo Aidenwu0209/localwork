@@ -329,7 +329,7 @@
       "id": "D1",
       "group": "server-download",
       "title": "SSH 连通性 + 磁盘只读检查",
-      "steps": "ssh -p 30147 root@36.150.116.200(本机别名 radeon-cloud);echo/df/nproc 只读。",
+      "steps": "ssh radeon-cloud;echo/df/nproc 只读。",
       "verify": "SSH 免密成功;磁盘余量已记录。",
       "depends": [],
       "status": "accept",
@@ -444,7 +444,7 @@
         "P3.1"
       ],
       "status": "accept",
-      "note": "2026-08-02 accept: replacement instance u-15420-7be0d6c9 at 36.150.116.206:31357; local Prometheus/Grafana + remote rocm-smi exporter live. Fail-closed gates passed simultaneously: exporter=1, GPU count=1, required role health=4/4, required roles with tokens/s=4/4; live GPU=100%, VRAM=37.03 GiB, timeline ingest rate=1.09 events/min. One-screen evidence=docs/assets/p32/grafana-rocm-live-20260802.png; [VERIFY]=docs/verification-log.md."
+      "note": "2026-08-02 accept: authorized replacement Radeon instance via ssh radeon-cloud; local Prometheus/Grafana + remote rocm-smi exporter live. Fail-closed gates passed simultaneously: exporter=1, GPU count=1, required role health=4/4, required roles with tokens/s=4/4; live GPU=100%, VRAM=37.03 GiB, timeline ingest rate=1.09 events/min. One-screen evidence=docs/assets/p32/grafana-rocm-live-20260802.png; [VERIFY]=docs/verification-log.md."
     },
     {
       "id": "P3.3",

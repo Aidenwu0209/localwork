@@ -106,7 +106,7 @@ Mirror of `docs/EXECUTION_HANDBOOK.md` §10. **Do not treat unchecked boxes as d
 | 源码、英文 README、两拓扑、快速开始可复现 | **已具备** | 双语 README/拓扑、submodule/setup、doctor、CI 与干净检出全套已通过。本地不推断 GitHub 可见性,提交前人工确认 |
 | 可编辑 PPT / Poster | **已具备** | 7 页可编辑 PPT 已逐页渲染、无溢出且备注含来源 |
 | `docs/benchmarks.md` + Grafana 截图 | **已具备** | P3.1 ROCm 正式 18+3 cell 消融、checksummed 原始证据和 P3.2 一屏 Grafana 截图已 accept;未测项在 benchmarks 中保持显式边界 |
-| 演示视频 | **已具备，等最终格式确认** | P3.4 2:37 六幕成片已 accept,含已验证 Radeon 链路故障切换和 Local Metal 第二次日报;官方推荐 3–5 分钟,提交前人工确认是否需≥3:00 版 |
+| 演示视频 | **已具备，2:37 风险已披露** | P3.4 原始证据片已 accept;P3.18 增加完整英文烧录字幕提交版与可编辑 SRT。官方推荐 3–5 分钟,但非硬性时长 |
 | `docs/licenses.md`(含 Gemma 单独标注) | **已具备** | 本文(P3.5) |
 | 提示词/示例去个人信息;无真实隐私/API key 入库 | **基本具备** | Honcho few-shot 已合成化(M2.3);`tests/assets` 全合成;演示前若跑过真实采集须清库 |
 | 比赛服务器仅演示数据、赛后可销毁重建 | **部分具备** | 算力端无状态 + `download-models.sh` 可重建权重;提交前仍须确认演示数据/清库流程 |

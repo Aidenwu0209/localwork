@@ -4,7 +4,7 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
 
 ## 2026-07-20 (planning session)
 
-- **Server reachability**: `ssh root@36.150.116.200 -p 30147` passwordless OK (alias `radeon-cloud` in `~/.ssh/config`). `nproc=128`. Root fs is **overlay** (container); free ≈2.0T.
+- **Server reachability**: passwordless `ssh radeon-cloud` was verified through the local authorized alias. `nproc=128`. Root fs is **overlay** (container); free ≈2.0T.
 - **Persistent storage**: only `/workspace` survives rebuilds, and it is a **10 GB** NFS PVC — too small for weights. Decision: weights on overlay `/root/dejaview-models/`, bootstrap script + sha256 in `/workspace/dejaview-models/` + git.
 - **Mac hardware**: Apple M5, **16 GB** unified memory → dev stack must start/stop instances per task; 27B never runs locally; dev `brain` is served by the E4B instance (dual-mapped in LiteLLM).
 - **No cloud API key available** → all dev inference is local (Metal). Bonus: even dev data never leaves the device.
@@ -78,7 +78,12 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
 - **T0.4 PASS — all 5 logical names serve via :4000**: embed (1024-dim, 27ms), fast (no-think chat OK), sentinel (vision), perceive (Gemma E4B Q8, 12×8=96), brain (ThinkingCap-Qwen3.6-27B Q6_K, 17×23=391 in 14.6 s incl. reasoning). This is the load-bearing evidence for the 40-point ROCm optimisation score: the 27B fits, loads, and infers on the W7900D under ROCm 7.2.
 - **Shared-GPU VRAM choreography (Dolphin co-tenant)**: Dolphin (~10.6 GB) + the four常驻 small (sentinel+fast+embed+perceive ≈ 12 GB) = ~23 GB with ~25 GB free. brain Q8_0 (28 GB) would push the total to ~50.6 GB > 48 GB → OOM Dolphin. Resolution per handbook §2.4: run brain at **Q6_K (21 GB)**. Even Q6_K is tight alongside the full常驻 four + Dolphin (~43 GB), so the practical ops pattern is **stop perceive before starting brain** (brain itself can serve perceive's screen-understanding role), run brain, then optionally restart perceive. brain Q6_K measured: 17×23=391 correct in 14.6 s, no disturbance to Dolphin.
 - **Gateway coexistence verified**: Dolphin's VRAM footprint was unchanged before/during/after the brain smoke (10.6 GB ± Dolphin's own fluctuation); the eval job kept its 24 h+ uptime throughout. The dev-stack `-j32` build + per-instance `--log-disable` + `server-stack.sh` pidfile controller kept the co-tenant untouched.
-- **SSH tunnel for Mac access**: the server gateway binds 0.0.0.0:4000 but that port isn't exposed publicly. Mac reaches it via `ssh -N -L 14000:127.0.0.1:4000 radeon-cloud`, so Mac `.env` uses `GATEWAY_URL=http://127.0.0.1:14000/v1`. The tunnel adds latency jitter (httpx ReadTimeout on serial batches) — `seed_fixtures.py` and `agentd/embed.py` gained retry + 90-120 s timeouts to absorb it.
+- **Historical SSH tunnel finding (superseded by P3.17):** the 2026-07-21
+  gateway was reachable only through a local SSH forward, but its process still
+  listened on all server interfaces. P3.17 later hard-bound both gateways to
+  `127.0.0.1`; current deployments must keep the loopback listener and use the
+  authorized `ssh radeon-cloud` tunnel. The tunnel can add latency jitter, so
+  callers retain bounded retries and timeouts.
 
 ## 2026-07-21 (agentd出口 + M7.2)
 
@@ -119,7 +124,7 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   - **VRAM** 4-model residency: **13.71 / 47.98 GiB** used (`docs/assets/rocm-smi-vram-4model.png`)
 - **Dolphin co-tenant**: historical PID 20527 **absent** at capture (VRAM matches 4-model stack only).
 - **MTP flag surface**: `llama-server --help` lists `--spec-type ... draft-mtp ...` on this build → flag exists. On/off tok/s A/B for ThinkingCap-27B **not run** (SSH dropped before brain up) — still `[VERIFY]`.
-- **Blocked**: after perceive single-request benches, `ssh radeon-cloud` (`36.150.116.200:30147`) returned **Connection refused** for >10 min (host still ICMP-reachable). Missing brain Q8/Q6/Q4 × MTP × concurrency and perceive `-np` 1/2/4 sweep. Q4_K_M download had reached ~18% (~2.9 GB of 16 GB) — resume with `wget -c` when SSH returns.
+- **Blocked**: after perceive single-request benches, `ssh radeon-cloud` returned **Connection refused** for >10 min (host still ICMP-reachable). Missing brain Q8/Q6/Q4 × MTP × concurrency and perceive `-np` 1/2/4 sweep. Q4_K_M download had reached ~18% (~2.9 GB of 16 GB) — resume with `wget -c` when SSH returns.
 - Tables live in `docs/benchmarks.md` §2; TASKBOARD P3.1 → `blocked`.
 
 ## 2026-07-23 (P3.6 sentinel tune + P3.7 perceive prompts)
@@ -146,7 +151,7 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   - **verbatim ⊆ ocr_text violations 0/20** (parser drops hallucinations)
   - Examples: `defining parse_timeline method in TimelineParser class`, `displaying error ROCM-4042 in terminal`, `reading security advisory SEC-2026-0142 for nova-cipher in webpage`
 - **Scripts**: `services/memoryd/scripts/eval_perceive.py` (`--ocr-from-gt` or live ocrd).
-- **Note**: AMD ROCm gateway was down (`Connection refused` on :30147); Mac Metal vision + mmproj often segfaults after 1 request — use `--no-mmproj-offload` / text-only for local regression; production path remains gateway→ROCm when server is up.
+- **Note**: AMD ROCm gateway was down (`Connection refused` on the historical cloud endpoint); Mac Metal vision + mmproj often segfaults after 1 request — use `--no-mmproj-offload` / text-only for local regression; production path remains gateway→ROCm when server is up.
 
 ## 2026-07-23 (handoff re-verify M1.3 / M2.4 / M3.1)
 
@@ -163,7 +168,7 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`; formal tables in
   `docs/benchmarks.md` §2. `shasum -a 256 -c SHA256SUMS` passed for every
   archived artifact.
-- **Environment identity**: replacement instance `u-4695-e6d1476b`, 2× AMD
+- **Environment identity**: authorized replacement Radeon instance, 2× AMD
   EPYC 9334 / 128 logical CPUs / 1007.56 GiB RAM; W7900D-class gfx1100,
   51,522,830,336 B (47.98 GiB) VRAM; ROCm 7.2.1; driver 6.14.14.
   llama.cpp is clean source commit
@@ -227,8 +232,8 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
 
 ## 2026-08-02 ([VERIFY] P3.2 Grafana / ROCm live dashboard — accept)
 
-- **Live topology:** replacement instance `u-15420-7be0d6c9`
-  (`36.150.116.206:31357`) ran the five fixed model roles plus LiteLLM and the
+- **Live topology:** authorized replacement Radeon instance
+  via the authorized `ssh radeon-cloud` alias ran the five fixed model roles plus LiteLLM and the
   local-only ROCm exporter. Prometheus and Grafana ran on the Mac; all traffic
   crossed explicit SSH forwards, so the AMD host exposed no metrics or model
   port publicly.

@@ -32,8 +32,17 @@ class DoctorTest(unittest.TestCase):
         self.assertNotIn(marker, result.stdout + result.stderr)
 
     def test_missing_required_tool_is_blocking_and_named(self) -> None:
-        env = os.environ | {"PATH": "/usr/bin:/bin"}
-        result = subprocess.run([SCRIPT], env=env, capture_output=True, text=True)
+        # GitHub-hosted Linux runners expose /usr/bin/docker (and its Compose
+        # plugin) even when the deliberately reduced PATH hides uv and Node.
+        # Put a deterministic failing docker shim first so this test verifies
+        # the doctor's error contract instead of depending on runner images.
+        with tempfile.TemporaryDirectory() as raw:
+            bin_dir = Path(raw)
+            docker = bin_dir / "docker"
+            docker.write_text("#!/bin/sh\nexit 127\n", encoding="utf-8")
+            docker.chmod(0o755)
+            env = os.environ | {"PATH": f"{bin_dir}:/usr/bin:/bin"}
+            result = subprocess.run([SCRIPT], env=env, capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("uv missing", result.stderr)
         self.assertIn("node missing", result.stderr)

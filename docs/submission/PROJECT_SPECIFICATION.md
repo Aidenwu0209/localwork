@@ -202,7 +202,7 @@ Honcho is pinned to revision `340175ad` and receives two repository-owned patche
 - OCR accuracy varies by backend and screen conditions. The synthetic corpus does not represent every real application, font, language boundary, or compression artifact.
 - The daily split topology permits allowed transient inference payloads to reach an authorized stateless compute plane. It does not claim that all inference occurs on the data device.
 - Hardware/live-cloud verification is separate from the offline test suite and must never be simulated as a passing live check.
-- The official submission guidance recommends a **3–5 minute** demo. The current accepted video is **2:37** (157.2 seconds). The team will submit the current video and will **not** re-record it; the duration difference is disclosed rather than hidden.
+- The official submission guidance recommends a **3–5 minute** demo. The accepted evidence cut is **2:37** (157.2 seconds). It remains unchanged; the submission package adds complete burned-in English captions plus an editable SRT. The duration difference is disclosed rather than hidden.
 
 ## 13. Delivery checklist
 
@@ -214,7 +214,7 @@ Honcho is pinned to revision `340175ad` and receives two repository-owned patche
 - [x] Formal ROCm evidence identified by checksummed run; unmeasured benefits excluded.
 - [x] Safe clean-clone commands use loopback/symbolic configuration only.
 - [x] Root license, notice, third-party licenses, and model manifest referenced.
-- [x] Current 2:37 video retained; official 3–5 minute recommendation disclosed; no re-record planned.
+- [x] Original 2:37 evidence cut retained; English-captioned submission cut and editable SRT supplied; official 3–5 minute recommendation disclosed.
 - [ ] Human submitter confirms current contest portal, membership/eligibility, repository visibility, and final upload fields immediately before submission.
 - [ ] Human operator runs the hardware/live-service acceptance checklist on the authorized final environment; offline CI does not substitute for it.
 
@@ -225,4 +225,4 @@ The specification is grounded in the following repository artifacts:
 - Product and release contract: `README.md`, `STATUS.md`, `TASKBOARD.json`, and `docs/superpowers/specs/2026-08-02-mature-product-design.md`.
 - Model and legal identity: `docs/model-manifest.md`, `docs/licenses.md`, root `LICENSE`, and root `NOTICE`.
 - ROCm method and raw evidence: `docs/benchmarks.md` and `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`.
-- Accepted implementation and demo proof: `docs/verification-log.md`; the memoryd pipeline and Honcho projection modules; `tests/release/test_release_contract.py`; and `docs/assets/demo/p34-video-manifest.json` with the accepted MP4.
+- Accepted implementation and demo proof: `docs/verification-log.md`; the memoryd pipeline and Honcho projection modules; `tests/release/test_release_contract.py`; and `docs/assets/demo/p34-video-manifest.json` with both the accepted evidence MP4 and English-captioned submission MP4.

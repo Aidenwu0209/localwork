@@ -7,6 +7,18 @@
   "audio_codec": "aac",
   "size_bytes": 6407325,
   "sha256": "5dc772cea426b215ce6a87c83b75f7dbf2c9f9ca5884e77686e449c2f3ae23ed",
+  "submission_artifact": {
+    "artifact": "docs/assets/demo/dejaview-p34-six-act-20260802-en.mp4",
+    "language": "Chinese narration with complete burned-in English captions",
+    "duration_seconds": 157.2,
+    "resolution": "1920x1080",
+    "video_codec": "h264",
+    "audio_codec": "aac",
+    "size_bytes": 8969304,
+    "sha256": "4b326db90e38282abb8467d34e01b39989dc27dc6b1fb92807f0b56fcc81b4ed",
+    "caption_source": "docs/assets/demo/dejaview-p34-six-act-20260802-en.srt",
+    "caption_sha256": "b0a8f5c0f3f3b841520f1a86d562ba5b943f088c28c3eafbf6d22b37cd0ed3dd"
+  },
   "capture_method": "Frames captured from one live isolated browser run; only idle inference waits were removed.",
   "fault_injection": "Visible termination of the exact attested Radeon SSH compute tunnel; Wi-Fi and host network interfaces remain untouched.",
   "timeline": [

@@ -18,9 +18,7 @@ P3.1 正式 run 为 `p31-w7900d-20260728T075653Z`,证据在
 
 ## 环境
 - 仓库:`/Users/wu/Projects/Aidenwu0209/localwork/` · `git@github.com:Aidenwu0209/localwork.git`
-- 当前服务器:`ssh radeon-cloud`(= `root@36.150.116.206 -p 31357`;
-  实例 `u-15420-7be0d6c9`)。W7900D / ROCm 7.2.1。旧 `:30147` /
-  `:30189` 是历史端口。
+- 当前服务器只通过本机授权别名 `ssh radeon-cloud` 访问;不在仓库记录临时公网坐标或实例标识。W7900D / ROCm 7.2.1。
 - P3.4 正式成片后 gateway 与五模型角色仍在当前实例常驻。实例重启或
   重新起模型前先 `rocm-smi` + `server-stack.sh status`;
   brain 共租时用 Q6_K、先停 perceive、MTP 默认关(加载后仍保留 ≥6 GiB

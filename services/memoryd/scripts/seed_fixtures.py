@@ -89,7 +89,7 @@ FIXTURE_EVENTS = [
      "+ imagehash==4.3.1\n+ numpy==2.5.1\ninstalled in 1.2s"),
     (32, "Terminal", "ssh radeon-cloud",
      "SSHing into the AMD server to check GPU status",
-     "ssh root@36.150.116.200 -p 30147\nLast login: ...\nrocm-smi\nGPU 0: W7900D  48GB  util 12%"),
+     "ssh radeon-cloud\nLast login: ...\nrocm-smi\nGPU 0: W7900D  48GB  util 12%"),
     (34, "Terminal", "tail -f /tmp/dejaview-perceive.log",
      "Tailing the perceive model server log",
      "llama-server b10050\nllama_model_loader: loaded gemma-4-e4b-it Q4_0 (4590 MB)\nserver listening on 127.0.0.1:8002"),

@@ -217,7 +217,7 @@ localwork/                 # 远程 github.com/Aidenwu0209/localwork(项目代�
 │   ├── memoryd/           # 摄取编排(哨兵→OCR→新颖度门→理解→入库→Honcho)
 │   ├── ocrd/              # PP-OCRv6 逐字层微服务(部署在算力端 CPU)
 │   └── agentd/            # 主脑 Agent(tool calling, 日报, OpenAI 兼容出口)
-├── clients/capture/       # 跨平台采集客户端(mac/win 适配层)
+├── clients/capture/       # 已交付 macOS 屏幕采集;Windows 仅架构目标
 ├── third_party/honcho     # submodule → honcho-dejaview @ 钉死 commit
 └── Makefile               # make server-up / data-up / bench / demo-seed
 ```
@@ -233,17 +233,18 @@ localwork/                 # 远程 github.com/Aidenwu0209/localwork(项目代�
 
 ## 5. 感知客户端规格(clients/capture)
 
-### 5.1 技术选型(跨平台,Mac 与 Windows 都支持)
+### 5.1 当前交付边界(macOS screen-only)
 
-| 能力 | macOS | Windows |
+| 能力 | 已交付 macOS 客户端 | Windows 状态 |
 |---|---|---|
-| 截屏 | `mss`(Quartz 后端) | `mss`(GDI 后端) |
-| 前台应用/窗口标题 | pyobjc:`NSWorkspace` + `CGWindowListCopyWindowInfo` | `pywin32`:`GetForegroundWindow` + `GetWindowTextW` |
-| 浏览器 URL(尽力而为) | osascript 问 Safari/Chrome | UI Automation(可选,`uiautomation` 包) |
-| 音频 | `sounddevice` 麦克风;系统声再议(BlackHole,可砍) | WASAPI loopback(`soundcard` 包,反而更简单) |
-| 权限 | 需一次性授予「屏幕录制」+「麦克风」(系统设置→隐私与安全) | 无需特殊权限 |
+| 截屏 | `mss`(Quartz 后端),内存中编码后立即 POST | 架构目标,未交付 |
+| 前台应用/窗口标题 | pyobjc:`NSWorkspace` + `CGWindowListCopyWindowInfo` | 架构目标,未交付 |
+| 浏览器 URL(尽力而为) | osascript 问 Safari/Chrome | 架构目标,未交付 |
+| 音频/文档 | 未交付;memoryd 明确返回 `501 unsupported_media` | 未交付 |
+| 权限 | 需一次性授予「屏幕录制」 | 未交付 |
 
-服务器端(Ubuntu)**不需要**任何截屏能力——早期担心的 Wayland 问题随"传感器=Mac/Win 客户端"架构自然消失。
+服务器端(Ubuntu)**不需要**任何截屏能力。Windows 仍可作为未来的数据主权
+端适配目标,但当前比赛交付不得写成已有 Windows 可执行程序。
 
 ### 5.2 行为规范
 
@@ -251,8 +252,8 @@ localwork/                 # 远程 github.com/Aidenwu0209/localwork(项目代�
 - **去重**:dhash(`imagehash` 库)与上一帧距离 < 10 则丢弃。
 - **画幅**:上报按原生分辨率等比缩至宽 ≤2560px(保 Retina 细节供 OCR 识别小字);服务器 OCR 完成后归档再缩至 ≤1600px WebP quality 80。
 - **隐私**:内存里处理,POST 完即丢,客户端磁盘零残留;锁屏/屏保时暂停采集。
-- **配置**:`capture.yaml`(memoryd_url, device_id, 触发参数, 音频开关)。
-- 打包:`uv` 项目,`make run-capture`;Windows 出一个 `pyinstaller` 单文件为加分项(可砍)。
+- **配置**:`capture.yaml`(memoryd_url, device_id, 触发参数、URL 探测开关)。
+- 运行:`CAPTURE_DEVICE_ID=<id> make capture`;保持前台与权限状态可见。
 
 ### 5.3 上报契约(memoryd 提供)
 
@@ -260,9 +261,10 @@ localwork/                 # 远程 github.com/Aidenwu0209/localwork(项目代�
 POST /v1/ingest/frame   multipart/form-data:
   file: webp 图像
   meta: {"device_id","ts","app","window_title","url|null","trigger":"change|periodic"}
-POST /v1/ingest/audio   wav(16k mono)分段 + {"device_id","ts_start","ts_end"}
-POST /v1/ingest/doc     任意文档 + {"source_path","tags":[]}
 ```
+
+`POST /v1/ingest/audio` 与 `POST /v1/ingest/doc` 是历史规划接口,当前固定返回
+`501 unsupported_media`;不得作为已实现能力进入提交材料。
 
 ---
 
@@ -290,7 +292,7 @@ cmake -B build -DGGML_HIP=ON -DAMDGPU_TARGETS=gfx1100 -DCMAKE_BUILD_TYPE=Release
 **启动模板**(每模型一个脚本,systemd 或 compose 均可):
 ```bash
 llama-server -m brain-Q8_0.gguf --mmproj brain-mmproj-f16.gguf \
-  --alias brain -ngl 99 -c 32768 -np 2 --host 0.0.0.0 --port 8001 \
+  --alias brain -ngl 99 -c 32768 -np 2 --host 127.0.0.1 --port 8001 \
   --spec-type draft-mtp    # [VERIFY] MTP 旗标在当前版本的确切写法与收益
 llama-server -m e4b-Q8.gguf --mmproj e4b-mmproj-BF16.gguf \
   --alias perceive -ngl 99 -c 16384 -np 4 --port 8002
@@ -335,8 +337,8 @@ llama-server -m qwen3-embedding-0.6b-Q8_0.gguf \
    提示词纪律:**verbatim 字段只准从 OCR 文本中摘取,禁止自行转写图面文字**(防幻觉硬规则);图像仅供布局/视觉上下文;窗口元数据由系统注入,模型不得改写 app/title 字段。
 5. 组装事件 → `embed` 向量化 → 写 `timeline_events`(含 ocr_text/ocr_blocks)+ 截图存 `DATA_ROOT/screenshots/YYYY/MM/DD/`。
 6. 节流写 Honcho:每 5 分钟或 20 事件,由 `fast` 把 activity 行合并成一条陈述式 message 发给 Honcho(workspace=`dejaview`, peer=`owner`, session=按天)。
-7. 音频:按 T0.6 结论走 `perceive` 或 whisper.cpp → transcript 事件,同样入库+发 Honcho。
-8. 文档:MarkItDown → 分块 → `kb_chunks`。(扫描版/图片型 PDF 是 MarkItDown 弱项:如确有需求,可选接 PaddleOCR-VL 做文档解析——**仅限 kb 摄取路径,不得进入 timeline 确定性层**;默认按砍需求处理,不做。)
+7. 音频与文档摄取属于历史规划,当前未交付;入口 fail-closed 返回 501,
+   不进入 timeline、Honcho 或知识库。
 
 ### 6.3 时间线库 DDL(deploy/mac/timeline-init.sql)
 
@@ -512,7 +514,7 @@ sentinel 4×/16×压缩、novelty-gate 节流收益、EPYC ocrd 并发和完整�
 - [x] 可编辑 PPT / Poster 补充材料 — 7 页 PPT 已逐页渲染、无溢出,每页备注含来源。
 - [x] `docs/benchmarks.md` + Grafana 截图 — **已具备**(OCR A/B +
   P3.1 ROCm 正式消融 + P3.2 一屏截图)
-- [x] 已验收演示视频(≤5 分钟) — **P3.4 已完成**:2:37 六幕成片,含远端链路故障切换与 Local Metal 第二次日报。官方推荐 3–5 分钟,因此最终提交前仍需人工确认是直接提交已验收版,还是在不伪造等待的前提下制作≥3:00 提交版。
+- [x] 已验收演示视频(≤5 分钟) — **P3.4 已完成**:2:37 六幕原始证据片保持不变,含远端链路故障切换与 Local Metal 第二次日报;P3.18 另导出完整英文烧录字幕提交版和可编辑 SRT。官方推荐 3–5 分钟,2:37 时长差异保持显式披露。
 - [x] `docs/licenses.md`:Apache-2.0(ThinkingCap/MiniCPM/Honcho/Qwen3-Embedding;手册旧称 bge-m3 已替换)+ MIT(llama.cpp 等)+ **Gemma 单独标注** + 各 Python 依赖 — **已具备**(P3.5)
 - [x] 全部提示词/示例已去个人信息;仓库无任何真实隐私数据、无 API key — **基本具备**(演示前若真实采集须清库)
 - [ ] 比赛服务器上只有演示数据,赛后可一键销毁重建 — **部分具备**(无状态算力+模型引导脚本;提交前再确认演示数据)
@@ -587,7 +589,8 @@ sentinel 4×/16×压缩、novelty-gate 节流收益、EPYC ocrd 并发和完整�
 Postgres/Honcho → agentd 带证据引用)。`TASKBOARD`:**G0+M+D 33/33
 accept**;当前总计 **47/48 accept**,P3.17 干净复现/发布一致性已
 `accept`,P3.18 最终全链路验收为 `doing`。P3.4 正式六幕成片为
-`docs/assets/demo/dejaview-p34-six-act-20260802.mp4`(2:37)。P3.1 正式 run:
+`docs/assets/demo/dejaview-p34-six-act-20260802.mp4`(2:37),英文烧录字幕提交版为
+`docs/assets/demo/dejaview-p34-six-act-20260802-en.mp4`。P3.1 正式 run:
 `p31-w7900d-20260728T075653Z`,证据目录
 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`。
 
@@ -604,7 +607,9 @@ accept**;当前总计 **47/48 accept**,P3.17 干净复现/发布一致性已
 - 参考开源只取思路:**禁止抄 AGPL 代码**(OpenRecall 等)。
 
 #### 架构(存储/计算分离)
-- **Mac/Windows = 数据主权端**:capture、本地 Sentinel、memoryd、ocrd、agentd、Postgres+pgvector、Honcho、放行截图。用户记忆库**永不落** AMD 服务器。
+- **数据主权端**:当前交付为 Mac 上的 capture、本地 Sentinel、memoryd、
+  ocrd、agentd、Postgres+pgvector、Honcho 与放行截图;Windows 是同一架构的
+  未交付目标。用户记忆库**永不落** AMD 服务器。
 - **AMD 服务器 = 无状态算力端**:llama.cpp ROCm + LiteLLM 网关;只处理 Sentinel 放行后的短时推理请求,不存用户 DB。agentd 实际请求失败时可降级到 Local Metal,且必须如实显示 backend/model/degraded/reason。
 - Mac↔服务器用 SSH 隧道:`ssh -f -N -L 14000:127.0.0.1:4000 radeon-cloud`(网关不暴露公网)。决赛可用 LAN。
 - 逻辑模型名统一:`brain / perceive / sentinel / fast / embed`。Sentinel 用独立本地网关;其他阶段才经通用 LiteLLM 网关。
