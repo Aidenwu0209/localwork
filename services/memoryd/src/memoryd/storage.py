@@ -36,8 +36,11 @@ _HONCHO_LEASE_SQL = """
 WITH candidates AS (
   SELECT event_id
   FROM honcho_outbox
-  WHERE (state = 'pending' AND next_attempt_at <= %s)
-     OR (state = 'sending' AND lease_expires_at <= %s)
+  WHERE attempt_count < %s
+    AND (
+      (state = 'pending' AND next_attempt_at <= %s)
+      OR (state = 'sending' AND lease_expires_at <= %s)
+    )
   ORDER BY next_attempt_at, event_id
   FOR UPDATE SKIP LOCKED
   LIMIT %s
@@ -50,6 +53,15 @@ SET state = 'sending',
 FROM candidates
 WHERE outbox.event_id = candidates.event_id
 RETURNING outbox.event_id, outbox.payload, outbox.session_id, outbox.attempt_count
+"""
+
+_HONCHO_EXPIRE_EXHAUSTED_SQL = """
+UPDATE honcho_outbox
+SET state = 'failed', last_error = 'retry_exhausted', lease_expires_at = NULL,
+    updated_at = %s
+WHERE state = 'sending'
+  AND lease_expires_at <= %s
+  AND attempt_count >= %s
 """
 
 
@@ -214,13 +226,21 @@ class TimelineStore:
         }
 
     def lease_honcho_rows(
-        self, *, batch_size: int, lease_seconds: int, now: datetime
+        self,
+        *,
+        batch_size: int,
+        lease_seconds: int,
+        max_attempts: int,
+        now: datetime,
     ) -> list[HonchoOutboxRow]:
         lease_until = now + timedelta(seconds=lease_seconds)
         with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
+            # A crash after the final allowed send must not resurrect the row
+            # once its lease expires.  This transition is local and idempotent.
+            cur.execute(_HONCHO_EXPIRE_EXHAUSTED_SQL, (now, now, max_attempts))
             cur.execute(
                 _HONCHO_LEASE_SQL,
-                (now, now, batch_size, lease_until, now),
+                (max_attempts, now, now, batch_size, lease_until, now),
             )
             rows = cur.fetchall()
         return [_row_to_honcho_outbox(row) for row in rows]
@@ -322,5 +342,12 @@ def _row_to_honcho_outbox(row: tuple[object, ...]) -> HonchoOutboxRow:
 
 def _safe_projection_error(error: str) -> str:
     """Persist only fixed public error categories, never an upstream body."""
-    allowed = {"network_error", "upstream_4xx", "upstream_5xx", "unexpected_error"}
+    allowed = {
+        "network_error",
+        "upstream_4xx",
+        "upstream_5xx",
+        "unexpected_error",
+        "invalid_projection_payload",
+        "retry_exhausted",
+    }
     return error if error in allowed else "unexpected_error"

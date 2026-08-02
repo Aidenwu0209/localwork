@@ -27,7 +27,7 @@ class FakeStore:
         return self.enabled
 
     def lease_honcho_rows(
-        self, *, batch_size: int, lease_seconds: int, now: datetime
+        self, *, batch_size: int, lease_seconds: int, max_attempts: int, now: datetime
     ) -> list[HonchoOutboxRow]:
         self.lease_calls += 1
         leased, self.rows = self.rows[:batch_size], self.rows[batch_size:]
@@ -102,20 +102,72 @@ def test_delivers_one_closed_projection_and_replay_never_duplicates() -> None:
     assert worker.run_once(now=datetime(2026, 8, 3, tzinfo=timezone.utc)) == 0
     assert store.sent == [9]
 
+    list_request = next(r for r in requests if r.url.path.endswith("/messages/list"))
+    assert json.loads(list_request.content) == {
+        "filters": {"metadata": {"dejaview_event_id": 9, "schema": 1}}
+    }
     messages_request = next(r for r in requests if r.url.path.endswith("/messages"))
     assert messages_request.headers["idempotency-key"] == "dejaview-event-9"
     body = json.loads(messages_request.content)
     message = body["messages"]
     assert len(message) == 1
     assert message[0]["peer_id"] == "owner"
+    assert message[0]["metadata"] == {"dejaview_event_id": 9, "schema": 1}
     projection = json.loads(message[0]["content"])
     assert projection == _row().payload
     body_text = messages_request.content.decode()
     for forbidden in (
         "ocr", "url", "window_title", "verbatim", "screenshot", "bbox",
-        "pixels", "metadata", "FORBIDDEN",
+        "pixels", "FORBIDDEN",
     ):
         assert forbidden not in body_text.lower()
+
+
+def test_lease_recovery_finds_deterministic_metadata_and_never_recreates_message() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.url.path.endswith("/messages/list"):
+            return httpx.Response(
+                200,
+                json={
+                    "items": [
+                        {
+                            "id": "already-sent",
+                            "metadata": {"dejaview_event_id": 9, "schema": 1},
+                        }
+                    ]
+                },
+            )
+        if request.url.path.endswith("/messages"):
+            raise AssertionError("recovery must not duplicate a delivered message")
+        return httpx.Response(200, json={"id": "ok"})
+
+    store = FakeStore([_row(attempt_count=2)])
+    assert _worker(store, handler).run_once(now=datetime(2026, 8, 3, tzinfo=timezone.utc)) == 1
+    assert store.sent == [9]
+    assert [r.url.path for r in requests].count(
+        "/v3/workspaces/dejaview/sessions/dejaview-2026-08-04/messages"
+    ) == 0
+
+
+def test_untrusted_outbox_payload_fails_closed_without_any_http() -> None:
+    row = _row()
+    row.payload["ocr_text"] = "FORBIDDEN"
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={})
+
+    store = FakeStore([row])
+    assert _worker(store, handler).run_once(now=datetime(2026, 8, 3, tzinfo=timezone.utc)) == 0
+    assert requests == []
+    assert store.sent == []
+    assert store.retries == [
+        (9, "invalid_projection_payload", datetime(2026, 8, 3, tzinfo=timezone.utc))
+    ]
 
 
 def test_network_failure_schedules_sanitized_bounded_exponential_retry() -> None:
@@ -139,10 +191,29 @@ def test_last_attempt_is_failed_without_exposing_upstream_error() -> None:
 
 
 def test_storage_leasing_sql_is_concurrent_and_recovers_expired_leases() -> None:
-    from memoryd.storage import _HONCHO_LEASE_SQL
+    from memoryd.storage import _HONCHO_EXPIRE_EXHAUSTED_SQL, _HONCHO_LEASE_SQL
 
     sql = _HONCHO_LEASE_SQL.lower()
     assert "for update skip locked" in sql
     assert "state = 'sending'" in sql
     assert "lease_expires_at <=" in sql
     assert "attempt_count = attempt_count + 1" in sql
+    assert "attempt_count < %s" in sql
+    expired = _HONCHO_EXPIRE_EXHAUSTED_SQL.lower()
+    assert "state = 'failed'" in expired
+    assert "attempt_count >= %s" in expired
+
+
+def test_already_exhausted_row_is_never_sent_even_if_a_store_returns_it() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={})
+
+    store = FakeStore([_row(attempt_count=4)])
+    assert _worker(store, handler).run_once(now=datetime(2026, 8, 3, tzinfo=timezone.utc)) == 0
+    assert requests == []
+    assert store.retries == [
+        (9, "retry_exhausted", datetime(2026, 8, 3, tzinfo=timezone.utc))
+    ]
