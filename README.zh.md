@@ -1,6 +1,6 @@
 # DejaView · 全本地数字记忆体
 
-> 持续感知你的屏幕与语音,把数字生活变成**可问答、带证据的记忆**;用 Honcho 心理建模理解「你是谁」;隐私哨兵把关「什么不该被记住」。**AI 推理 100% 在 Radeon PRO W7900D(ROCm)上执行**,数据永远存在用户自己的设备上。
+> 持续感知你的屏幕,把数字生活变成**可问答、带证据的记忆**;用 Honcho 心理建模理解「你是谁」;隐私哨兵把关「什么不该被记住」。**AI 推理 100% 在 Radeon PRO W7900D(ROCm)上执行**,数据永远存在用户自己的设备上。当前服务不支持音频和文档写入。
 
 产品代号:**DejaView**(déjà vu + view:你的机器替你「似曾相识」)。  
 英文主文档:[README.md](README.md)
@@ -36,16 +36,16 @@
 ```
 ┌─ 传感器(Mac/Win) ─┐   ┌─ 数据主权端(Mac,有状态) ──────────────┐   ┌─ 算力端(AMD,无状态) ────────────┐
 │ capture 客户端     │   │ memoryd(编排)        agentd(主脑出口) │   │ LiteLLM 网关 :4000              │
-│ 逐窗口截图         │──▶│ ocrd(PP-OCR,CPU)     Honcho(用户画像) │──▶│ brain :8001 · perceive :8002    │
-│ dhash · 零落盘     │   │ Postgres+pgvector     timeline+kb+audit│   │ sentinel :8003 · fast :8005     │
+│ 逐窗口截图         │──▶│ 本地 Sentinel → ocrd(PP-OCR,CPU)          │──▶│ brain :8001 · perceive :8002    │
+│ dhash · 零落盘     │   │ Postgres+pgvector     timeline+kb+audit│   │ fast :8005                     │
 └────────────────────┘   │ DATA_ROOT(~/dejaview-data)             │   │ embed :8004 ·(可选 EPYC ocrd)   │
                          └────────────────────────────────────────┘   └────────────────────────────────┘
-                                      GATEWAY_URL 是唯一 Mac↔服务器接缝
-                                      (开发期:SSH 隧道 Mac :14000 → 服务器 :4000)
+                         SENTINEL_GATEWAY_URL 保持本地;仅放行帧才会使用 GATEWAY_URL
 ```
 
-- **有状态只在 Mac:** Postgres、Redis、截图/录音/文档、审计日志。单一可移植 `DATA_ROOT`。
+- **有状态只在 Mac:** Postgres、Redis、截图与审计日志。单一可移植 `DATA_ROOT`;当前不支持音频/文档写入。
 - **服务器纯无状态:** 模型服务 + 网关(+ 可选 EPYC OCR)。不落用户数据、不落 prompt 日志。
+- **隐私顺序:** memoryd 先把原始帧发送到 `SENTINEL_GATEWAY_URL` 配置的本地 Sentinel；仅放行帧才会经 `GATEWAY_URL` 请求 Radeon 算力。
 - **网络:** LAN 或 Tailscale/WireGuard;冒烟用 SSH 隧道即可(见下)。
 
 ### 形态 B — AMD 单机(评委 / 演示)
@@ -54,7 +54,7 @@
 
 ```
 ┌──────────────────────────── AMD 单机(有状态 + 算力) ────────────────────────────┐
-│  capture ─▶ memoryd / ocrd / Honcho / Postgres / DATA_ROOT                      │
+│  capture ─▶ memoryd / 本地 Sentinel / ocrd / Honcho / Postgres / DATA_ROOT       │
 │                    │                                                             │
 │                    └──▶ LiteLLM :4000 ─▶ brain / perceive / sentinel / fast / embed (ROCm) │
 └──────────────────────────────────────────────────────────────────────────────────┘
@@ -89,6 +89,7 @@
 ```bash
 cp .env.example .env
 cp deploy/mac/honcho.env.example deploy/mac/honcho.env   # 按需改;本地冒烟无需真实密钥
+set -a; source .env; set +a   # memoryd 直接读取已导出的环境变量
 ```
 
 最小命令(完整起服表与排障:[`STATUS.md`](STATUS.md) · 手册 §12.5):
@@ -101,15 +102,17 @@ docker compose -f deploy/mac/compose.honcho.yml up -d
 docker compose -f deploy/mac/compose.honcho.yml run --rm --no-deps \
   --entrypoint /app/.venv/bin/python honcho-api scripts/configure_embeddings.py --yes
 
-# 2. AMD 推理(4 小模型常驻;brain 按需——先查 VRAM)
-ssh radeon-cloud "cd /root/dejaview-launch && ./server-stack.sh up embed fast sentinel perceive"
+# 2. AMD 推理(本地 Sentinel 之后的阶段;brain 按需——先查 VRAM)
+ssh radeon-cloud "cd /root/dejaview-launch && ./server-stack.sh up embed fast perceive"
 
 # 3. 隧道(服务器网关不暴露公网)
 ssh -f -N -L 14000:127.0.0.1:4000 radeon-cloud
 
-# 4. ocrd · memoryd · capture
+# 4. 启动本地 Sentinel 网关并为它导出 SENTINEL_GATEWAY_URL；
+#    memoryd 只会向 Radeon 网关发送 Sentinel 放行的帧。
+#    ocrd · memoryd · capture
 cd services/ocrd && nohup uv run python -m ocrd > /tmp/ocrd.log 2>&1 &
-MEMORYD_REAL_PIPELINE=1 GATEWAY_URL=http://127.0.0.1:14000/v1 \
+GATEWAY_URL=http://127.0.0.1:14000/v1 \
   nohup uv run --project services/memoryd python -m memoryd > /tmp/memoryd.log 2>&1 &
 cd clients/capture && CAPTURE_DEVICE_ID=dev uv run python -m capture
 
@@ -126,7 +129,7 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 | Honcho | `compose.honcho.yml up -d` | `:8100` |
 | 隧道 | `ssh -L 14000:…:4000` | Mac `:14000` → 服务器 `:4000` |
 | ocrd | `uv run python -m ocrd` | `:8006` |
-| memoryd | `MEMORYD_REAL_PIPELINE=1 … python -m memoryd` | `:8090` |
+| memoryd | `SENTINEL_GATEWAY_URL=… GATEWAY_URL=… python -m memoryd` | `:8090` |
 | agentd | `python -m agentd` | `:8101` |
 | capture | `python -m capture` | — |
 
@@ -134,7 +137,9 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 
 ## 逻辑模型名表
 
-应用代码只允许出现下列逻辑名(经 `GATEWAY_URL` 调用)。物理路由只在 `deploy/server/litellm.yaml`。
+应用代码使用下列逻辑名。`sentinel` 通过独立且本地的
+`SENTINEL_GATEWAY_URL` 调用，其他经网关的阶段使用 `GATEWAY_URL`。物理路由只在
+`deploy/server/litellm.yaml`。
 
 | 逻辑名 | 角色 | 物理模型 | 端口 |
 |---|---|---|---|
@@ -145,14 +150,15 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 | `embed` | 全部向量化(查询侧加指令前缀) | Qwen3-Embedding-0.6B(1024 维) | 8004 |
 | `ocrd`*(非 LLM)* | 确定性逐字 OCR | PP-OCRv6 / rapidocr(CPU) | 8006 |
 
-**切云三纪律(仅开发期):** ① **`sentinel` 永远本地**——它看的是未过滤画面。② 切换 `embed` 必须全量重建索引。③ 比赛演示与提交视频必须**全本地**。
+**切云三纪律(仅开发期):** ① **`sentinel` 永远本地**——它看的是未过滤画面，须用 `SENTINEL_GATEWAY_URL` 单独配置。② 切换 `embed` 必须全量重建索引。③ 比赛演示与提交视频必须**全本地**。
 
 ---
 
 ## 隐私与数据主权
 
-- 用户记忆(Postgres、Redis、`DATA_ROOT` 截图/录音/文档、审计日志)只在**你自己的设备**——从不落 AMD 算力节点。
+- 用户记忆(Postgres、Redis、`DATA_ROOT` 截图、审计日志)只在**你自己的设备**——从不落 AMD 算力节点。当前音频和文档入口均返回 `501 unsupported_media`。
 - 采集端:**零落盘**(内存处理 → POST → 丢弃)。哨兵 `block` 帧只写审计——不 OCR、不落图。
+- 采集端每 30 秒发送一次仅元数据 heartbeat，锁屏时也继续；帧响应的 `processing_state` 为 `stored`、`merged` 或 `blocked`。缺少屏幕录制权限时，capture 会在开始采集前以状态码 `2` 退出。
 - 仓库只有**合成测试资产**(无真实 PII、无 API key)。若跑过真实采集,公开演示前请清库。
 - SearXNG 默认 **disabled**(与「数据不出设备」叙事冲突)。
 

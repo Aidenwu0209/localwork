@@ -7,16 +7,17 @@ Ingestion orchestrator for DejaView (handbook §6.2). Runs on the Mac
 sentinel -> ocrd -> novelty gate -> perceive -> embed -> timeline store -> Honcho
 ```
 
-## Status
+## Frame safety and pipeline mode
 
-- **M3.2 (this commit):** FastAPI skeleton with the three ingest endpoints and a
-  pluggable pipeline. Every stage is a Protocol backed by an obvious stub, so
-  the ingest path runs end to end against the real Postgres store with zero GPU.
-  A blocked sentinel decision writes only to `sentinel_audit` — the image never
-  reaches OCR or disk (privacy invariant from handbook §6.2.1).
-- **M3.3:** real `embed` + search endpoints (semantic / pg_trgm / time).
-- **M3.4 / M5.1:** swap stubs for gateway-backed sentinel/perceive/embed and the
-  ocrd microservice. No orchestrator changes — construct `Pipeline` explicitly.
+The default pipeline is real: every frame first goes to the local privacy gate
+at `SENTINEL_GATEWAY_URL`, then only a Sentinel-allowed frame reaches OCR,
+storage, or the general `GATEWAY_URL` stages. A blocked frame writes audit
+metadata only; its pixels never reach OCR or disk.
+
+`MEMORYD_ALLOW_STUB_PIPELINE=false` is the default. Setting it to `true` is an
+unsafe test-only switch: memoryd constructs stubs but rejects every
+`/v1/ingest/frame` request with `503` and `pipeline_not_ready`, before reading
+the uploaded image. Do not use it for capture or production-like runs.
 
 ## Run
 
@@ -25,9 +26,12 @@ sentinel -> ocrd -> novelty gate -> perceive -> embed -> timeline store -> Honch
 uv run python -m memoryd            # serves 127.0.0.1:8090
 ```
 
-Config comes from `.env` (copy `.env.example` from repo root). Logical model
-names only (`brain`/`perceive`/`sentinel`/`fast`/`embed`); physical routing
-lives in `deploy/server/litellm.yaml`.
+Export configuration variables from the repository `.env.example` template
+through your shell or process manager. The dedicated
+`SENTINEL_GATEWAY_URL` must stay local to the data-sovereignty side;
+`GATEWAY_URL` is used only after a frame is allowed. Application code uses
+logical names only (`brain`/`perceive`/`sentinel`/`fast`/`embed`); physical
+routing lives in `deploy/server/litellm.yaml`.
 
 ## Smoke test
 
@@ -37,3 +41,19 @@ curl -F "file=@some.png" \
      http://127.0.0.1:8090/v1/ingest/frame
 # -> {"accepted":true,"event_id":1,"sentinel":{"decision":"allow",...}, ...}
 ```
+
+## Response and heartbeat contracts
+
+Frame responses have `processing_state` of `stored`, `merged`, or `blocked`.
+`stored` returns a positive `event_id`; `merged` returns a positive
+`merged_into`; `blocked` has `accepted: false` and means the image was
+discarded before OCR and storage.
+
+Capture clients send `POST /v1/capture/heartbeat` every 30 seconds, including
+while their screen is locked. The body is metadata only: device ID,
+timezone-aware client timestamp, and nonnegative stored/merged/blocked/failed
+counters. No pixels, window titles, app names, or URLs are accepted.
+
+`/v1/ingest/audio` and `/v1/ingest/doc` are intentionally unsupported today:
+both return `501` with `unsupported_media` and list `frame` as the only
+supported ingest type.

@@ -1,6 +1,6 @@
 # DejaView
 
-> Continuously perceives your screen and voice, turns digital life into **queryable memory with evidence**; uses Honcho psychological modeling to understand *who you are*; a privacy sentinel gates *what must never be remembered*. **AI inference runs 100% on Radeon PRO W7900D (ROCm)**; data stays on your own devices.
+> Continuously perceives your screen and turns digital life into **queryable memory with evidence**; uses Honcho psychological modeling to understand *who you are*; a privacy sentinel gates *what must never be remembered*. **AI inference runs 100% on Radeon PRO W7900D (ROCm)**; data stays on your own devices. Audio and document ingest are not supported in the current service.
 
 Product codename: **DejaView** (déjà vu + view — your machine has “seen this before”).  
 中文叙事名:**全本地数字记忆体** · [中文 README](README.zh.md)
@@ -36,16 +36,18 @@ Same codebase and compose stack; switch with `GATEWAY_URL` / profiles (see `docs
 ```
 ┌─ Sensor (Mac/Win) ─┐   ┌─ Data sovereignty (Mac, stateful) ────────────┐   ┌─ Compute (AMD, stateless) ──────────┐
 │ capture client     │   │ memoryd (orchestrator)   agentd (brain出口)   │   │ LiteLLM gateway :4000               │
-│ per-window capture │──▶│ ocrd (PP-OCR, CPU)       Honcho (user model)  │──▶│ brain :8001 · perceive :8002         │
-│ dhash · zero-disk  │   │ Postgres+pgvector        timeline+kb+audit    │   │ sentinel :8003 · fast :8005         │
+│ per-window capture │──▶│ local Sentinel → ocrd (PP-OCR, CPU)           │──▶│ brain :8001 · perceive :8002         │
+│ dhash · zero-disk  │   │ Postgres+pgvector        timeline+kb+audit    │   │ fast :8005                           │
 └────────────────────┘   │ DATA_ROOT (~/dejaview-data)                   │   │ embed :8004 · (ocrd EPYC optional)  │
                          └───────────────────────────────────────────────┘   └─────────────────────────────────────┘
-                                      GATEWAY_URL is the only Mac↔server seam
-                                      (dev: SSH tunnel Mac :14000 → server :4000)
+                          SENTINEL_GATEWAY_URL stays local; only allowed frames use GATEWAY_URL
 ```
 
-- **Stateful on Mac only:** Postgres, Redis, screenshots/audio/docs, audit logs. One portable `DATA_ROOT`.
+- **Stateful on Mac only:** Postgres, Redis, screenshots, and audit logs. One portable `DATA_ROOT`; audio/document ingest is currently unsupported.
 - **Server is stateless:** model services + gateway (+ optional EPYC OCR). No user data, no prompt logs on disk.
+- **Privacy order:** memoryd sends raw frames to the local Sentinel configured by
+  `SENTINEL_GATEWAY_URL` before OCR, disk, or any allowed Radeon request through
+  `GATEWAY_URL`.
 - **Network:** LAN or Tailscale/WireGuard; SSH tunnel is fine for smoke (see below).
 
 ### Topology B — Single-box AMD (judge / demo)
@@ -54,7 +56,7 @@ Same codebase and compose stack; switch with `GATEWAY_URL` / profiles (see `docs
 
 ```
 ┌──────────────────────────── AMD single box (stateful + compute) ────────────────────────────┐
-│  capture ─▶ memoryd / ocrd / Honcho / Postgres / DATA_ROOT                                  │
+│  capture ─▶ memoryd / local Sentinel / ocrd / Honcho / Postgres / DATA_ROOT                 │
 │                    │                                                                         │
 │                    └──▶ LiteLLM :4000 ─▶ brain / perceive / sentinel / fast / embed (ROCm) │
 └──────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -89,6 +91,7 @@ Prereqs: Docker Desktop · [`uv`](https://github.com/astral-sh/uv) · SSH host a
 ```bash
 cp .env.example .env
 cp deploy/mac/honcho.env.example deploy/mac/honcho.env   # edit if needed; no secrets required for local smoke
+set -a; source .env; set +a   # memoryd reads exported environment variables directly
 ```
 
 Minimal commands (full recipe + troubleshooting: [`STATUS.md`](STATUS.md) · handbook §12.5):
@@ -101,15 +104,17 @@ docker compose -f deploy/mac/compose.honcho.yml up -d
 docker compose -f deploy/mac/compose.honcho.yml run --rm --no-deps \
   --entrypoint /app/.venv/bin/python honcho-api scripts/configure_embeddings.py --yes
 
-# 2. AMD inference (4 small models; brain on demand — check VRAM first)
-ssh radeon-cloud "cd /root/dejaview-launch && ./server-stack.sh up embed fast sentinel perceive"
+# 2. AMD inference for stages after local Sentinel (brain on demand — check VRAM first)
+ssh radeon-cloud "cd /root/dejaview-launch && ./server-stack.sh up embed fast perceive"
 
 # 3. Tunnel (server gateway is not public)
 ssh -f -N -L 14000:127.0.0.1:4000 radeon-cloud
 
-# 4. ocrd · memoryd · capture
+# 4. Start a local Sentinel gateway and export SENTINEL_GATEWAY_URL for it;
+#    memoryd will send only Sentinel-allowed frames to the Radeon gateway.
+#    ocrd · memoryd · capture
 cd services/ocrd && nohup uv run python -m ocrd > /tmp/ocrd.log 2>&1 &
-MEMORYD_REAL_PIPELINE=1 GATEWAY_URL=http://127.0.0.1:14000/v1 \
+GATEWAY_URL=http://127.0.0.1:14000/v1 \
   nohup uv run --project services/memoryd python -m memoryd > /tmp/memoryd.log 2>&1 &
 cd clients/capture && CAPTURE_DEVICE_ID=dev uv run python -m capture
 
@@ -126,7 +131,7 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 | Honcho | `compose.honcho.yml up -d` | `:8100` |
 | Tunnel | `ssh -L 14000:…:4000` | Mac `:14000` → server `:4000` |
 | ocrd | `uv run python -m ocrd` | `:8006` |
-| memoryd | `MEMORYD_REAL_PIPELINE=1 … python -m memoryd` | `:8090` |
+| memoryd | `SENTINEL_GATEWAY_URL=… GATEWAY_URL=… python -m memoryd` | `:8090` |
 | agentd | `python -m agentd` | `:8101` |
 | capture | `python -m capture` | — |
 
@@ -134,7 +139,9 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 
 ## Logical model names
 
-Application code may only use these names (via `GATEWAY_URL`). Physical routing lives in `deploy/server/litellm.yaml`.
+Application code uses these logical names. `sentinel` is reached through the
+separate local `SENTINEL_GATEWAY_URL`; the other gateway-backed stages use
+`GATEWAY_URL`. Physical routing lives in `deploy/server/litellm.yaml`.
 
 | Logical name | Role | Physical model | Port |
 |---|---|---|---|
@@ -145,14 +152,18 @@ Application code may only use these names (via `GATEWAY_URL`). Physical routing 
 | `embed` | All embeddings (query side adds instruction prefix) | Qwen3-Embedding-0.6B (1024-d) | 8004 |
 | `ocrd` *(not LLM)* | Deterministic verbatim OCR | PP-OCRv6 / rapidocr (CPU) | 8006 |
 
-**Cloud-swap rules (dev only):** (1) **`sentinel` stays local forever** — it sees unfiltered screens. (2) Switching `embed` requires a full re-index. (3) Contest demo / submission video must be **fully local**.
+**Cloud-swap rules (dev only):** (1) **`sentinel` stays local forever** — it sees unfiltered screens; configure it separately with `SENTINEL_GATEWAY_URL`. (2) Switching `embed` requires a full re-index. (3) Contest demo / submission video must be **fully local**.
 
 ---
 
 ## Privacy & data sovereignty
 
-- User memory (Postgres, Redis, `DATA_ROOT` screenshots/audio/docs, audit logs) lives on **your device** — never on the AMD compute node.
+- User memory (Postgres, Redis, `DATA_ROOT` screenshots, audit logs) lives on **your device** — never on the AMD compute node. Audio and document ingest currently return `501 unsupported_media`.
 - Capture client: **zero local disk** (in-memory → POST → discard). Sentinel `block` frames write audit only — no OCR, no screenshot file.
+- Capture sends a metadata-only heartbeat every 30 seconds, including while the
+  screen is locked. Frame replies report `processing_state`: `stored`,
+  `merged`, or `blocked`; a missing Screen Recording permission exits capture
+  with status `2` before frame capture begins.
 - Repo contains **synthetic fixtures only** (no real PII, no API keys). Clear the timeline DB before public demos if you ran real capture.
 - SearXNG stays **disabled** by default (conflicts with “data never leaves the device”).
 

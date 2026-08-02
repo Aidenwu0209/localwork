@@ -20,6 +20,9 @@ memoryd_url: http://127.0.0.1:8090
 #   poll_interval         how often to check the frontmost window for change
 #   min_capture_interval  minimum gap between any two uploads (anti-flood)
 #   periodic_interval     fallback frame cadence when nothing changed
+# Capture also sends a metadata-only heartbeat every 30 seconds through this
+# memoryd_url, including while the screen is locked. It never contains pixels,
+# app names, window titles, or URLs.
 poll_interval: 3.0
 min_capture_interval: 3.0
 periodic_interval: 30.0

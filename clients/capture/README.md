@@ -15,9 +15,10 @@ then dropped (handbook §5.2 privacy invariant).
   `CGWindowListCopyWindowInfo`.
 - Optionally probes the active browser tab URL via `osascript` (best effort).
 - POSTs `{file, meta}` to memoryd as `multipart/form-data`.
-- Pauses while the session is locked or the screensaver is running.
+- Pauses window reads, screenshots, and frame uploads while the session is
+  locked or the screensaver is running; its metadata-only heartbeat continues.
 - Detects a missing Screen Recording permission (all-black frame) and prints
-  step-by-step guidance instead of crashing.
+  step-by-step guidance, then exits with status `2` without starting capture.
 
 ## Install & run
 
@@ -58,8 +59,9 @@ the client detects this on startup and prints guidance. To grant:
 3. Toggle its switch **ON**. macOS will prompt to quit the app.
 4. **Quit the app fully (⌘Q)** and relaunch it, then run capture again.
 
-The first non-black frame confirms it worked. Until then, capture keeps
-running (it does not crash) but every frame is black and useless to OCR.
+The first non-black frame confirms it worked. Until then, capture exits with
+status `2` before it creates its HTTP client or starts a capture loop. Grant
+the permission, fully relaunch the authorized app, then run capture again.
 
 > Note: AppleScript automation (for the optional browser-URL probe) needs a
 > separate one-time grant under **Privacy & Security → Automation**. If you
@@ -69,7 +71,7 @@ running (it does not crash) but every frame is black and useless to OCR.
 
 | key                   | default                  | meaning                                                 |
 |-----------------------|--------------------------|---------------------------------------------------------|
-| `memoryd_url`         | `http://127.0.0.1:8090`  | memoryd base URL; `/v1/ingest/frame` is appended.       |
+| `memoryd_url`         | `http://127.0.0.1:8090`  | memoryd base URL; frame ingest and heartbeat paths use it. |
 | `device_id`           | short hostname           | Stable identifier for this machine in the timeline.     |
 | `poll_interval`       | `3.0`                    | Seconds between frontmost-window checks.                |
 | `min_capture_interval`| `3.0`                    | Minimum seconds between any two uploads (anti-flood).   |
@@ -112,3 +114,19 @@ src/capture/
 
 On any network/HTTP error the frame is dropped silently — nothing is cached
 to disk (privacy invariant).
+
+Successful frame responses carry `processing_state`:
+
+- `stored`: a new event was persisted (`accepted: true`, positive `event_id`).
+- `merged`: the frame extended an existing event (`accepted: true`, positive
+  `merged_into`).
+- `blocked`: Sentinel refused the frame (`accepted: false`); pixels do not
+  reach OCR or disk.
+
+The client treats a transport, non-2xx, or malformed response as local
+`failed`; it does not advance deduplication for that frame.
+
+`POST /v1/capture/heartbeat` is sent every 30 seconds, even while the session
+is locked. Its JSON has only `device_id`, timezone-aware `client_ts`, and the
+nonnegative `stored`, `merged`, `blocked`, and `failed` counters. It contains
+no pixels or window/app/URL metadata.
