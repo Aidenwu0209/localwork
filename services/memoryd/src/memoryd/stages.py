@@ -76,7 +76,9 @@ class StubSentinel:
     async def classify(self, image_bytes: bytes) -> SentinelVerdict:
         # Always allow: the stub exists to exercise the pipeline, not to test
         # privacy behaviour. The real sentinel is wired in M3.4 / T2.1.
-        return SentinelVerdict(decision="allow", category="normal", confidence=0.5)
+        return SentinelVerdict(
+            decision="allow", category="normal", confidence=0.5, reason="test_stub"
+        )
 
 
 class StubOcr:
@@ -300,10 +302,10 @@ class GatewaySentinel:
         return _parse_sentinel_json(content)
 
 
-def _normalize_sentinel_category(raw: object) -> str:
-    """Map model category strings onto the closed taxonomy."""
+def _normalize_sentinel_category(raw: object) -> str | None:
+    """Map documented model aliases onto the closed sentinel taxonomy."""
     if not isinstance(raw, str):
-        return "normal"
+        return None
     cat = raw.strip().lower().replace(" ", "_").replace("-", "_")
     if cat in _SENTINEL_CATS:
         return cat
@@ -326,10 +328,7 @@ def _normalize_sentinel_category(raw: object) -> str:
     }
     if cat in aliases:
         return aliases[cat]
-    for known in _SENTINEL_CATS:
-        if known in cat or cat in known:
-            return known
-    return "normal"
+    return None
 
 
 def _extract_json_objects(content: str) -> list[str]:
@@ -356,17 +355,10 @@ def _extract_json_objects(content: str) -> list[str]:
     return out
 
 
-def _parse_sentinel_json(content: str) -> SentinelVerdict:
-    """Strict-ish JSON extraction with category→decision consistency (P3.6).
-
-    MiniCPM-V often returns partial JSON (e.g. only ``decision``) or sets
-    ``decision=block`` with ``category=normal``. We:
-      1. parse whatever fields are present;
-      2. normalise category onto the closed taxonomy;
-      3. DERIVE decision from category (sensitive→block, normal→allow).
-
-    Fail-open (allow/normal) only when nothing usable is found.
-    """
+def _parse_sentinel_json(
+    content: str, *, confidence_threshold: float = 0.70
+) -> SentinelVerdict:
+    """Parse a sentinel response, blocking every uncertain result."""
     parsed: dict | None = None
     for cand in _extract_json_objects(content):
         try:
@@ -380,37 +372,51 @@ def _parse_sentinel_json(content: str) -> SentinelVerdict:
             continue
 
     if parsed is None:
-        # Last-resort: scan free text for a known category token.
-        lowered = (content or "").lower()
-        category = "normal"
-        for cat in (
-            "password_prompt",
-            "banking_finance",
-            "private_chat",
-            "id_document",
-            "adult",
-            "normal",
-        ):
-            if cat in lowered:
-                category = cat
-                break
-        decision = "block" if category in _SENTINEL_SENSITIVE else "allow"
-        return SentinelVerdict(decision=decision, category=category, confidence=0.5)
+        return SentinelVerdict(
+            decision="block",
+            category="normal",
+            confidence=0.0,
+            reason="malformed_output",
+        )
 
-    category = _normalize_sentinel_category(parsed.get("category", "normal"))
-    if "confidence" in parsed:
-        try:
-            confidence = float(parsed.get("confidence"))
-        except (TypeError, ValueError):
-            confidence = 0.75
+    try:
+        confidence = float(parsed.get("confidence", 0.0))
+    except (TypeError, ValueError):
+        confidence = 0.0
+    if not 0.0 <= confidence <= 1.0:
+        confidence = 0.0
+
+    if "category" not in parsed:
+        category = None
     else:
-        # Category present without confidence — prefer a mid-high prior over the
-        # old hard-coded 0.5 that made every audit row look like a parse fallback.
-        confidence = 0.75
-    confidence = max(0.0, min(1.0, confidence))
-    # Category wins: never block normal, never allow a sensitive label.
-    decision = "block" if category in _SENTINEL_SENSITIVE else "allow"
-    return SentinelVerdict(decision=decision, category=category, confidence=confidence)
+        category = _normalize_sentinel_category(parsed["category"])
+    if category is None:
+        return SentinelVerdict(
+            decision="block",
+            category="normal",
+            confidence=confidence,
+            reason="unknown_category",
+        )
+    if category in _SENTINEL_SENSITIVE:
+        return SentinelVerdict(
+            decision="block",
+            category=category,
+            confidence=confidence,
+            reason="sensitive_category",
+        )
+    if confidence < confidence_threshold:
+        return SentinelVerdict(
+            decision="block",
+            category="normal",
+            confidence=confidence,
+            reason="low_confidence",
+        )
+    return SentinelVerdict(
+        decision="allow",
+        category="normal",
+        confidence=confidence,
+        reason="classified_normal",
+    )
 
 
 class OcrdClient:

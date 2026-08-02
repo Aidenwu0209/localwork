@@ -21,6 +21,15 @@ SentinelCategory = Literal[
     "normal",
 ]
 SentinelDecision = Literal["allow", "block"]
+SentinelReason = Literal[
+    "classified_normal",
+    "sensitive_category",
+    "malformed_output",
+    "unknown_category",
+    "low_confidence",
+    "sentinel_unavailable",
+    "test_stub",
+]
 
 
 class SentinelVerdict(BaseModel):
@@ -33,6 +42,7 @@ class SentinelVerdict(BaseModel):
     decision: SentinelDecision
     category: SentinelCategory
     confidence: float = Field(ge=0.0, le=1.0)
+    reason: SentinelReason
 
 
 # --- OCR --------------------------------------------------------------------

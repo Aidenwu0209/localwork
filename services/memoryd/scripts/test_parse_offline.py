@@ -27,16 +27,24 @@ def check_sentinel() -> None:
     )
     assert v.decision == "block" and v.category == "banking_finance", v
 
-    # Partial JSON (only decision) → fail-open allow/normal unless category token.
+    # Partial JSON (only decision) → unknown category blocks.
     v = _parse_sentinel_json('{"decision":"allow"}')
-    assert v.decision == "allow" and v.category == "normal", v
+    assert v.decision == "block" and v.reason == "unknown_category", v
+
+    # Malformed and unknown categories block; normal needs sufficient confidence.
+    v = _parse_sentinel_json("not-json")
+    assert v.decision == "block" and v.reason == "malformed_output", v
+    v = _parse_sentinel_json('{"category":"medical_record","confidence":0.9}')
+    assert v.decision == "block" and v.reason == "unknown_category", v
+    v = _parse_sentinel_json('{"category":"normal","confidence":0.69}')
+    assert v.decision == "block" and v.reason == "low_confidence", v
 
     # Category-only JSON (new prompt shape).
     v = _parse_sentinel_json('{"category":"password_prompt","confidence":0.87}')
     assert v.decision == "block" and v.category == "password_prompt"
     assert abs(v.confidence - 0.87) < 1e-6
     v = _parse_sentinel_json('{"category":"banking_finance"}')
-    assert v.decision == "block" and abs(v.confidence - 0.75) < 1e-6
+    assert v.decision == "block" and abs(v.confidence - 0.0) < 1e-6
 
     # Fenced + trailing comma.
     v = _parse_sentinel_json(
