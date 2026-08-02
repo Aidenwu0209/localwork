@@ -340,6 +340,17 @@ def test_stage_assets_disable_browser_caching() -> None:
     assert 'src="/demo_stage.js?v=' in html
 
 
+def test_daily_badge_is_unverified_during_run_then_pins_actual_route() -> None:
+    script = Path(__file__).with_name("test_demo_stage_ui.mjs")
+    result = subprocess.run(
+        ["node", str(script)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+
+
 def test_local_role_identity_requires_llama_alias_and_port() -> None:
     command = (
         "/opt/homebrew/bin/llama-server -m /models/fast.gguf "

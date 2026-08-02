@@ -109,6 +109,52 @@ def test_remote_timeout_uses_local_perceive_for_brain() -> None:
     assert client.posts[1][1]["model"] == "perceive"
 
 
+def test_blank_remote_content_without_tool_calls_uses_local() -> None:
+    client = ScriptedClient(
+        {
+            "radeon": [
+                FixtureResponse(
+                    body={"choices": [{"message": {"content": "  \n"}}]}
+                )
+            ],
+            "local": [FixtureResponse()],
+        }
+    )
+    router = ComputeRouter(settings(), client_factory=client, clock=lambda: 10.0)
+
+    result = router.chat("brain", [{"role": "user", "content": "synthetic"}])
+
+    assert result.route.backend == "local_metal"
+    assert result.route.reason == "remote_invalid_response_shape"
+
+
+def test_empty_assistant_content_is_valid_when_tool_calls_are_well_formed() -> None:
+    tool_call = {
+        "id": "call-1",
+        "function": {"name": "search_timeline", "arguments": "{}"},
+    }
+    client = ScriptedClient(
+        {
+            "radeon": [
+                FixtureResponse(
+                    body={
+                        "choices": [
+                            {"message": {"content": "", "tool_calls": [tool_call]}}
+                        ]
+                    }
+                )
+            ],
+            "local": [],
+        }
+    )
+    router = ComputeRouter(settings(), client_factory=client, clock=lambda: 10.0)
+
+    result = router.chat("brain", [{"role": "user", "content": "synthetic"}])
+
+    assert result.route.backend == "radeon"
+    assert result.message["tool_calls"] == [tool_call]
+
+
 def test_remote_embedding_timeout_uses_local_embed_and_requires_1024_dimensions() -> None:
     embedding = [0.25] * 1024
     client = ScriptedClient(

@@ -400,7 +400,9 @@ def _validated_message(product: object, backend: str) -> tuple[dict[str, Any], s
                 raise _BackendFailure(
                     f"{_reason_prefix(backend)}_invalid_response_shape", True
                 )
-    if not isinstance(content, str) and not tool_calls:
+    if not tool_calls and (
+        not isinstance(content, str) or not content.strip()
+    ):
         raise _BackendFailure(f"{_reason_prefix(backend)}_invalid_response_shape", True)
     return message, content or ""
 

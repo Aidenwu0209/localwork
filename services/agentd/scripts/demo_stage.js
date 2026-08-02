@@ -235,11 +235,14 @@ document.getElementById("dailyButton").addEventListener("click", (event) => {
   const button = event.currentTarget;
   const trace = document.getElementById("dailyTrace");
   const report = document.getElementById("dailyReport");
+  const backend = document.getElementById("dailyBackend");
   const pipeline = [...document.querySelectorAll("#agentPipeline > div")];
   button.disabled = true;
   dailyRunActive = true;
-  dailyBackendPinned = false;
+  dailyBackendPinned = true;
   button.textContent = "AGENTS WORKING…";
+  backend.textContent = "RUNNING · BACKEND UNVERIFIED";
+  backend.classList.remove("fallback");
   trace.textContent = "Routing to the best available inference path…";
   report.textContent = "Grounding report against synthetic demo events…";
   pipeline.forEach((node) => node.classList.remove("active"));
