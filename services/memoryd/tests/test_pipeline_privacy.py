@@ -122,10 +122,13 @@ class RecordingStore:
     def merge_into_previous(self, *, event_id: int, ts: str) -> None:
         self._calls.append("store.merge")
 
-    def screenshot_target(self, *, device_id: str, ts: str) -> Path:
+    def write_screenshot(
+        self, *, device_id: str, ts: str, image_bytes: bytes
+    ) -> Path:
         self._calls.append("store.screenshot")
         target = self._root / "screenshots" / "frame.webp"
         target.parent.mkdir(parents=True, exist_ok=True)
+        Image.open(io.BytesIO(image_bytes)).save(target, format="WEBP")
         return target
 
     def insert_event(self, **values: object) -> int:

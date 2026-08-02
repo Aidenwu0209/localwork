@@ -12,6 +12,7 @@ hostname so two installs on different machines never collide without config.
 from __future__ import annotations
 
 import os
+import re
 import socket
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -27,6 +28,7 @@ WEBP_QUALITY = 80
 # duplicates and the second is dropped (handbook §5.2: "dhash ... 距离 < 10
 # 则丢弃"). Set <= 0 to disable dedup entirely.
 DEDUP_DISTANCE = 10
+_DEVICE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 
 
 def _default_device_id() -> str:
@@ -76,6 +78,15 @@ class CaptureConfig:
 
     # Where the config came from (for logging at startup).
     source: str = "defaults"
+
+    def __post_init__(self) -> None:
+        if (
+            not isinstance(self.device_id, str)
+            or _DEVICE_ID_RE.fullmatch(self.device_id) is None
+        ):
+            raise ValueError(
+                "device_id must be 1-128 ASCII letters, digits, hyphens, or underscores"
+            )
 
     @property
     def frame_endpoint(self) -> str:

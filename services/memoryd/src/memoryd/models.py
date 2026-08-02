@@ -106,7 +106,12 @@ class PerceiveEvent(BaseModel):
 
 # --- ingest payloads (handbook §5.3) ---------------------------------------
 class FrameMeta(BaseModel):
-    device_id: str
+    device_id: str = Field(
+        strict=True,
+        min_length=1,
+        max_length=128,
+        pattern=r"^[A-Za-z0-9_-]+$",
+    )
     ts: str  # ISO-8601; capture client owns the clock
     app: str | None = None
     window_title: str | None = None

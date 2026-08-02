@@ -14,9 +14,7 @@ gateway-backed implementations without touching this orchestrator.
 
 from __future__ import annotations
 
-import io
 from dataclasses import dataclass
-from PIL import Image
 
 from memoryd.models import (
     IngestAck,
@@ -106,20 +104,15 @@ class Pipeline:
         embed_input = " ".join([event.activity, *event.topics]).strip() or event.activity
         vector = await self.embed.embed(embed_input)
 
-        # Write the screenshot to DATA_ROOT (only for ALLOWED frames).
-        screenshot_target = self.store.screenshot_target(
-            device_id=meta.device_id, ts=meta.ts
+        # The storage boundary validates the device id, creates a contained
+        # no-symlink directory chain, and atomically publishes the WebP. Invalid
+        # synthetic image bytes retain the historical no-screenshot behavior.
+        screenshot_target = self.store.write_screenshot(
+            device_id=meta.device_id,
+            ts=meta.ts,
+            image_bytes=image_bytes,
         )
-        # Re-encode as WebP per handbook §5.2 (<=1600px, quality 80). Downscaling
-        # is intentionally omitted here; M3.4 / capture client owns final sizing.
-        try:
-            with Image.open(io.BytesIO(image_bytes)) as img:
-                img.save(screenshot_target, format="WEBP", quality=80)
-            screenshot_path = str(screenshot_target)
-        except Exception:
-            # If the bytes aren't a decodable image (e.g. a stub test payload),
-            # skip the screenshot write but still record the event.
-            screenshot_path = None
+        screenshot_path = str(screenshot_target) if screenshot_target is not None else None
 
         event_id = self.store.insert_event(
             ts=meta.ts,

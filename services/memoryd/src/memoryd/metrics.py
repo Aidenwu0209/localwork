@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import time
 from datetime import datetime
 from threading import Lock
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
     from memoryd.models import IngestAck
@@ -16,11 +17,13 @@ class MemoryMetrics:
     _OUTCOMES = ("stored", "merged", "blocked")
     _CAPTURE_OUTCOMES = ("stored", "merged", "blocked", "failed")
 
-    def __init__(self) -> None:
+    def __init__(self, *, clock: Callable[[], float] = time.time) -> None:
         self._lock = Lock()
+        self._clock = clock
         self._ingest_counts = {outcome: 0 for outcome in self._OUTCOMES}
         self._timeline_events = 0
         self._capture_heartbeats: dict[str, tuple[datetime, dict[str, int]]] = {}
+        self._last_capture_receipt = 0.0
         self._capture_totals = {outcome: 0 for outcome in self._CAPTURE_OUTCOMES}
         self._honcho_projection = {"enabled": 0, "pending": 0, "failed": 0}
 
@@ -37,6 +40,7 @@ class MemoryMetrics:
         self, *, device_id: str, client_ts: datetime, counters: dict[str, int]
     ) -> bool:
         with self._lock:
+            self._last_capture_receipt = self._clock()
             previous = self._capture_heartbeats.get(device_id)
             if previous is not None and client_ts <= previous[0]:
                 return False
@@ -65,9 +69,7 @@ class MemoryMetrics:
             timeline_events = self._timeline_events
             capture_counts = dict(self._capture_totals)
             honcho_projection = dict(self._honcho_projection)
-            last_heartbeat = 0.0
-            for client_ts, _counters in self._capture_heartbeats.values():
-                last_heartbeat = max(last_heartbeat, client_ts.timestamp())
+            last_heartbeat = self._last_capture_receipt
 
         lines = [
             "# HELP dejaview_memory_ingest_total Frame ingests by final outcome.",

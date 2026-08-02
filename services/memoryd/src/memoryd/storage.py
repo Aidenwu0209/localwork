@@ -7,7 +7,11 @@ frames write ONLY to sentinel_audit, never to timeline or disk) lives here.
 
 from __future__ import annotations
 
+import io
 import json
+import os
+import re
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -15,6 +19,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import psycopg
+from PIL import Image, UnidentifiedImageError
 
 from memoryd.models import (
     NoveltyVerdict,
@@ -22,6 +27,53 @@ from memoryd.models import (
     PerceiveEvent,
     SentinelVerdict,
 )
+
+
+_DEVICE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+
+
+class UnsafeScreenshotPath(ValueError):
+    """The configured screenshot tree is not a regular no-symlink directory chain."""
+
+
+def _validate_device_id(device_id: str) -> None:
+    if not isinstance(device_id, str) or _DEVICE_ID_RE.fullmatch(device_id) is None:
+        raise ValueError(
+            "device_id must be 1-128 ASCII letters, digits, hyphens, or underscores"
+        )
+
+
+def _open_screenshot_day(data_root: Path, ts: str) -> tuple[int, Path, datetime]:
+    """Open/create the screenshot date directory without following child symlinks."""
+    occurred_at = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    canonical_root = data_root.resolve(strict=False)
+    canonical_root.mkdir(parents=True, exist_ok=True)
+    flags = os.O_RDONLY | os.O_DIRECTORY | getattr(os, "O_CLOEXEC", 0)
+    nofollow_flags = flags | getattr(os, "O_NOFOLLOW", 0)
+    current_fd = os.open(canonical_root, flags)
+    current_path = canonical_root
+    try:
+        for part in (
+            "screenshots",
+            f"{occurred_at.year:04d}",
+            f"{occurred_at.month:02d}",
+            f"{occurred_at.day:02d}",
+        ):
+            try:
+                os.mkdir(part, mode=0o700, dir_fd=current_fd)
+            except FileExistsError:
+                pass
+            try:
+                next_fd = os.open(part, nofollow_flags, dir_fd=current_fd)
+            except OSError as exc:
+                raise UnsafeScreenshotPath("unsafe screenshot directory") from exc
+            os.close(current_fd)
+            current_fd = next_fd
+            current_path = current_path / part
+        return current_fd, current_path, occurred_at
+    except Exception:
+        os.close(current_fd)
+        raise
 
 
 @dataclass(frozen=True)
@@ -65,18 +117,6 @@ WHERE state = 'sending'
 """
 
 
-def _screenshot_path(data_root: Path, device_id: str, ts: str) -> Path:
-    """DATA_ROOT/screenshots/YYYY/MM/DD/<device>_<ts>.webp (handbook §6.2 step 5).
-
-    The directory is created on demand; the file itself is written by the caller.
-    """
-    dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-    day_dir = data_root / "screenshots" / f"{dt.year:04d}" / f"{dt.month:02d}" / f"{dt.day:02d}"
-    day_dir.mkdir(parents=True, exist_ok=True)
-    safe_ts = dt.strftime("%Y%m%dT%H%M%S")
-    return day_dir / f"{device_id}_{safe_ts}.webp"
-
-
 class TimelineStore:
     """Thin wrapper over psycopg. Connections are per-call (M3.2 simplicity);
     M3.3 will introduce a pool when ingest throughput matters.
@@ -86,7 +126,7 @@ class TimelineStore:
         self, dsn: str, data_root: Path, *, honcho_timezone: str = "Asia/Shanghai"
     ) -> None:
         self._dsn = dsn
-        self._data_root = data_root
+        self._data_root = data_root.resolve(strict=False)
         self._honcho_timezone = honcho_timezone
 
     def write_sentinel_audit(
@@ -296,8 +336,59 @@ class TimelineStore:
     def data_root(self) -> Path:
         return self._data_root
 
-    def screenshot_target(self, *, device_id: str, ts: str) -> Path:
-        return _screenshot_path(self._data_root, device_id, ts)
+    def write_screenshot(
+        self, *, device_id: str, ts: str, image_bytes: bytes
+    ) -> Path | None:
+        _validate_device_id(device_id)
+        try:
+            with Image.open(io.BytesIO(image_bytes)) as source:
+                source.load()
+                image = source.copy()
+        except (UnidentifiedImageError, OSError, ValueError):
+            return None
+
+        day_fd, day_path, occurred_at = _open_screenshot_day(self._data_root, ts)
+        token = uuid.uuid4().hex
+        safe_ts = occurred_at.strftime("%Y%m%dT%H%M%S%f")
+        final_name = f"{device_id}_{safe_ts}_{token}.webp"
+        temporary_name = f".{token}.tmp"
+        temporary_created = False
+        try:
+            create_flags = (
+                os.O_WRONLY
+                | os.O_CREAT
+                | os.O_EXCL
+                | getattr(os, "O_CLOEXEC", 0)
+                | getattr(os, "O_NOFOLLOW", 0)
+            )
+            fd = os.open(temporary_name, create_flags, 0o600, dir_fd=day_fd)
+            temporary_created = True
+            with os.fdopen(fd, "wb") as handle:
+                image.save(handle, format="WEBP", quality=80)
+                handle.flush()
+                os.fsync(handle.fileno())
+            # Hard-link publication is atomic and fails rather than replacing a
+            # symlink or special file that appeared at the destination name.
+            os.link(
+                temporary_name,
+                final_name,
+                src_dir_fd=day_fd,
+                dst_dir_fd=day_fd,
+                follow_symlinks=False,
+            )
+            os.unlink(temporary_name, dir_fd=day_fd)
+            temporary_created = False
+            os.fsync(day_fd)
+            return day_path / final_name
+        except FileExistsError as exc:
+            raise UnsafeScreenshotPath("unsafe screenshot destination") from exc
+        finally:
+            if temporary_created:
+                try:
+                    os.unlink(temporary_name, dir_fd=day_fd)
+                except FileNotFoundError:
+                    pass
+            os.close(day_fd)
 
 
 def _now_iso() -> str:

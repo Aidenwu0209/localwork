@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from unittest.mock import AsyncMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 from memoryd.config import Settings
@@ -113,5 +115,38 @@ def test_invalid_meta_is_sanitized_without_reading_or_running_pipeline() -> None
             assert response.status_code == 422
             assert response.json() == {"detail": {"code": "invalid_meta"}}
             assert marker not in response.text
+    read.assert_not_awaited()
+    assert pipeline.calls == 0
+
+
+@pytest.mark.parametrize(
+    "device_id",
+    (
+        "../../../../../../tmp/escape",
+        "device/child",
+        r"device\child",
+        "device\nchild",
+        "d" * 129,
+    ),
+)
+def test_frame_rejects_unsafe_device_id_before_reading_upload(device_id: str) -> None:
+    pipeline = ScriptedPipeline([])
+    client = client_for(pipeline)
+    meta = json.dumps(
+        {"device_id": device_id, "ts": "2026-08-03T00:00:00+00:00"}
+    )
+
+    with patch(
+        "starlette.datastructures.UploadFile.read",
+        new=AsyncMock(side_effect=AssertionError("unsafe device id read the upload")),
+    ) as read:
+        response = client.post(
+            "/v1/ingest/frame",
+            files={"file": ("synthetic.png", b"frame", "image/png")},
+            data={"meta": meta},
+        )
+
+    assert response.status_code == 422
+    assert response.json() == {"detail": {"code": "invalid_meta"}}
     read.assert_not_awaited()
     assert pipeline.calls == 0

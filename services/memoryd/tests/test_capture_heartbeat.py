@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
 from memoryd.config import Settings
+from memoryd.metrics import MemoryMetrics
 from memoryd.server import create_app
 
 
@@ -24,6 +27,7 @@ def client() -> TestClient:
 
 def test_heartbeat_keeps_only_newest_metadata_and_exports_aggregate() -> None:
     app = client()
+    before_receipt = time.time()
     payload = {
         "device_id": "synthetic-device",
         "client_ts": "2026-08-03T00:00:00+00:00",
@@ -34,9 +38,16 @@ def test_heartbeat_keeps_only_newest_metadata_and_exports_aggregate() -> None:
     old = {**payload, "client_ts": "2026-08-02T00:00:00+00:00", "stored": 99}
     assert app.post("/v1/capture/heartbeat", json=old).json() == {"accepted": False}
     metrics = app.get("/metrics").text
+    after_receipt = time.time()
     for state, count in (("stored", 1), ("merged", 2), ("blocked", 3), ("failed", 4)):
         assert f'dejaview_capture_frames_total{{outcome="{state}"}} {count}' in metrics
-    assert "dejaview_capture_last_heartbeat_unixtime 1785715200.0" in metrics
+    heartbeat_line = next(
+        line
+        for line in metrics.splitlines()
+        if line.startswith("dejaview_capture_last_heartbeat_unixtime ")
+    )
+    last_receipt = float(heartbeat_line.rsplit(" ", 1)[1])
+    assert before_receipt <= last_receipt <= after_receipt
 
 
 def test_heartbeat_rejects_nonmetadata_invalid_values() -> None:
@@ -130,3 +141,31 @@ def test_heartbeat_totals_are_monotonic_across_client_restart_and_devices() -> N
     assert app.post("/v1/capture/heartbeat", json=second_device).json() == {"accepted": True}
     metrics = app.get("/metrics").text
     assert 'dejaview_capture_frames_total{outcome="stored"} 13' in metrics
+
+
+def test_heartbeat_freshness_uses_server_receipt_not_future_client_clock() -> None:
+    received_at = [1_800_000_000.25]
+    metrics = MemoryMetrics(clock=lambda: received_at[0])
+    future_client_ts = datetime(2099, 1, 1, tzinfo=timezone.utc)
+    counters = {"stored": 1, "merged": 0, "blocked": 0, "failed": 0}
+
+    assert metrics.observe_capture_heartbeat(
+        device_id="synthetic-device",
+        client_ts=future_client_ts,
+        counters=counters,
+    ) is True
+    assert "dejaview_capture_last_heartbeat_unixtime 1800000000.25" in (
+        metrics.render_prometheus()
+    )
+
+    # Even an out-of-order but otherwise valid heartbeat proves the capture
+    # process reached memoryd now; it must not mutate cumulative counters.
+    received_at[0] = 1_800_000_010.5
+    assert metrics.observe_capture_heartbeat(
+        device_id="synthetic-device",
+        client_ts=datetime(2026, 8, 3, tzinfo=timezone.utc),
+        counters={"stored": 99, "merged": 0, "blocked": 0, "failed": 0},
+    ) is False
+    rendered = metrics.render_prometheus()
+    assert "dejaview_capture_last_heartbeat_unixtime 1800000010.5" in rendered
+    assert 'dejaview_capture_frames_total{outcome="stored"} 1' in rendered
