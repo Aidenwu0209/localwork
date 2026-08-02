@@ -12,6 +12,7 @@ grounds). Health check at /health for docker/orchestration.
 from __future__ import annotations
 
 import asyncio
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime
 from typing import Annotated, TypeVar
 from urllib.parse import urlsplit
@@ -20,6 +21,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, Response, Uploa
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from memoryd.config import Settings
+from memoryd.honcho_projection import HonchoProjectionWorker
 from memoryd.metrics import MemoryMetrics
 from memoryd.models import AudioMeta, DocMeta, FrameMeta, IngestAck
 from memoryd.pipeline import Pipeline
@@ -158,16 +160,67 @@ def _default_pipeline(settings: Settings) -> Pipeline:
 
 
 def create_app(
-    *, settings: Settings | None = None, pipeline: Pipeline | None = None
+    *,
+    settings: Settings | None = None,
+    pipeline: Pipeline | None = None,
+    projection_store: object | None = None,
+    projection_worker: object | None = None,
 ) -> FastAPI:
     settings = settings or Settings.from_env()
     pipeline = pipeline or _default_pipeline(settings)
     metrics = MemoryMetrics()
 
+    if projection_store is None and isinstance(pipeline, Pipeline) and isinstance(
+        pipeline.store, TimelineStore
+    ):
+        projection_store = pipeline.store
+    if projection_worker is None and isinstance(projection_store, TimelineStore):
+        projection_worker = HonchoProjectionWorker(store=projection_store, settings=settings)
+
+    def _projection_status() -> dict[str, object]:
+        if projection_store is None or not hasattr(projection_store, "projection_status"):
+            raise HTTPException(status_code=503, detail={"code": "projection_not_ready"})
+        try:
+            status = projection_store.projection_status()  # type: ignore[union-attr]
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail={"code": "projection_not_ready"}) from exc
+        if not isinstance(status, dict):
+            raise HTTPException(status_code=503, detail={"code": "projection_not_ready"})
+        metrics.observe_honcho_projection(status)
+        return status
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
+        task: asyncio.Task[None] | None = None
+        if projection_worker is not None:
+            async def _run_projection() -> None:
+                while True:
+                    try:
+                        await asyncio.to_thread(projection_worker.run_once)  # type: ignore[union-attr]
+                        _projection_status()
+                    except asyncio.CancelledError:
+                        raise
+                    except HTTPException:
+                        pass
+                    except Exception:
+                        # Worker/storage failures are represented in the local
+                        # outbox; do not turn an upstream outage into an app crash.
+                        pass
+                    await asyncio.sleep(settings.honcho_poll_seconds)
+            task = asyncio.create_task(_run_projection(), name="honcho-projection")
+        try:
+            yield
+        finally:
+            if task is not None:
+                task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await task
+
     app = FastAPI(
         title="DejaView memoryd",
         version="0.1.0",
         description="Ingestion orchestrator (handbook §6.2).",
+        lifespan=lifespan,
     )
 
     @app.get("/health")
@@ -209,6 +262,32 @@ def create_app(
             },
         )
         return {"accepted": accepted}
+
+    @app.get("/v1/profile/status")
+    async def profile_status() -> dict[str, object]:
+        return _projection_status()
+
+    @app.post("/v1/profile/pause")
+    async def pause_profile_projection() -> dict[str, bool]:
+        if projection_store is None or not hasattr(projection_store, "set_projection_enabled"):
+            raise HTTPException(status_code=503, detail={"code": "projection_not_ready"})
+        try:
+            projection_store.set_projection_enabled(enabled=False)  # type: ignore[union-attr]
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail={"code": "projection_not_ready"}) from exc
+        _projection_status()
+        return {"enabled": False, "paused": True}
+
+    @app.post("/v1/profile/resume")
+    async def resume_profile_projection() -> dict[str, bool]:
+        if projection_store is None or not hasattr(projection_store, "set_projection_enabled"):
+            raise HTTPException(status_code=503, detail={"code": "projection_not_ready"})
+        try:
+            projection_store.set_projection_enabled(enabled=True)  # type: ignore[union-attr]
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail={"code": "projection_not_ready"}) from exc
+        _projection_status()
+        return {"enabled": True, "paused": False}
 
     @app.post("/v1/ingest/frame", response_model=IngestAck, status_code=202)
     async def ingest_frame(

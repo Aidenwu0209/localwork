@@ -182,6 +182,34 @@ class TimelineStore:
             )
             return bool(cur.fetchone()[0])
 
+    def projection_status(self) -> dict[str, object]:
+        """Return operational state only; projection payloads never leave DB."""
+        with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
+            cur.execute(
+                "SELECT enabled FROM honcho_projection_control WHERE singleton = true",
+                (),
+            )
+            enabled_row = cur.fetchone()
+            cur.execute(
+                """SELECT
+                     COUNT(*) FILTER (WHERE state IN ('pending', 'sending')),
+                     COUNT(*) FILTER (WHERE state = 'failed'),
+                     MAX(sent_at), MIN(session_id), MAX(session_id)
+                   FROM honcho_outbox""",
+                (),
+            )
+            pending, failed, last_success, session_start, session_end = cur.fetchone()
+        enabled = bool(enabled_row[0]) if enabled_row is not None else True
+        return {
+            "enabled": enabled,
+            "paused": not enabled,
+            "pending": int(pending or 0),
+            "failed": int(failed or 0),
+            "last_success": last_success.isoformat() if last_success is not None else None,
+            "covered_session_start": str(session_start) if session_start is not None else None,
+            "covered_session_end": str(session_end) if session_end is not None else None,
+        }
+
     def lease_honcho_rows(
         self, *, batch_size: int, lease_seconds: int, now: datetime
     ) -> list[HonchoOutboxRow]:

@@ -22,6 +22,16 @@ class MemoryMetrics:
         self._timeline_events = 0
         self._capture_heartbeats: dict[str, tuple[datetime, dict[str, int]]] = {}
         self._capture_totals = {outcome: 0 for outcome in self._CAPTURE_OUTCOMES}
+        self._honcho_projection = {"enabled": 0, "pending": 0, "failed": 0}
+
+    def observe_honcho_projection(self, status: dict[str, object]) -> None:
+        """Store aggregate queue health only, never any event or payload text."""
+        with self._lock:
+            self._honcho_projection = {
+                "enabled": 1 if status.get("enabled") is True else 0,
+                "pending": max(0, int(status.get("pending") or 0)),
+                "failed": max(0, int(status.get("failed") or 0)),
+            }
 
     def observe_capture_heartbeat(
         self, *, device_id: str, client_ts: datetime, counters: dict[str, int]
@@ -54,6 +64,7 @@ class MemoryMetrics:
             counts = dict(self._ingest_counts)
             timeline_events = self._timeline_events
             capture_counts = dict(self._capture_totals)
+            honcho_projection = dict(self._honcho_projection)
             last_heartbeat = 0.0
             for client_ts, _counters in self._capture_heartbeats.values():
                 last_heartbeat = max(last_heartbeat, client_ts.timestamp())
@@ -71,6 +82,19 @@ class MemoryMetrics:
             for outcome in self._CAPTURE_OUTCOMES
         )
         lines.append(f"dejaview_capture_last_heartbeat_unixtime {last_heartbeat}")
+        lines.extend(
+            [
+                "# HELP dejaview_honcho_projection_enabled Whether local Honcho projection is enabled.",
+                "# TYPE dejaview_honcho_projection_enabled gauge",
+                f"dejaview_honcho_projection_enabled {honcho_projection['enabled']}",
+                "# HELP dejaview_honcho_projection_pending Pending or leased local outbox rows.",
+                "# TYPE dejaview_honcho_projection_pending gauge",
+                f"dejaview_honcho_projection_pending {honcho_projection['pending']}",
+                "# HELP dejaview_honcho_projection_failed Terminal local outbox failures.",
+                "# TYPE dejaview_honcho_projection_failed gauge",
+                f"dejaview_honcho_projection_failed {honcho_projection['failed']}",
+            ]
+        )
         lines.extend(
             [
                 "# HELP dejaview_timeline_events_total New timeline events persisted.",
