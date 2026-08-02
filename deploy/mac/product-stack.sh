@@ -33,20 +33,19 @@ privacy_marker() { printf '%s/privacy.product-owned\n' "$RUNTIME_DIR"; }
 service_tree_revision() {
   local service="$1" source_root="${DEJAVIEW_SERVICE_SOURCE_ROOT:-$ROOT}"
   if [[ "$source_root" == "$ROOT" ]]; then
-    if ! git -C "$ROOT" ls-files --others --exclude-standard -- "services/$service" |
+    if ! git -C "$ROOT" ls-files --others --exclude-standard -z -- "services/$service" |
+      python3 -c '
+import sys
+raise SystemExit(1 if any(sys.stdin.buffer.read().split(b"\0")) else 0)
+'; then
+      return 1
+    fi
+    if ! git -C "$ROOT" ls-files -z -- "services/$service" |
       python3 -c '
 import os
 import sys
-
-allowed_suffixes = {".py", ".pyi", ".toml", ".yaml", ".yml", ".lock"}
-ignored_parts = {"__pycache__", ".venv", "logs", "log"}
-for line in sys.stdin:
-    path = line.strip()
-    parts = set(path.split("/"))
-    if parts & ignored_parts:
-        continue
-    if os.path.splitext(path)[1] in allowed_suffixes:
-        raise SystemExit(1)
+paths = [path.decode("utf-8") for path in sys.stdin.buffer.read().split(b"\0") if path]
+raise SystemExit(1 if any(os.path.basename(path) == ".env" or os.path.basename(path).startswith(".env.") for path in paths) else 0)
 '; then
       return 1
     fi
@@ -241,8 +240,11 @@ read_privacy_record() {
   current="$(process_fingerprint "$pid")"
   [[ -n "$current" && "$current" == "$fingerprint" ]] || return 1
   command="$(process_command "$pid")"
-  launcher="$ROOT/deploy/mac/llama-launch/$expected.sh"
-  [[ "$command" == *"$launcher"* ]] || return 1
+  if [[ "$expected" == sentinel ]]; then
+    [[ "$command" == *"llama-server"* && "$command" == *"--alias sentinel"* && "$command" == *"--host 127.0.0.1"* && "$command" == *"--port 8003"* ]] || return 1
+  else
+    [[ "$command" == *"uvx"* && "$command" == *"litellm"* && "$command" == *"--config"* && "$command" == *"server/litellm.yaml"* && "$command" == *"--host 127.0.0.1"* && "$command" == *"--port 4000"* && "$command" != *"--detailed_debug"* ]] || return 1
+  fi
   PRIVACY_PID="$pid"
   PRIVACY_FINGERPRINT="$fingerprint"
 }

@@ -234,7 +234,6 @@ class ProductStackTest(unittest.TestCase):
 
     def _privacy_environment(self, tmp: Path) -> tuple[dict[str, str], Path]:
         env = self._environment(tmp)
-        privacy_log = tmp / "privacy.log"
         privacy_ready = tmp / "privacy-ready"
         dev_stack = tmp / "dev-stack.sh"
         ps = tmp / "bin" / "ps"
@@ -242,7 +241,7 @@ class ProductStackTest(unittest.TestCase):
             "#!/bin/sh\n"
             'case "$*" in\n'
             '  *"stat="*) printf "S\\n" ;;\n'
-            '  *"command="*) printf "uv run --project %s/services/ocrd --project %s/services/memoryd --project %s/services/agentd %s/deploy/mac/llama-launch/sentinel.sh %s/deploy/mac/llama-launch/gateway.sh python -m ocrd python -m memoryd python -m agentd\\n" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" ;;\n'
+            '  *"command="*) printf "uv run --project %s/services/ocrd --project %s/services/memoryd --project %s/services/agentd llama-server -m fixture --alias sentinel --host 127.0.0.1 --port 8003 uvx --from litellm[proxy]==1.93.0 litellm --config %s/deploy/mac/server/litellm.yaml --host 127.0.0.1 --port 4000 python -m ocrd python -m memoryd python -m agentd\\n" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" ;;\n'
             '  *"lstart="*) printf "Mon Aug 3 00:00:00 2026\\n" ;;\n'
             "esac\n",
             encoding="utf-8",
@@ -267,18 +266,17 @@ class ProductStackTest(unittest.TestCase):
         env |= {
             "DEJAVIEW_SKIP_PRIVACY_STACK": "0",
             "DEJAVIEW_DEV_STACK_SCRIPT": str(dev_stack),
-            "PRIVACY_LOG": str(privacy_log),
             "DEJAVIEW_TEST_ROOT": str(ROOT),
             "DEJAVIEW_TEST_OWNER_PID": str(os.getpid()),
             "DEJAVIEW_TEST_REQUIRE_PRIVACY_START": "1",
             "DEJAVIEW_TEST_PRIVACY_READY": str(privacy_ready),
         }
-        return env, privacy_log
+        return env, privacy_ready
 
     def test_product_up_owns_privacy_stack_before_services_and_is_idempotent(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             tmp = Path(raw)
-            env, privacy_log = self._privacy_environment(tmp)
+            env, _ = self._privacy_environment(tmp)
 
             first = subprocess.run([SCRIPT, "up"], env=env, capture_output=True, text=True)
             self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
@@ -305,7 +303,7 @@ class ProductStackTest(unittest.TestCase):
     def test_product_up_rolls_back_owned_privacy_stack_after_service_failure(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             tmp = Path(raw)
-            env, privacy_log = self._privacy_environment(tmp)
+            env, _ = self._privacy_environment(tmp)
             uv = tmp / "bin" / "uv"
             uv.write_text("#!/bin/sh\nexit 7\n", encoding="utf-8")
             uv.chmod(0o755)
@@ -322,12 +320,12 @@ class ProductStackTest(unittest.TestCase):
     def test_product_down_does_not_stop_a_preexisting_privacy_stack(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             tmp = Path(raw)
-            env, privacy_log = self._privacy_environment(tmp)
+            env, _ = self._privacy_environment(tmp)
 
             result = subprocess.run([SCRIPT, "down"], env=env, capture_output=True, text=True)
 
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertFalse(privacy_log.exists(), "unowned privacy stack was stopped")
+            self.assertFalse((tmp / "order.log").exists(), "unowned privacy stack was stopped")
 
     def test_status_rejects_legacy_http_200_payload(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
