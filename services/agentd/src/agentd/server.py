@@ -16,15 +16,17 @@ from __future__ import annotations
 
 import json
 import logging
+import re
+from datetime import datetime
 from typing import Any
 from urllib.parse import urlsplit
 
-import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from agentd.config import Settings
+from agentd.router import BothBackendsFailed, ComputeFailure, ComputeRouter, RouteMetadata
 from agentd.tools import SPECS, dispatch
 
 log = logging.getLogger(__name__)
@@ -46,6 +48,11 @@ ANSWER DISCIPLINE (mandatory):
 Be concise. Use the tools; do not guess."""
 
 MAX_TOOL_ROUNDS = 6  # cap the loop so a confused brain can't spin forever
+_EVENT_MARKER = re.compile(r"\[event#[^\]]*\]")
+_CITATION_MARKER = re.compile(
+    r"\[event#(?P<event_id>\d+) (?P<hhmm>[0-2]\d:[0-5]\d) (?P<app>[^\]]+)\]"
+)
+_EVIDENCE_INSUFFICIENT = "I don't have sufficient verified evidence to answer that safely."
 
 
 def _safe_url_origin(value: str) -> str:
@@ -82,8 +89,11 @@ class ChatRequest(BaseModel):
     stream: bool | None = None
 
 
-def create_app(*, settings: Settings | None = None) -> FastAPI:
+def create_app(
+    *, settings: Settings | None = None, router: ComputeRouter | None = None
+) -> FastAPI:
     settings = settings or Settings.from_env()
+    router = router or ComputeRouter(settings)
     app = FastAPI(title="DejaView agentd", version="0.1.0")
 
     @app.get("/health")
@@ -123,45 +133,92 @@ def create_app(*, settings: Settings | None = None) -> FastAPI:
         for m in req.messages:
             messages.append(m.model_dump(exclude_none=True))
 
-        gateway_base = settings.gateway_url.rstrip("/")
-        if not gateway_base.endswith("/v1"):
-            gateway_base = gateway_base + "/v1"
-
         round_idx = 0
+        citation_allowlist: dict[int, str] = {}
+        last_route: RouteMetadata | None = None
         while round_idx < MAX_TOOL_ROUNDS:
             round_idx += 1
-            # Ask the brain.
-            brain_body: dict[str, Any] = {
-                "model": settings.brain_model,
-                "messages": messages,
-                "tools": SPECS,
-                "tool_choice": "auto",
-            }
-            if req.temperature is not None:
-                brain_body["temperature"] = req.temperature
-            if req.max_tokens is not None:
-                brain_body["max_tokens"] = req.max_tokens
-
             try:
-                with httpx.Client(timeout=httpx.Timeout(300.0, connect=10.0)) as client:
-                    r = client.post(f"{gateway_base}/chat/completions", json=brain_body)
-                    r.raise_for_status()
-                    brain_resp = r.json()
-            except httpx.HTTPStatusError as exc:
+                product = router.chat(
+                    settings.brain_model,
+                    messages,
+                    tools=SPECS,
+                    temperature=req.temperature,
+                    max_tokens=req.max_tokens,
+                )
+            except BothBackendsFailed as exc:
                 raise HTTPException(
-                    502, f"brain error: {exc.response.text[:300]}"
+                    503,
+                    detail={"code": "compute_unavailable", "reasons": list(exc.reasons)},
                 ) from exc
-            except (httpx.ReadTimeout, httpx.ConnectError) as exc:
-                raise HTTPException(504, f"brain unreachable: {exc}") from exc
+            except ComputeFailure as exc:
+                raise HTTPException(
+                    502, detail={"code": "compute_rejected", "reason": exc.reason}
+                ) from exc
 
-            choice = brain_resp["choices"][0]
-            msg = choice["message"]
+            last_route = product.route
+            msg = product.message
             tool_calls = msg.get("tool_calls") or []
 
             if not tool_calls:
-                # Final answer.
-                content = msg.get("content") or ""
-                return _chat_response(settings, content, finish_reason="stop")
+                citations = _validated_citations(product.content, citation_allowlist)
+                if citations is not None:
+                    return _chat_response(
+                        settings,
+                        product.content,
+                        finish_reason="stop",
+                        route=product.route,
+                        citations=citations,
+                    )
+                correction_messages = [
+                    *messages,
+                    {"role": "assistant", "content": product.content},
+                    {
+                        "role": "user",
+                        "content": (
+                            "Your previous answer had citations that were not returned by "
+                            "this request's tools. Return a corrected answer using only "
+                            "the exact allowed [event#id HH:MM app] citations, or omit "
+                            "memory claims."
+                        ),
+                    },
+                ]
+                try:
+                    corrected = router.chat(
+                        settings.brain_model,
+                        correction_messages,
+                        tools=SPECS,
+                        temperature=req.temperature,
+                        max_tokens=req.max_tokens,
+                    )
+                except BothBackendsFailed as exc:
+                    raise HTTPException(
+                        503,
+                        detail={"code": "compute_unavailable", "reasons": list(exc.reasons)},
+                    ) from exc
+                except ComputeFailure as exc:
+                    raise HTTPException(
+                        502,
+                        detail={"code": "compute_rejected", "reason": exc.reason},
+                    ) from exc
+                corrected_citations = _validated_citations(
+                    corrected.content, citation_allowlist
+                )
+                if corrected_citations is not None:
+                    return _chat_response(
+                        settings,
+                        corrected.content,
+                        finish_reason="stop",
+                        route=corrected.route,
+                        citations=corrected_citations,
+                    )
+                return _chat_response(
+                    settings,
+                    _EVIDENCE_INSUFFICIENT,
+                    finish_reason="stop",
+                    route=corrected.route,
+                    citations=[],
+                )
 
             # Append the assistant message (with tool_calls) to the conversation,
             # then execute each tool call and append a tool result message.
@@ -189,8 +246,9 @@ def create_app(*, settings: Settings | None = None) -> FastAPI:
                     result = dispatch(settings, name, args)
                     log.info("tool result: %s -> %s", name, str(result)[:120])
                 except Exception as exc:  # noqa: BLE001 - isolate tool failures
-                    result = {"error": f"{type(exc).__name__}: {exc}"}
-                    log.warning("tool %s failed: %s", name, exc)
+                    result = {"error": {"code": "tool_failed"}}
+                    log.warning("tool %s failed", name)
+                citation_allowlist.update(_citation_labels(result))
                 messages.append(
                     {
                         "role": "tool",
@@ -202,17 +260,69 @@ def create_app(*, settings: Settings | None = None) -> FastAPI:
             # Loop back to the brain with the tool results.
 
         # Exceeded the round cap — return whatever the last brain message was.
+        if last_route is None:
+            raise HTTPException(503, detail={"code": "compute_unavailable", "reasons": []})
         return _chat_response(
             settings,
             "(agentd: reached tool-call round cap; please rephrase.)",
             finish_reason="length",
+            route=last_route,
+            citations=[],
         )
 
     return app
 
 
+def _citation_labels(result: object) -> dict[int, str]:
+    """Extract only event metadata returned by this request's successful tools."""
+    if not isinstance(result, dict) or "error" in result:
+        return {}
+    candidates: list[object] = list(result.get("hits", []))
+    if "event_id" in result:
+        candidates.append(
+            {"id": result.get("event_id"), "ts": result.get("ts"), "app": result.get("app")}
+        )
+    labels: dict[int, str] = {}
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        event_id = candidate.get("id")
+        ts = candidate.get("ts")
+        app = candidate.get("app")
+        if isinstance(event_id, bool) or not isinstance(event_id, int):
+            continue
+        if not isinstance(ts, str) or not isinstance(app, str) or not app.strip():
+            continue
+        try:
+            hhmm = datetime.fromisoformat(ts.replace("Z", "+00:00")).strftime("%H:%M")
+        except ValueError:
+            continue
+        labels[event_id] = f"{hhmm} {app}"
+    return labels
+
+
+def _validated_citations(content: str, allowlist: dict[int, str]) -> list[dict[str, int | str]] | None:
+    markers = _EVENT_MARKER.findall(content)
+    parsed = list(_CITATION_MARKER.finditer(content))
+    if len(markers) != len(parsed):
+        return None
+    citations: list[dict[str, int | str]] = []
+    for marker in parsed:
+        event_id = int(marker.group("event_id"))
+        label = f"{marker.group('hhmm')} {marker.group('app')}"
+        if allowlist.get(event_id) != label:
+            return None
+        citations.append({"event_id": event_id, "label": label})
+    return citations
+
+
 def _chat_response(
-    settings: Settings, content: str, *, finish_reason: str
+    settings: Settings,
+    content: str,
+    *,
+    finish_reason: str,
+    route: RouteMetadata,
+    citations: list[dict[str, int | str]],
 ) -> JSONResponse:
     import time
     import uuid
@@ -231,5 +341,6 @@ def _chat_response(
                 }
             ],
             "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+            "dejaview": {**route.as_dict(), "latency_ms": route.latency_ms, "citations": citations},
         }
     )
