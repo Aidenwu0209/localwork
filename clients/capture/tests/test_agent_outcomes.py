@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import asyncio
+from unittest.mock import patch
 
 from capture.agent import (
     CaptureCounters,
     _send_heartbeat,
     apply_upload_outcome,
     recovery_pending,
+    run_agent,
     should_commit_frame,
 )
 from capture.config import CaptureConfig
+from capture.permissions import PermissionCheck
 from capture.uploader import UploadOutcome
 
 
@@ -91,3 +94,53 @@ def test_failed_heartbeat_keeps_recovery_pending() -> None:
     )
     assert recovery_pending(had_upload_failure=True, heartbeat_accepted=rejected) is True
     assert recovery_pending(had_upload_failure=True, heartbeat_accepted=True) is False
+
+
+class FixtureAsyncClient:
+    async def __aenter__(self) -> "FixtureAsyncClient":
+        return self
+
+    async def __aexit__(self, *args: object) -> None:
+        return None
+
+
+class FixtureClock:
+    def __init__(self, *values: float) -> None:
+        self._values = iter(values)
+
+    def monotonic(self) -> float:
+        return next(self._values)
+
+
+def test_locked_agent_sends_due_heartbeat_without_using_capture_apis() -> None:
+    heartbeats: list[str] = []
+
+    async def send_heartbeat(config: CaptureConfig, *args: object) -> bool:
+        heartbeats.append(config.device_id)
+        return True
+
+    async def stop_after_locked_wait(*args: object) -> None:
+        raise asyncio.CancelledError
+
+    def lock_agent(state: object) -> bool:
+        state.locked = True  # type: ignore[attr-defined]
+        return True
+
+    with (
+        patch(
+            "capture.agent.check_screen_recording_permission",
+            return_value=PermissionCheck(True, "granted"),
+        ),
+        patch("capture.agent._install_lock_observer", side_effect=lock_agent),
+        patch("capture.agent._pump_runloop"),
+        patch("capture.agent.time", FixtureClock(0.0, 0.0, 31.0)),
+        patch("capture.agent.httpx.AsyncClient", return_value=FixtureAsyncClient()),
+        patch("capture.agent._send_heartbeat", side_effect=send_heartbeat),
+        patch("capture.agent.get_active_window", side_effect=AssertionError("active window read")),
+        patch("capture.agent.list_windows", side_effect=AssertionError("window list read")),
+        patch("capture.agent.capture_window_png", side_effect=AssertionError("window capture")),
+        patch("capture.agent.upload_frame", side_effect=AssertionError("frame upload")),
+        patch("capture.agent.asyncio.sleep", side_effect=stop_after_locked_wait),
+    ):
+        assert asyncio.run(run_agent(CaptureConfig(device_id="synthetic-device"))) == 0
+    assert heartbeats == ["synthetic-device"]

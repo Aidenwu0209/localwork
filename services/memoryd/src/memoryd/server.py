@@ -52,6 +52,17 @@ class CaptureHeartbeat(BaseModel):
     blocked: Annotated[int, Field(strict=True, ge=0)]
     failed: Annotated[int, Field(strict=True, ge=0)]
 
+    @field_validator("client_ts", mode="before")
+    @classmethod
+    def _require_iso_string(cls, value: object) -> str:
+        if not isinstance(value, str):
+            raise ValueError("client_ts must be an ISO-8601 string")
+        try:
+            datetime.fromisoformat(value)
+        except ValueError as exc:
+            raise ValueError("client_ts must be an ISO-8601 string") from exc
+        return value
+
     @field_validator("client_ts")
     @classmethod
     def _require_timezone(cls, value: datetime) -> datetime:

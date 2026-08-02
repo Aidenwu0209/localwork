@@ -250,14 +250,14 @@ async def run_agent(config: "CaptureConfig") -> int:
             try:
                 _pump_runloop(0.05)
 
-                if lock_state.locked:
-                    await asyncio.sleep(config.poll_interval)
-                    continue
-
                 now = time.monotonic()
                 if now - last_heartbeat_ts >= 30.0:
                     await _send_heartbeat(config, counters, client)
                     last_heartbeat_ts = now
+
+                if lock_state.locked:
+                    await asyncio.sleep(config.poll_interval)
+                    continue
 
                 # Trigger: foreground change OR periodic timer. The window LIST
                 # is re-enumerated every cycle regardless, but we only capture

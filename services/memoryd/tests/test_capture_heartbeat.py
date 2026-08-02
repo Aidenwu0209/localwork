@@ -53,6 +53,36 @@ def test_heartbeat_rejects_nonmetadata_invalid_values() -> None:
     assert "SENSITIVE" not in response.text
 
 
+@pytest.mark.parametrize(
+    "client_ts",
+    [0, 1.5, True, None, "2026-08-03T00:00:00"],
+)
+def test_heartbeat_rejects_non_iso_or_naive_client_timestamps(client_ts: object) -> None:
+    app = client()
+    payload = {
+        "device_id": "synthetic-device",
+        "client_ts": client_ts,
+        "stored": 0, "merged": 0, "blocked": 0, "failed": 0,
+    }
+    response = app.post("/v1/capture/heartbeat", json=payload)
+    assert response.status_code == 422
+    assert response.json() == {"detail": {"code": "invalid_heartbeat"}}
+
+
+def test_heartbeat_accepts_timezone_aware_iso_client_timestamp() -> None:
+    app = client()
+    response = app.post(
+        "/v1/capture/heartbeat",
+        json={
+            "device_id": "synthetic-device",
+            "client_ts": "2026-08-03T00:00:00+00:00",
+            "stored": 0, "merged": 0, "blocked": 0, "failed": 0,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() == {"accepted": True}
+
+
 @pytest.mark.parametrize("counter", [True, False, "1"])
 def test_heartbeat_rejects_coerced_counter_values(counter: object) -> None:
     app = client()
