@@ -15,7 +15,8 @@
     "服务器纪律(当前):仅允许 下载 + 只读检查(df/ls/echo);禁止查询或占用 GPU、禁止编译、禁止加载模型、禁止触碰任何在跑进程。S1 剩余(引擎+冒烟)与 S2(全量基准/联调)等用户开放。",
     "隐私纪律:云端替身只喂合成数据;真实个人数据一律等全本地链路后再接入;密钥/真实个人信息禁止入库。",
     "Phase 3 交接(2026-07-23):G0+M+D 33/33 已 accept。下一批任务 ID 为 P3.1–P3.10,规格见 docs/EXECUTION_HANDBOOK.md §12.3;开工指令见 docs/AGENT_KICKOFF_PROMPT.md。最高优先 P3.1 ROCm 消融报告。",
-    "2026-07-28 交接刷新:完整决策写入 docs/EXECUTION_HANDBOOK.md §12 + STATUS.md + AGENT_KICKOFF_PROMPT.md。接手只领 P3.1/P3.2/P3.4。"
+    "2026-07-28 交接刷新:完整决策写入 docs/EXECUTION_HANDBOOK.md §12 + STATUS.md + AGENT_KICKOFF_PROMPT.md。接手只领 P3.1/P3.2/P3.4。",
+    "2026-08-02 产品化续作:已验收的 P3.1/P3.2/P3.4/P3.11 证据不重做。新增 P3.12-P3.18 只修成熟产品缺口;仍保持数字记忆体叙事、五模型逻辑分层、Mac/Windows 数据主权与 AMD 无状态算力。"
   ],
   "tasks": [
     {
@@ -510,6 +511,96 @@
       ],
       "status": "accept",
       "note": "2026-08-02 accept:新增隐私安全 health exporter + Prometheus 自检采集 + Grafana READY/DEGRADED/FAILED 首行;RED→GREEN 覆盖状态机、五模型校验、thinking=false Local Metal 冒烟、30s 缓存、compose 与 fail-closed UI 共 13 tests。真实缺服务/隧道预检 state=0 且 Local fallback=1;恢复正式七转发隧道与 real memoryd/agentd 后 state=2、fresh=7.32s、exporter=1、GPU=1、roles=4、active=4。证据=docs/assets/p32/grafana-selfcheck-20260802.{png,json};PNG 1280×720 sha256=75825f71e029809757d5333fcf3b47ca7573b60974b113ea94794cc06cd17bfd。"
+    },
+    {
+      "id": "P3.12",
+      "group": "productization",
+      "title": "成熟产品设计与验收矩阵",
+      "steps": "把隐私门、可靠采集、真实 Local fallback、Honcho 自动成长、产品 UI、干净复现与最终验收拆成边界清晰的设计规格和实施顺序。",
+      "verify": "设计覆盖架构、数据流、失败语义、接口、UI、测试与发布;无 TBD/TODO/自相矛盾;保持既定产品叙事和五模型分层。",
+      "depends": [
+        "P3.6",
+        "P3.11"
+      ],
+      "status": "doing",
+      "note": "2026-08-02 认领:root;只做设计与验收矩阵,不修改生产代码。"
+    },
+    {
+      "id": "P3.13",
+      "group": "productization",
+      "title": "隐私门与采集可靠性加固",
+      "steps": "Sentinel malformed/unknown/低置信/不可用全部 fail-closed;默认禁用 Stub 隐私门;block 严格不 OCR/不落盘/不入时间线;capture 区分 stored/merged/blocked/dropped 并导出丢帧指标;audio/doc 未实现时诚实拒绝。",
+      "verify": "测试覆盖解析失败、模型失败、block 短路、响应状态和上传失败;合成敏感帧在 DB/文件系统均为零痕迹;无虚假 accepted=true。",
+      "depends": [
+        "P3.12"
+      ],
+      "status": false,
+      "note": ""
+    },
+    {
+      "id": "P3.14",
+      "group": "productization",
+      "title": "真实 Radeon→Local Metal Agent 降级",
+      "steps": "从演示脚本抽离通用计算路由;每次请求优先 Radeon,仅在真实请求或产物校验失败时切 Local Metal;两端都失败明确报错;结果携带 backend/model/degraded/reason;fast-track 始终关闭思考。",
+      "verify": "故障注入覆盖远端成功、远端失败本地成功、双端失败、非法产物和断路恢复;agentd 问答与日报均使用同一路由;状态页与实际后端一致。",
+      "depends": [
+        "P3.13"
+      ],
+      "status": false,
+      "note": ""
+    },
+    {
+      "id": "P3.15",
+      "group": "productization",
+      "title": "timeline→Honcho 自动成长闭环",
+      "steps": "为 allow 事件建立最小化 Honcho projection/outbox;按日 session、event_id 幂等、异步重试;只发送 activity/topics/app/time/provenance,禁止 OCR/URL/标题/截图;支持暂停与状态查询。",
+      "verify": "单事件自动进入正确 session;重放不重复;Honcho 故障不回滚 timeline;block/OCR/URL/截图永不进入请求;状态可观测。",
+      "depends": [
+        "P3.13"
+      ],
+      "status": false,
+      "note": ""
+    },
+    {
+      "id": "P3.16",
+      "group": "productization",
+      "title": "日常产品页:时间线+问答+证据+隐私+画像+状态",
+      "steps": "把六幕演示台升级为默认只读日常产品页,提供时间线筛选、开放式问答、结构化引用、受控证据图、隐私审计摘要、Honcho 画像和真实算力状态;有副作用的演示动作隔离并确认。",
+      "verify": "1440/1024/390px 与 200% 缩放可完成筛选→提问→证据;键盘/读屏基本可用;引用不可越权;blocked 原图不可访问;离线不误绿;浏览器与 API 契约测试通过。",
+      "depends": [
+        "P3.14",
+        "P3.15"
+      ],
+      "status": false,
+      "note": ""
+    },
+    {
+      "id": "P3.17",
+      "group": "productization",
+      "title": "干净机器复现与发布一致性",
+      "steps": "修正 submodule/Honcho patch、端口、后台进程、服务器就绪判定和文档漂移;增加 doctor/quickstart 验证;补根 LICENSE/NOTICE 与第一方 CI。",
+      "verify": "新 clone 按 README 无隐式 cwd/端口错误;setup-honcho 可幂等;server-stack 失败返回非零;doctor 能定位缺依赖;CI 跑完整第一方测试;中英文状态一致。",
+      "depends": [
+        "P3.16"
+      ],
+      "status": false,
+      "note": ""
+    },
+    {
+      "id": "P3.18",
+      "group": "productization",
+      "title": "成熟产品全链路验收",
+      "steps": "运行单元、集成、浏览器、无障碍、故障注入、干净复现和真实服务冒烟;记录已验证证据、外部依赖和人工提交门槛。",
+      "verify": "每个 P3.12-P3.17 条目都有新鲜证据;测试零失败;真实 allow/block/recall/evidence/Honcho/fallback 流程可重复;无密钥/真实 PII;验收记录入 verification-log。",
+      "depends": [
+        "P3.13",
+        "P3.14",
+        "P3.15",
+        "P3.16",
+        "P3.17"
+      ],
+      "status": false,
+      "note": ""
     }
   ]
 }
