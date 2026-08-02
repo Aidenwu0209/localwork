@@ -124,6 +124,7 @@ cd clients/capture && CAPTURE_DEVICE_ID=dev uv run python -m capture
 RADEON_GATEWAY_URL=http://127.0.0.1:14000/v1 \
 LOCAL_GATEWAY_URL=http://127.0.0.1:4000/v1 \
 uv run --project services/agentd python -m agentd
+# Daily product: http://127.0.0.1:8101/
 curl -s http://127.0.0.1:8101/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"messages":[{"role":"user","content":"What GPU errors have I hit recently? Cite the events."}]}'

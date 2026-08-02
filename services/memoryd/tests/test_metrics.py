@@ -76,11 +76,10 @@ class MemoryMetricsTest(unittest.TestCase):
             response.json(),
             {
                 "status": "ok",
+                "service": "memoryd",
                 "pipeline": "real",
                 "accepting_frames": True,
-                "gateway_origin": "https://example.com:4443",
-                "database": "dejaview_demo",
-                "data_root": str(Path("/tmp/dejaview-p34-data").resolve()),
+                "dependencies_verified": False,
             },
         )
         self.assertNotIn("secret", response.text)

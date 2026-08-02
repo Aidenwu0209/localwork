@@ -172,8 +172,18 @@ def test_product_typography_heading_order_and_backgrounds_are_auditable(
     evidence_rule = re.search(r"\.evidence-button\s*\{([^}]*)\}", css).group(1)
     assert "min-width: 44px" in evidence_rule
     assert "min-height: 44px" in evidence_rule
+    for selector in (
+        ".skip-link",
+        ".wordmark",
+        ".view-nav a",
+        ".input-action button, .primary-button, .secondary-button",
+        ".text-button",
+    ):
+        rule = re.search(rf"{re.escape(selector)}\s*\{{([^}}]*)\}}", css).group(1)
+        assert "min-height: 44px" in rule, selector
 
     control_rule = re.search(r"(?m)^input, textarea\s*\{([^}]*)\}", css).group(1)
+    assert "min-height: 44px" in control_rule
     placeholder_rule = re.search(
         r"(?m)^input::placeholder, textarea::placeholder\s*\{([^}]*)\}", css
     ).group(1)
@@ -181,3 +191,10 @@ def test_product_typography_heading_order_and_backgrounds_are_auditable(
     placeholder = re.search(r"color:\s*(#[0-9a-fA-F]{6})", placeholder_rule).group(1)
     assert contrast_ratio(control_border, "#fffef9") >= 3
     assert contrast_ratio(placeholder, "#fffef9") >= 4.5
+
+    compact_header = re.search(
+        r"@media \(max-width: 800px\)\s*\{(.*?)\n\}", css, re.DOTALL
+    ).group(1)
+    assert ".topbar { display: block; }" in compact_header
+    assert ".status-strip" in compact_header
+    assert "max-width: none" in compact_header

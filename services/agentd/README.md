@@ -7,7 +7,7 @@ questions via tool-calling against:
 - the **timeline** (search_timeline: semantic / exact / hybrid + time bounds)
 - the **Honcho user model** (query_user_model — preferences, habits)
 - the **knowledge base** (search_kb — imported documents)
-- **screenshot evidence** (fetch_screenshot — image path + highlighted bbox)
+- **screenshot evidence** (fetch_screenshot — opaque event reference + text-free bbox)
 
 ## Runtime contract
 
@@ -33,6 +33,16 @@ RADEON_GATEWAY_URL=http://127.0.0.1:14000/v1 \
 LOCAL_GATEWAY_URL=http://127.0.0.1:4000/v1 \
 uv run python -m agentd     # serves 127.0.0.1:8101
 ```
+
+Open `http://127.0.0.1:8101/` for the default daily product experience. It
+shows the bounded timeline, grounded answers, capability-protected evidence,
+privacy decisions, profile projection, and truthful system state. The six-act
+competition stage remains isolated at its existing demo entry point.
+
+Browser mutations require same-origin JSON plus the local CSRF session. Evidence
+images use short-lived event capabilities and descriptor-relative, no-follow
+file access; raw screenshot paths, OCR text, window titles, and local filesystem
+coordinates are never returned by the product or health APIs.
 
 Config from `.env`: `RADEON_GATEWAY_URL`, `LOCAL_GATEWAY_URL`, legacy
 `GATEWAY_URL`, `TIMELINE_DB_URL`, `HONCHO_URL`, and `DATA_ROOT`. The Radeon

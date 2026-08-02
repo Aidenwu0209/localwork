@@ -507,3 +507,42 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
 - **Conclusion:** P3.15 moves from `doing` to `accept`. P3.16 is next; accepted
   benchmark, video, Grafana, fallback, and privacy evidence were not rerun or
   relabeled.
+
+## 2026-08-03 — P3.16 daily product experience and defensive boundary
+
+- **[VERIFY] Daily product:** agentd now serves the default DejaView experience
+  at `/`: bounded/filterable timeline, grounded memory questions, structured
+  citations, inspected evidence, local privacy summary, Honcho profile, and
+  truthful capture/compute/component state. The accepted six-act competition
+  stage and its assets were not changed.
+- **[VERIFY] Evidence boundary:** timeline cursors and evidence capabilities are
+  HMAC-signed, short-lived, filter/event bound, and fail closed. Evidence is
+  restricted to frame rows with a non-null screenshot. The image opener starts
+  at an already-open screenshots-root descriptor, walks every parent and leaf
+  with no-follow semantics, verifies descriptor identities, accepts only regular
+  image files, and returns only sanitized 404s. A deterministic parent-swap test
+  proved that outside bytes are never read.
+- **[VERIFY] Browser and operator controls:** browser mutations require
+  same-origin JSON and a double-submit CSRF token. Direct memoryd profile controls
+  additionally pin loopback Host/Origin, a fixed non-simple control header, and
+  exact `{"confirm":true}` JSON. Cross-site forms and a matching hostile
+  Host/Origin fixture both leave projection state unchanged.
+- **[VERIFY] No false green or coordinate leak:** structural/configuration-only
+  memoryd health cannot establish readiness; incomplete profile projection is
+  degraded or unknown. Health APIs omit database names, URLs, and data-root
+  paths. Tool logs emit only allowlisted names or `unknown_tool`; screenshot tool
+  results expose only an opaque event reference and text-free highlight boxes.
+- **[VERIFY] Product-quality UI:** independent browser review passed at
+  1440×900, 1024×768, 720×900 (200% equivalent), and 390×844 with zero horizontal
+  overflow. Every interactive target measured at least 44px. The evidence drawer
+  traps keyboard focus, makes the background inert, closes with Escape, and
+  restores the exact opener. Dynamic state uses non-repeating polite live
+  regions; unavailable/degraded/offline/unknown profile states disable all
+  profile interactions. Final axe-core result: **0 violations**.
+- **Fresh regression:** agentd **101 passed**, memoryd **82 passed + 6 subtests**,
+  capture **22 passed**, and product focus **9 passed**. Changed-file Ruff,
+  JavaScript syntax, `git diff --check`, and accepted demo-asset diff checks all
+  passed. Independent security and UX re-reviews returned PASS.
+- **Conclusion:** P3.16 moves from `doing` to `accept`. P3.17 is next; accepted
+  benchmark, Grafana, video, model hierarchy, and product narrative were not
+  modified or rerun.

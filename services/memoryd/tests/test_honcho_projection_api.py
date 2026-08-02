@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import time
-from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 
 from memoryd.config import Settings
@@ -82,14 +82,19 @@ def test_status_pause_resume_are_idempotent_and_never_expose_payloads() -> None:
             "covered_session_start": "dejaview-2026-08-03",
             "covered_session_end": "dejaview-2026-08-04",
         }
-        assert client.post("/v1/profile/pause").json() == {"enabled": False, "paused": True}
-        assert client.post("/v1/profile/pause").json() == {"enabled": False, "paused": True}
+        headers = {
+            "Origin": "http://testserver",
+            "X-DejaView-Control": "profile-projection",
+        }
+        confirmed = {"confirm": True}
+        assert client.post("/v1/profile/pause", json=confirmed, headers=headers).json() == {"enabled": False, "paused": True}
+        assert client.post("/v1/profile/pause", json=confirmed, headers=headers).json() == {"enabled": False, "paused": True}
         # Ingestion/outbox creation remains local; only delivery is stopped.
         store.outbox_rows = 1
         assert worker.run_once() == 0
         assert store.outbox_rows == 1
-        assert client.post("/v1/profile/resume").json() == {"enabled": True, "paused": False}
-        assert client.post("/v1/profile/resume").json() == {"enabled": True, "paused": False}
+        assert client.post("/v1/profile/resume", json=confirmed, headers=headers).json() == {"enabled": True, "paused": False}
+        assert client.post("/v1/profile/resume", json=confirmed, headers=headers).json() == {"enabled": True, "paused": False}
         assert worker.run_once() == 1
         assert store.outbox_rows == 0
         # A status read is also the explicitly supported no-payload metrics
@@ -100,6 +105,50 @@ def test_status_pause_resume_are_idempotent_and_never_expose_payloads() -> None:
         assert "dejaview_honcho_projection_failed 1" in metrics
         assert "ocr" not in metrics.lower()
         assert "payload" not in metrics.lower()
+
+
+@pytest.mark.parametrize(
+    ("content", "headers"),
+    [
+        (None, {}),
+        ('{"confirm":true}', {"content-type": "application/json"}),
+        ('{"confirm":true}', {"content-type": "application/x-www-form-urlencoded", "X-DejaView-Control": "profile-projection"}),
+        ('{"confirm":false}', {"content-type": "application/json", "X-DejaView-Control": "profile-projection"}),
+        ('{"confirm":true,"extra":1}', {"content-type": "application/json", "X-DejaView-Control": "profile-projection"}),
+    ],
+)
+def test_direct_profile_controls_require_exact_confirmation_and_fixed_header(
+    content: str | None, headers: dict[str, str]
+) -> None:
+    store = FakeProjectionStore()
+    with TestClient(
+        create_app(settings=_settings(), pipeline=object(), projection_store=store)
+    ) as client:
+        response = client.post("/v1/profile/pause", content=content, headers=headers)
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": {"code": "profile_control_forbidden"}}
+    assert store.enabled is True
+
+
+def test_direct_profile_controls_reject_non_local_host_and_origin() -> None:
+    store = FakeProjectionStore()
+    with TestClient(
+        create_app(settings=_settings(), pipeline=object(), projection_store=store),
+        base_url="http://attacker.invalid",
+    ) as client:
+        response = client.post(
+            "/v1/profile/pause",
+            json={"confirm": True},
+            headers={
+                "Origin": "http://attacker.invalid",
+                "X-DejaView-Control": "profile-projection",
+            },
+        )
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": {"code": "profile_control_forbidden"}}
+    assert store.enabled is True
 
 
 def test_lifespan_starts_worker_without_leaking_after_client_closes() -> None:

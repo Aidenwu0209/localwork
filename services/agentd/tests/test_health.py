@@ -39,12 +39,6 @@ class AgentHealthTest(unittest.TestCase):
                 "service": "agentd",
                 "model": "dejaview",
                 "brain_model": "brain",
-                "gateway_origin": "https://example.com:4443",
-                "radeon_gateway_origin": "https://radeon.example:4444",
-                "local_gateway_origin": "http://127.0.0.1:4000",
-                "honcho_origin": "http://127.0.0.1:8100",
-                "database": "dejaview_demo",
-                "data_root": str(Path("/tmp/dejaview-p34-data").resolve()),
             },
         )
         for secret in (

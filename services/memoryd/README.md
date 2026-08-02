@@ -72,7 +72,15 @@ backoff, and deduplicated using the exact `dejaview_event_id` metadata marker.
 Operators can pause, resume, and inspect the queue without exposing payloads:
 
 ```bash
-curl http://127.0.0.1:8090/v1/honcho/projection/status
-curl -X POST http://127.0.0.1:8090/v1/honcho/projection/pause
-curl -X POST http://127.0.0.1:8090/v1/honcho/projection/resume
+curl http://127.0.0.1:8090/v1/profile/status
+curl -X POST http://127.0.0.1:8090/v1/profile/pause \
+  -H 'Origin: http://127.0.0.1:8090' \
+  -H 'Content-Type: application/json' \
+  -H 'X-DejaView-Control: profile-projection' \
+  -d '{"confirm":true}'
+curl -X POST http://127.0.0.1:8090/v1/profile/resume \
+  -H 'Origin: http://127.0.0.1:8090' \
+  -H 'Content-Type: application/json' \
+  -H 'X-DejaView-Control: profile-projection' \
+  -d '{"confirm":true}'
 ```

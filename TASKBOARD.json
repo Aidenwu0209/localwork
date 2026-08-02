@@ -571,8 +571,8 @@
         "P3.14",
         "P3.15"
       ],
-      "status": "doing",
-      "note": "Implementation plan: docs/superpowers/plans/2026-08-03-p316-daily-product-ui.md; parallel implementation, API/security review, and responsive/accessibility audit."
+      "status": "accept",
+      "note": "2026-08-03 验收:agentd 默认日常产品页覆盖时间线筛选、Radeon→Local grounded 问答、短时签名证据、隐私摘要、Honcho 画像与真实状态;六幕 demo 保持隔离。证据路径逐级 O_NOFOLLOW 且仅 frame+有效截图可访问;浏览器双提交 CSRF, memoryd 控制再钉本地 Host/Origin+固定 header+exact JSON;health/tool/log 全部去本机坐标和私密内容;配置型健康不误绿。1440/1024/720/390 无横溢,全交互目标>=44px,drawer focus/inert/Escape 通过,axe 0 violations,降级画像 fail-closed。Fresh:agentd 101,memoryd 82+6 subtests,capture 22,Node 9;独立安全与 UX 复审 PASS。证据=docs/verification-log.md [VERIFY] P3.16。"
     },
     {
       "id": "P3.17",

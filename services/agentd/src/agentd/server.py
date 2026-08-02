@@ -19,7 +19,6 @@ import logging
 import re
 from datetime import datetime, timezone
 from typing import Any, Callable
-from urllib.parse import urlsplit
 
 import httpx
 from fastapi import FastAPI, HTTPException
@@ -29,7 +28,7 @@ from pydantic import BaseModel
 from agentd.config import Settings
 from agentd.product import ProductStoreProtocol, install_product_routes
 from agentd.router import BothBackendsFailed, ComputeFailure, ComputeRouter, RouteMetadata
-from agentd.tools import SPECS, dispatch
+from agentd.tools import NAMES, SPECS, dispatch
 
 log = logging.getLogger(__name__)
 
@@ -55,22 +54,6 @@ _CITATION_MARKER = re.compile(
     r"\[event#(?P<event_id>\d+) (?P<hhmm>[0-2]\d:[0-5]\d) (?P<app>[^\]]+)\]"
 )
 _EVIDENCE_INSUFFICIENT = "I don't have sufficient verified evidence to answer that safely."
-
-
-def _safe_url_origin(value: str) -> str:
-    """Return only scheme/host/port, never URL credentials or query data."""
-    parsed = urlsplit(value)
-    if not parsed.scheme or not parsed.hostname:
-        return "invalid"
-    try:
-        port = parsed.port
-    except ValueError:
-        return "invalid"
-    host = parsed.hostname.lower()
-    if ":" in host:
-        host = f"[{host}]"
-    port_suffix = f":{port}" if port is not None else ""
-    return f"{parsed.scheme.lower()}://{host}{port_suffix}"
 
 
 class ChatMessage(BaseModel):
@@ -110,14 +93,6 @@ def create_app(
             "service": "agentd",
             "model": settings.model_name,
             "brain_model": settings.brain_model,
-            "gateway_origin": _safe_url_origin(settings.gateway_url),
-            "radeon_gateway_origin": _safe_url_origin(
-                settings.compute_radeon_gateway_url
-            ),
-            "local_gateway_origin": _safe_url_origin(settings.local_gateway_url),
-            "honcho_origin": _safe_url_origin(settings.honcho_url),
-            "database": urlsplit(settings.timeline_db_url).path.removeprefix("/"),
-            "data_root": str(settings.data_root),
         }
 
     @app.get("/v1/models")
@@ -243,6 +218,7 @@ def create_app(
             for tc in tool_calls:
                 fn = tc.get("function", {})
                 name = fn.get("name", "")
+                safe_name = name if isinstance(name, str) and name in NAMES else "unknown_tool"
                 raw_args = fn.get("arguments", "{}")
                 try:
                     args = (
@@ -252,14 +228,21 @@ def create_app(
                     )
                 except json.JSONDecodeError:
                     args = {}
-                log.info("tool_call tool=%s", name)
+                log.info("tool_call tool=%s", safe_name)
                 try:
                     result = dispatch(settings, name, args, router=router)
-                    count = result.get("count") if isinstance(result, dict) else None
-                    log.info("tool_result tool=%s status=success count=%s", name, count)
+                    raw_count = result.get("count") if isinstance(result, dict) else None
+                    count = (
+                        raw_count
+                        if isinstance(raw_count, int)
+                        and not isinstance(raw_count, bool)
+                        and 0 <= raw_count <= 1_000_000
+                        else None
+                    )
+                    log.info("tool_result tool=%s status=success count=%s", safe_name, count)
                 except Exception:  # noqa: BLE001 - isolate tool failures
                     result = {"error": {"code": "tool_failed"}}
-                    log.warning("tool_result tool=%s status=failed", name)
+                    log.warning("tool_result tool=%s status=failed", safe_name)
                 citation_allowlist.update(_citation_labels(result))
                 messages.append(
                     {

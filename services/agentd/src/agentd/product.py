@@ -14,6 +14,7 @@ from collections.abc import Awaitable, Callable
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
+from urllib.parse import urlsplit
 
 import httpx
 import psycopg
@@ -40,6 +41,8 @@ _PROFILE_FIELDS = (
     "covered_session_start",
     "covered_session_end",
 )
+_MEMORYD_DEPENDENCIES = frozenset({"storage", "sentinel", "ocr", "gateway", "honcho"})
+_PRODUCT_HOSTS = frozenset({"127.0.0.1", "localhost", "::1", "testserver"})
 _WEB_ROOT = Path(__file__).with_name("web")
 
 
@@ -128,7 +131,7 @@ class ProductStore:
     def get_evidence(self, event_id: int) -> dict[str, Any] | None:
         with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
             cur.execute(
-                """SELECT id, ts, app, activity, topics, ocr_blocks,
+                """SELECT id, ts, kind, app, activity, topics, ocr_blocks,
                           screenshot_path
                    FROM timeline_events WHERE id = %s""",
                 (event_id,),
@@ -139,11 +142,12 @@ class ProductStore:
         return {
             "id": int(row[0]),
             "ts": row[1].isoformat(),
-            "app": row[2],
-            "activity": row[3],
-            "topics": list(row[4] or []),
-            "ocr_blocks": row[5] or [],
-            "screenshot_path": row[6],
+            "kind": row[2],
+            "app": row[3],
+            "activity": row[4],
+            "topics": list(row[5] or []),
+            "ocr_blocks": row[6] or [],
+            "screenshot_path": row[7],
         }
 
     def privacy_summary(self) -> dict[str, Any]:
@@ -206,13 +210,12 @@ class ProductAPI:
                 health = client.get(f"{self.settings.memoryd_url.rstrip('/')}/health")
                 health.raise_for_status()
                 health_body = health.json()
-                memoryd_state = (
-                    "ready"
-                    if isinstance(health_body, dict)
-                    and health_body.get("status") == "ok"
-                    and health_body.get("accepting_frames") is True
-                    else "degraded"
-                )
+                if _memoryd_health_verified(health_body):
+                    memoryd_state = "ready"
+                elif isinstance(health_body, dict) and health_body.get("status") == "degraded":
+                    memoryd_state = "degraded"
+                else:
+                    memoryd_state = "unknown"
                 metrics = client.get(f"{self.settings.memoryd_url.rstrip('/')}/metrics")
                 metrics.raise_for_status()
                 capture = _capture_status(metrics.text, checked_at)
@@ -230,9 +233,17 @@ class ProductAPI:
         }
         if database_state == "offline" or memoryd_state == "offline":
             overall = "offline"
-        elif capture["state"] == "stale" or compute["state"] == "degraded":
+        elif (
+            memoryd_state == "degraded"
+            or capture["state"] == "stale"
+            or compute["state"] == "degraded"
+        ):
             overall = "degraded"
-        elif capture["state"] != "ready" or compute["state"] != "ready":
+        elif (
+            memoryd_state != "ready"
+            or capture["state"] != "ready"
+            or compute["state"] != "ready"
+        ):
             overall = "unknown"
         else:
             overall = "ready"
@@ -398,7 +409,9 @@ def install_product_routes(
     async def product_evidence(event_id: int, request: Request) -> JSONResponse:
         _require_evidence_capability(request, product, event_id)
         event = _event_or_404(product.store, event_id)
-        image_path = _contained_image_path(settings.data_root, event.get("screenshot_path"))
+        image_available = _evidence_image_available(
+            settings.data_root, event.get("screenshot_path")
+        )
         capability = request.query_params["cap"]
         response = JSONResponse({
             "event_id": event_id,
@@ -408,10 +421,10 @@ def install_product_routes(
             "topics": list(event.get("topics") or []),
             "highlights": _safe_highlights(event.get("ocr_blocks")),
             "image": {
-                "available": image_path is not None,
+                "available": image_available,
                 "url": (
                     f"/api/evidence/{event_id}/image?cap={capability}"
-                    if image_path
+                    if image_available
                     else None
                 ),
             },
@@ -423,15 +436,12 @@ def install_product_routes(
     async def product_evidence_image(event_id: int, request: Request) -> StreamingResponse:
         _require_evidence_capability(request, product, event_id)
         event = _event_or_404(product.store, event_id)
-        image_path = _contained_image_path(settings.data_root, event.get("screenshot_path"))
-        if image_path is None:
-            raise HTTPException(
-                status_code=404, detail={"code": "evidence_image_unavailable"}
-            )
-        file_descriptor = _open_regular_nofollow(image_path)
+        file_descriptor, media_type = _open_evidence_image(
+            settings.data_root, event.get("screenshot_path")
+        )
         return StreamingResponse(
             _file_chunks(file_descriptor),
-            media_type=_image_media_type(image_path),
+            media_type=media_type,
             headers={
                 "Cache-Control": "private, no-store",
                 "X-Content-Type-Options": "nosniff",
@@ -525,7 +535,12 @@ def _install_profile_control(app: FastAPI, product: ProductAPI, action: str) -> 
                 timeout=httpx.Timeout(5.0, connect=1.0)
             ) as client:
                 response = client.post(
-                    f"{product.settings.memoryd_url.rstrip('/')}/v1/profile/{action}"
+                    f"{product.settings.memoryd_url.rstrip('/')}/v1/profile/{action}",
+                    json={"confirm": True},
+                    headers={
+                        "Origin": _local_service_origin(product.settings.memoryd_url),
+                        "X-DejaView-Control": "profile-projection",
+                    },
                 )
                 response.raise_for_status()
                 result = response.json()
@@ -561,7 +576,35 @@ def _profile_status(product: ProductAPI) -> dict[str, Any]:
             raise ValueError("invalid profile state")
         if set(body) != set(_PROFILE_FIELDS):
             raise ValueError("invalid profile state")
-        return {field: body.get(field) for field in _PROFILE_FIELDS}
+        status = {field: body.get(field) for field in _PROFILE_FIELDS}
+        enabled = status["enabled"]
+        paused = status["paused"]
+        pending = status["pending"]
+        failed = status["failed"]
+        last_success = status["last_success"]
+        if (
+            not isinstance(enabled, bool)
+            or not isinstance(paused, bool)
+            or isinstance(pending, bool)
+            or not isinstance(pending, int)
+            or pending < 0
+            or isinstance(failed, bool)
+            or not isinstance(failed, int)
+            or failed < 0
+            or (last_success is not None and not isinstance(last_success, str))
+        ):
+            raise ValueError("invalid profile state")
+        if not enabled:
+            state = "offline"
+        elif paused:
+            state = "stale"
+        elif failed > 0 or pending > 0:
+            state = "degraded"
+        elif not last_success:
+            state = "unknown"
+        else:
+            state = "ready"
+        return {"state": state, **status}
     except (httpx.HTTPError, TypeError, ValueError) as exc:
         raise HTTPException(
             status_code=503, detail={"code": "profile_unavailable"}
@@ -671,7 +714,30 @@ def _event_or_404(store: ProductStoreProtocol, event_id: int) -> dict[str, Any]:
         raise HTTPException(503, detail={"code": "evidence_unavailable"}) from exc
     if not isinstance(event, dict):
         raise HTTPException(404, detail={"code": "evidence_not_found"})
+    screenshot_path = event.get("screenshot_path")
+    if (
+        event.get("kind") != "frame"
+        or not isinstance(screenshot_path, str)
+        or not screenshot_path
+    ):
+        raise HTTPException(404, detail={"code": "evidence_not_found"})
     return event
+
+
+def _local_service_origin(value: str) -> str:
+    parsed = urlsplit(value)
+    if (
+        parsed.scheme not in {"http", "https"}
+        or parsed.hostname not in _PRODUCT_HOSTS
+        or parsed.username is not None
+        or parsed.password is not None
+    ):
+        raise ValueError("non-local service origin")
+    try:
+        parsed.port
+    except ValueError as exc:
+        raise ValueError("invalid service origin") from exc
+    return f"{parsed.scheme}://{parsed.netloc}"
 
 
 def _safe_highlights(raw_blocks: object) -> list[dict[str, list[int | float]]]:
@@ -694,63 +760,137 @@ def _safe_highlights(raw_blocks: object) -> list[dict[str, list[int | float]]]:
     return highlights
 
 
-def _contained_image_path(data_root: Path, stored_path: object) -> Path | None:
+def _open_evidence_image(data_root: Path, stored_path: object) -> tuple[int, str]:
+    unavailable = HTTPException(
+        status_code=404, detail={"code": "evidence_image_unavailable"}
+    )
     if not isinstance(stored_path, str) or not stored_path:
-        return None
+        raise unavailable
     raw = Path(stored_path)
     root = data_root / "screenshots"
-    if not raw.is_absolute() or ".." in raw.parts or not root.exists() or root.is_symlink():
-        return None
+    if not raw.is_absolute() or ".." in raw.parts:
+        raise unavailable
     try:
         relative = raw.relative_to(root)
-        current = root
-        for part in relative.parts:
-            current = current / part
-            if current.is_symlink():
-                return None
-        resolved_root = root.resolve(strict=True)
-        resolved = raw.resolve(strict=True)
-    except (OSError, RuntimeError, ValueError):
-        return None
-    if not resolved.is_relative_to(resolved_root) or not resolved.is_file():
-        return None
-    if resolved.suffix.lower() not in {".webp", ".png", ".jpg", ".jpeg"}:
-        return None
-    return resolved
+    except ValueError as exc:
+        raise unavailable from exc
+    if not relative.parts or any(part in {"", ".", ".."} for part in relative.parts):
+        raise unavailable
+    suffix = Path(relative.parts[-1]).suffix.lower()
+    media_type = {
+        ".webp": "image/webp",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+    }.get(suffix)
+    if media_type is None:
+        raise unavailable
 
-
-def _open_regular_nofollow(path: Path) -> int:
-    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    close_after: list[int] = []
+    root_flags = (
+        os.O_RDONLY
+        | getattr(os, "O_CLOEXEC", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_DIRECTORY", 0)
+    )
     try:
-        descriptor = os.open(path, flags)
-        metadata = os.fstat(descriptor)
-        if not stat.S_ISREG(metadata.st_mode):
-            raise OSError("not regular")
-        current = os.stat(path, follow_symlinks=False)
-        if (metadata.st_dev, metadata.st_ino) != (current.st_dev, current.st_ino):
-            raise OSError("file changed")
-        return descriptor
-    except OSError as exc:
-        if "descriptor" in locals():
+        directory_fd = os.open(root, root_flags)
+        close_after.append(directory_fd)
+        directory_identities = [_descriptor_identity(directory_fd)]
+        for part in relative.parts[:-1]:
+            directory_fd = os.open(part, root_flags, dir_fd=directory_fd)
+            close_after.append(directory_fd)
+            directory_identities.append(_descriptor_identity(directory_fd))
+        file_flags = (
+            os.O_RDONLY
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_NOFOLLOW", 0)
+            | getattr(os, "O_NONBLOCK", 0)
+        )
+        descriptor = os.open(relative.parts[-1], file_flags, dir_fd=directory_fd)
+        leaf_metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(leaf_metadata.st_mode):
             os.close(descriptor)
-        raise HTTPException(
-            status_code=404, detail={"code": "evidence_image_unavailable"}
-        ) from exc
+            raise OSError("not regular")
+        if not _descriptor_chain_matches(
+            root,
+            relative.parts,
+            directory_identities,
+            (leaf_metadata.st_dev, leaf_metadata.st_ino),
+            root_flags,
+            file_flags,
+        ):
+            os.close(descriptor)
+            raise OSError("evidence path changed")
+        return descriptor, media_type
+    except OSError as exc:
+        raise unavailable from exc
+    finally:
+        for directory_descriptor in reversed(close_after):
+            os.close(directory_descriptor)
+
+
+def _evidence_image_available(data_root: Path, stored_path: object) -> bool:
+    try:
+        descriptor, _media_type = _open_evidence_image(data_root, stored_path)
+    except HTTPException:
+        return False
+    os.close(descriptor)
+    return True
+
+
+def _descriptor_identity(descriptor: int) -> tuple[int, int]:
+    metadata = os.fstat(descriptor)
+    return metadata.st_dev, metadata.st_ino
+
+
+def _descriptor_chain_matches(
+    root: Path,
+    parts: tuple[str, ...],
+    directory_identities: list[tuple[int, int]],
+    leaf_identity: tuple[int, int],
+    root_flags: int,
+    file_flags: int,
+) -> bool:
+    opened: list[int] = []
+    try:
+        directory_fd = os.open(root, root_flags)
+        opened.append(directory_fd)
+        if _descriptor_identity(directory_fd) != directory_identities[0]:
+            return False
+        for index, part in enumerate(parts[:-1], start=1):
+            directory_fd = os.open(part, root_flags, dir_fd=directory_fd)
+            opened.append(directory_fd)
+            if _descriptor_identity(directory_fd) != directory_identities[index]:
+                return False
+        leaf_fd = os.open(parts[-1], file_flags, dir_fd=directory_fd)
+        opened.append(leaf_fd)
+        return _descriptor_identity(leaf_fd) == leaf_identity
+    except OSError:
+        return False
+    finally:
+        for descriptor in reversed(opened):
+            os.close(descriptor)
+
+
+def _memoryd_health_verified(body: object) -> bool:
+    if not isinstance(body, dict):
+        return False
+    dependencies = body.get("dependencies")
+    return (
+        body.get("status") == "ok"
+        and body.get("accepting_frames") is True
+        and body.get("dependencies_verified") is True
+        and isinstance(dependencies, dict)
+        and set(dependencies) == _MEMORYD_DEPENDENCIES
+        and all(dependencies[name] == "ready" for name in _MEMORYD_DEPENDENCIES)
+    )
 
 
 def _file_chunks(descriptor: int):
     with os.fdopen(descriptor, "rb") as image:
         while chunk := image.read(64 * 1024):
             yield chunk
-
-
-def _image_media_type(path: Path) -> str:
-    return {
-        ".webp": "image/webp",
-        ".png": "image/png",
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
-    }[path.suffix.lower()]
 
 
 def _capture_status(metrics: str, now: datetime) -> dict[str, Any]:
@@ -870,11 +1010,16 @@ def _require_same_origin_json(request: Request, product: ProductAPI) -> None:
     origin = request.headers.get("origin")
     host = request.headers.get("host")
     expected_origin = f"{request.url.scheme}://{host}" if host else ""
+    try:
+        hostname = urlsplit(f"//{host}").hostname if host else None
+    except ValueError:
+        hostname = None
     content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
     header_token = request.headers.get("x-dejaview-csrf", "")
     cookie_token = request.cookies.get("dejaview_csrf", "")
     if (
         not origin
+        or hostname not in _PRODUCT_HOSTS
         or origin.rstrip("/") != expected_origin.rstrip("/")
         or content_type != "application/json"
         or not header_token

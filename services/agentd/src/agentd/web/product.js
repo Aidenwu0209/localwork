@@ -1,6 +1,7 @@
 import {
   evidenceImageAlt,
   keepDialogFocus,
+  profileStateOperational,
   setDialogBackgroundInert,
   setProfileControls,
   shouldAnnounceStatus,
@@ -291,11 +292,13 @@ async function loadProfileStatus() {
   clearError(error);
   try {
     const body = await api("/api/profile/status");
-    const raw = body.enabled === false ? "offline" : body.paused ? "stale" : "ready";
-    const label = body.enabled === false ? "Disabled" : body.paused ? "Paused" : "Active";
+    const raw = ["ready", "degraded", "stale", "offline", "unknown"].includes(body.state)
+      ? body.state
+      : "unknown";
+    const label = raw === "ready" ? "Active" : raw === "stale" ? "Paused" : raw === "offline" ? "Disabled" : raw === "degraded" ? "Needs attention" : "Unverified";
     setStatusChip(byId("profile-status"), label, raw);
     setProfileControls(profileControls, {
-      available: true,
+      available: profileStateOperational(raw),
       enabled: body.enabled,
       paused: body.paused,
     });

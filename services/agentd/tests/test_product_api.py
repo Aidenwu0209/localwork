@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from agentd.config import Settings
+from agentd import product as product_module
 from agentd.router import RouteMetadata, RouteResult
 from agentd.server import create_app
 
@@ -105,11 +107,13 @@ class FakeLocalClient:
         offline: bool = False,
         metrics_text: str = "dejaview_capture_last_heartbeat_unixtime 0.0\n",
         extra_profile_field: bool = False,
+        health_body: object | None = None,
     ) -> None:
         self.offline = offline
         self.metrics_text = metrics_text
         self.extra_profile_field = extra_profile_field
-        self.posts: list[tuple[str, object]] = []
+        self.health_body = health_body
+        self.posts: list[tuple[str, object, object]] = []
 
     def __call__(self, **_kwargs: object) -> "FakeLocalClient":
         return self
@@ -124,7 +128,11 @@ class FakeLocalClient:
         if self.offline:
             raise httpx.ConnectError("PRIVATE LOCAL URL")
         if url.endswith("/health"):
-            return FakeResponse({"status": "ok", "accepting_frames": True})
+            return FakeResponse(
+                self.health_body
+                if self.health_body is not None
+                else {"status": "ok", "accepting_frames": True}
+            )
         if url.endswith("/metrics"):
             return FakeResponse({}, text=self.metrics_text)
         if url.endswith("/v1/profile/status"):
@@ -142,10 +150,16 @@ class FakeLocalClient:
             return FakeResponse(body)
         raise AssertionError(url)
 
-    def post(self, url: str, *, json: object | None = None) -> FakeResponse:
+    def post(
+        self,
+        url: str,
+        *,
+        json: object | None = None,
+        headers: object | None = None,
+    ) -> FakeResponse:
         if self.offline:
             raise httpx.ConnectError("PRIVATE LOCAL URL")
-        self.posts.append((url, json))
+        self.posts.append((url, json, headers))
         if url.endswith("/v1/profile/pause"):
             body = {"enabled": False, "paused": True}
             if self.extra_profile_field:
@@ -284,6 +298,36 @@ def test_status_distinguishes_stale_and_future_capture_heartbeat(tmp_path: Path)
     assert future_response.json()["overall"] == "unknown"
 
 
+def test_status_never_reports_ready_from_configuration_only_health(
+    tmp_path: Path,
+) -> None:
+    now = datetime(2026, 8, 3, 10, 0, tzinfo=timezone.utc)
+    local = FakeLocalClient(
+        metrics_text=f"dejaview_capture_last_heartbeat_unixtime {now.timestamp()}\n",
+        health_body={"status": "ok", "accepting_frames": True},
+    )
+    app = client(tmp_path, local_client=local, product_clock=lambda: now)
+
+    response = app.get("/api/status")
+
+    assert response.status_code == 200
+    assert response.json()["components"]["memoryd"]["state"] == "unknown"
+    assert response.json()["overall"] == "unknown"
+
+    incomplete_claim = FakeLocalClient(
+        metrics_text=f"dejaview_capture_last_heartbeat_unixtime {now.timestamp()}\n",
+        health_body={
+            "status": "ok",
+            "accepting_frames": True,
+            "dependencies_verified": True,
+        },
+    )
+    incomplete = client(
+        tmp_path, local_client=incomplete_claim, product_clock=lambda: now
+    ).get("/api/status")
+    assert incomplete.json()["components"]["memoryd"]["state"] == "unknown"
+
+
 def test_timeline_is_bounded_cursor_paginated_and_display_safe(tmp_path: Path) -> None:
     store = FakeStore()
     app = client(tmp_path, store=store)
@@ -397,6 +441,7 @@ def test_evidence_metadata_and_image_never_expose_paths_or_ocr(
     store = FakeStore()
     store.event = {
         "id": 42,
+        "kind": "frame",
         "ts": "2026-08-03T09:18:00+08:00",
         "app": "VS Code",
         "activity": "Reviewed a synthetic kernel change",
@@ -449,6 +494,7 @@ def test_evidence_image_denies_outside_traversal_and_symlink_paths(
     store = FakeStore()
     store.event = {
         "id": 42,
+        "kind": "frame",
         "ts": "2026-08-03T09:18:00+08:00",
         "app": "VS Code",
         "activity": "Synthetic",
@@ -468,6 +514,100 @@ def test_evidence_image_denies_outside_traversal_and_symlink_paths(
     assert "outside" not in response.text
 
 
+def test_evidence_image_parent_swap_after_leaf_open_fails_closed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    screenshots = tmp_path / "screenshots"
+    parent = screenshots / "2026"
+    parent.mkdir(parents=True)
+    image = parent / "event-42.webp"
+    image.write_bytes(b"inside")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / image.name).write_bytes(b"OUTSIDE")
+    store = FakeStore()
+    store.event = {
+        "id": 42,
+        "kind": "frame",
+        "ts": "2026-08-03T09:18:00+08:00",
+        "app": "Synthetic",
+        "activity": "Synthetic",
+        "topics": [],
+        "ocr_blocks": [],
+        "screenshot_path": str(image),
+    }
+    app = client(tmp_path, store=store)
+    capability = capability_from_timeline(app)
+    original_open = os.open
+    swapped = False
+
+    def racing_open(path, flags, *args, dir_fd=None, **kwargs):
+        nonlocal swapped
+        descriptor = original_open(path, flags, *args, dir_fd=dir_fd, **kwargs)
+        if path == image.name and dir_fd is not None and not swapped:
+            swapped = True
+            held = screenshots / "held"
+            parent.rename(held)
+            parent.symlink_to(outside, target_is_directory=True)
+        return descriptor
+
+    monkeypatch.setattr(product_module.os, "open", racing_open)
+    response = app.get(f"/api/evidence/42/image?cap={capability}")
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": {"code": "evidence_image_unavailable"}
+    }
+    assert b"OUTSIDE" not in response.content
+
+
+@pytest.mark.parametrize("kind", ["blocked", "audit", "document"])
+def test_evidence_capability_cannot_authorize_non_frame_rows(
+    tmp_path: Path, kind: str
+) -> None:
+    store = FakeStore()
+    store.event = {
+        "id": 42,
+        "kind": kind,
+        "ts": "2026-08-03T09:18:00+08:00",
+        "app": "Synthetic",
+        "activity": "Synthetic",
+        "topics": [],
+        "ocr_blocks": [],
+        "screenshot_path": None,
+    }
+    app = client(tmp_path, store=store)
+    capability = capability_from_timeline(app)
+
+    response = app.get(f"/api/evidence/42?cap={capability}")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": {"code": "evidence_not_found"}}
+
+
+def test_evidence_capability_cannot_authorize_frame_without_image(
+    tmp_path: Path,
+) -> None:
+    store = FakeStore()
+    store.event = {
+        "id": 42,
+        "kind": "frame",
+        "ts": "2026-08-03T09:18:00+08:00",
+        "app": "Synthetic",
+        "activity": "Synthetic",
+        "topics": [],
+        "ocr_blocks": [],
+        "screenshot_path": None,
+    }
+    app = client(tmp_path, store=store)
+    capability = capability_from_timeline(app)
+
+    response = app.get(f"/api/evidence/42?cap={capability}")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": {"code": "evidence_not_found"}}
+
+
 def test_blocked_or_missing_event_has_no_evidence_authority(tmp_path: Path) -> None:
     response = client(tmp_path).get("/api/evidence/999")
     assert response.status_code == 404
@@ -478,6 +618,7 @@ def test_evidence_capability_rejects_tampering_and_wrong_event(tmp_path: Path) -
     store = FakeStore()
     store.event = {
         "id": 42,
+        "kind": "frame",
         "ts": "2026-08-03T09:18:00+08:00",
         "app": "VS Code",
         "activity": "Synthetic",
@@ -544,6 +685,7 @@ def test_profile_status_and_controls_are_whitelisted_and_require_confirmation(
     status = app.get("/api/profile/status")
     assert status.status_code == 200
     assert status.json() == {
+        "state": "degraded",
         "enabled": True,
         "paused": False,
         "pending": 2,
@@ -564,6 +706,13 @@ def test_profile_status_and_controls_are_whitelisted_and_require_confirmation(
     assert paused.json() == {"enabled": False, "paused": True}
     resumed = app.post("/api/profile/resume", json={"confirm": True}, headers=headers)
     assert resumed.json() == {"enabled": True, "paused": False}
+    assert local.posts[0][1:] == (
+        {"confirm": True},
+        {
+            "Origin": "http://127.0.0.1:8090",
+            "X-DejaView-Control": "profile-projection",
+        },
+    )
 
 
 def test_profile_query_returns_local_answer_without_echoing_question(tmp_path: Path) -> None:
@@ -605,6 +754,29 @@ def test_mutations_reject_cross_site_form_and_missing_csrf_without_upstream_call
         content='{"confirm":true}',
         headers={**headers, "content-type": content_type},
     )
+    assert response.status_code == 403
+    assert response.json() == {"detail": {"code": "same_origin_required"}}
+    assert local.posts == []
+
+
+def test_mutations_reject_matching_attacker_host_and_origin(
+    tmp_path: Path,
+) -> None:
+    local = FakeLocalClient()
+    app = client(tmp_path, local_client=local)
+    session = app.get("/api/session")
+    token = session.json()["csrf_token"]
+
+    response = app.post(
+        "/api/profile/pause",
+        json={"confirm": True},
+        headers={
+            "host": "attacker.invalid",
+            "origin": "http://attacker.invalid",
+            "x-dejaview-csrf": token,
+        },
+    )
+
     assert response.status_code == 403
     assert response.json() == {"detail": {"code": "same_origin_required"}}
     assert local.posts == []

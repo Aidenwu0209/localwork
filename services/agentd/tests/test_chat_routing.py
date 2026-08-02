@@ -204,6 +204,28 @@ def test_tool_logs_never_include_arguments_or_result_content(caplog) -> None:
     assert "tool=search_timeline" in caplog.text
 
 
+def test_unknown_model_tool_name_is_sanitized_before_logging(caplog) -> None:
+    secret = "SYNTHETIC-PRIVATE-OCR-TITLE-PATH"
+    tool_call = {
+        "content": None,
+        "tool_calls": [
+            {
+                "id": "private-call-id",
+                "function": {"name": secret, "arguments": "{}"},
+            }
+        ],
+    }
+    router = ScriptedRouter([result(tool_call), result({"content": "No memory claim."})])
+
+    with caplog.at_level(logging.INFO, logger="agentd.server"):
+        response = post_chat(router)
+
+    assert response.status_code == 200
+    assert secret not in caplog.text
+    assert "private-call-id" not in caplog.text
+    assert "tool=unknown_tool" in caplog.text
+
+
 def test_dual_compute_failure_returns_only_sanitized_reasons() -> None:
     router = ScriptedRouter([BothBackendsFailed("remote_timeout", "local_timeout")])
 

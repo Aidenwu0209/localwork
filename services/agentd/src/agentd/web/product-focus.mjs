@@ -52,6 +52,10 @@ export function setProfileControls(controls, { available, enabled, paused } = {}
   controls.resume.disabled = !available || !paused;
 }
 
+export function profileStateOperational(state) {
+  return state === "ready" || state === "stale";
+}
+
 export function evidenceImageAlt({ eventId, app, captured }) {
   const safeEvent = Number.isInteger(eventId) && eventId > 0 ? eventId : "unknown";
   const safeApp = typeof app === "string" && app.trim() ? app.trim() : "unknown application";

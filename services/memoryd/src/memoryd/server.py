@@ -42,6 +42,7 @@ from memoryd.storage import TimelineStore
 
 
 MetaT = TypeVar("MetaT", bound=BaseModel)
+_LOCAL_CONTROL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1", "testserver"})
 
 
 class CaptureHeartbeat(BaseModel):
@@ -81,20 +82,35 @@ def _validated_meta(meta: str, model: type[MetaT]) -> MetaT:
         raise HTTPException(status_code=422, detail={"code": "invalid_meta"}) from exc
 
 
-def _safe_url_origin(value: str) -> str:
-    """Return only scheme/host/port, never URL credentials or query data."""
-    parsed = urlsplit(value)
-    if not parsed.scheme or not parsed.hostname:
-        return "invalid"
+async def _require_profile_control(request: Request) -> None:
+    content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    host = request.headers.get("host", "")
+    origin = request.headers.get("origin", "")
     try:
-        port = parsed.port
+        hostname = urlsplit(f"//{host}").hostname
     except ValueError:
-        return "invalid"
-    host = parsed.hostname.lower()
-    if ":" in host:
-        host = f"[{host}]"
-    port_suffix = f":{port}" if port is not None else ""
-    return f"{parsed.scheme.lower()}://{host}{port_suffix}"
+        hostname = None
+    expected_origin = f"{request.url.scheme}://{host}" if host else ""
+    if (
+        hostname not in _LOCAL_CONTROL_HOSTS
+        or not origin
+        or origin.rstrip("/") != expected_origin.rstrip("/")
+        or request.headers.get("x-dejaview-control") != "profile-projection"
+        or content_type != "application/json"
+    ):
+        raise HTTPException(
+            status_code=403, detail={"code": "profile_control_forbidden"}
+        )
+    try:
+        body = await request.json()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=403, detail={"code": "profile_control_forbidden"}
+        ) from exc
+    if body != {"confirm": True}:
+        raise HTTPException(
+            status_code=403, detail={"code": "profile_control_forbidden"}
+        )
 
 
 def _pipeline_identity(pipeline: object) -> str:
@@ -235,11 +251,10 @@ def create_app(
         accepting_frames = _accepting_frames(pipeline)
         return {
             "status": "ok" if accepting_frames else "degraded",
+            "service": "memoryd",
             "pipeline": pipeline_identity,
             "accepting_frames": accepting_frames,
-            "gateway_origin": _safe_url_origin(settings.gateway_url),
-            "database": urlsplit(settings.timeline_db_url).path.removeprefix("/"),
-            "data_root": str(settings.data_root),
+            "dependencies_verified": False,
         }
 
     @app.get("/metrics")
@@ -274,7 +289,8 @@ def create_app(
         return _projection_status()
 
     @app.post("/v1/profile/pause")
-    async def pause_profile_projection() -> dict[str, bool]:
+    async def pause_profile_projection(request: Request) -> dict[str, bool]:
+        await _require_profile_control(request)
         if projection_store is None or not hasattr(projection_store, "set_projection_enabled"):
             raise HTTPException(status_code=503, detail={"code": "projection_not_ready"})
         try:
@@ -285,7 +301,8 @@ def create_app(
         return {"enabled": False, "paused": True}
 
     @app.post("/v1/profile/resume")
-    async def resume_profile_projection() -> dict[str, bool]:
+    async def resume_profile_projection(request: Request) -> dict[str, bool]:
+        await _require_profile_control(request)
         if projection_store is None or not hasattr(projection_store, "set_projection_enabled"):
             raise HTTPException(status_code=503, detail={"code": "projection_not_ready"})
         try:

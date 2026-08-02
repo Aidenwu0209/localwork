@@ -16,7 +16,6 @@ answer with [event#id HH:MM app] citations (handbook §6.5 answer discipline).
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Literal
 
 import httpx
@@ -266,8 +265,7 @@ def search_kb(
 def fetch_screenshot(
     settings: Settings, *, event_id: int, highlight_text: str | None = None
 ) -> dict[str, Any]:
-    """Look up an event's screenshot path + locate highlight_text in its
-    ocr_blocks (returns the bbox(es) so the UI can outline them)."""
+    """Return an opaque evidence reference and text-free highlight boxes."""
     with psycopg.connect(settings.timeline_db_url) as conn, conn.cursor() as cur:
         cur.execute(
             "SELECT id, ts, app, window_title, screenshot_path, ocr_blocks "
@@ -277,7 +275,7 @@ def fetch_screenshot(
         row = cur.fetchone()
     if row is None:
         return {"event_id": event_id, "found": False}
-    eid, ts, app, title, screenshot_path, ocr_blocks = row
+    eid, _ts, app, _title, screenshot_path, ocr_blocks = row
     blocks = ocr_blocks or []
     highlights: list[dict] = []
     if highlight_text:
@@ -285,15 +283,13 @@ def fetch_screenshot(
         for b in blocks:
             txt = b.get("text") or ""
             if needle and needle in txt.lower():
-                highlights.append({"text": txt, "bbox": b.get("bbox", [])})
+                highlights.append({"bbox": b.get("bbox", [])})
     return {
         "event_id": eid,
         "found": True,
-        "ts": ts.isoformat() if ts else None,
         "app": app,
-        "window_title": title,
-        "screenshot_path": screenshot_path,
-        "screenshot_exists": bool(screenshot_path and Path(screenshot_path).exists()),
+        "evidence_available": bool(screenshot_path),
+        "evidence_reference": f"event:{eid}",
         "highlights": highlights,
     }
 

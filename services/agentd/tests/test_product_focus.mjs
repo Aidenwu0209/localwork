@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   evidenceImageAlt,
   keepDialogFocus,
+  profileStateOperational,
   setDialogBackgroundInert,
   setProfileControls,
   shouldAnnounceStatus,
@@ -103,6 +104,14 @@ test("unavailable profile disables every profile interaction", () => {
   assert.equal(controls.pause.disabled, true);
   assert.equal(controls.question.disabled, true);
   assert.equal(controls.resume.disabled, true);
+});
+
+test("only verified or intentionally paused profile states are operational", () => {
+  assert.equal(profileStateOperational("ready"), true);
+  assert.equal(profileStateOperational("stale"), true);
+  for (const state of ["degraded", "offline", "unknown", "invalid"]) {
+    assert.equal(profileStateOperational(state), false, state);
+  }
 });
 
 test("available profile exposes only controls valid for its current state", () => {
