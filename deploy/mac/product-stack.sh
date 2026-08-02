@@ -33,7 +33,7 @@ privacy_marker() { printf '%s/privacy.product-owned\n' "$RUNTIME_DIR"; }
 service_tree_revision() {
   local service="$1" source_root="${DEJAVIEW_SERVICE_SOURCE_ROOT:-$ROOT}"
   if [[ "$source_root" == "$ROOT" ]]; then
-    if ! git -C "$ROOT" ls-files --others --ignored --exclude-standard -z -- "services/$service" |
+    if ! { git -C "$ROOT" ls-files --others --exclude-standard -z -- "services/$service"; git -C "$ROOT" ls-files --ignored --exclude-standard -z -- "services/$service"; } |
       python3 -c '
 import os
 import sys

@@ -726,6 +726,36 @@ class ProductStackTest(unittest.TestCase):
             finally:
                 subprocess.run([SCRIPT, "down"], env=env, capture_output=True, text=True)
 
+    def test_production_root_rejects_tracked_env_by_path_without_reading(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            repo = tmp / "repo"
+            script = repo / "deploy" / "mac" / "product-stack.sh"
+            script.parent.mkdir(parents=True)
+            shutil.copy2(SCRIPT, script)
+            for service in ("ocrd", "memoryd", "agentd"):
+                path = repo / "services" / service / "src" / service
+                path.mkdir(parents=True)
+                (path / "__init__.py").write_text("", encoding="utf-8")
+            subprocess.run(["git", "init", "-q", repo], check=True)
+            subprocess.run(["git", "-C", repo, "add", "."], check=True)
+            subprocess.run(["git", "-C", repo, "-c", "user.name=test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"], check=True)
+            env = self._environment(tmp)
+            setup = tmp / "setup-ok.sh"; setup.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8"); setup.chmod(0o755)
+            env |= {"DEJAVIEW_SETUP_HONCHO_SCRIPT": str(setup)}
+            self.assertEqual(subprocess.run([script, "up"], env=env, capture_output=True, text=True).returncode, 0)
+            dotenv = repo / "services" / "ocrd" / ".env"
+            dotenv.write_text("DO_NOT_READ=sentinel\n", encoding="utf-8")
+            subprocess.run(["git", "-C", repo, "add", "services/ocrd/.env"], check=True)
+            dotenv.chmod(0)
+            try:
+                status = subprocess.run([script, "status"], env=env, capture_output=True, text=True)
+                self.assertNotEqual(status.returncode, 0, status.stdout + status.stderr)
+                self.assertIn("NOT_READY", status.stdout)
+            finally:
+                dotenv.chmod(0o600)
+                subprocess.run([script, "down"], env=env, capture_output=True, text=True)
+
 
 if __name__ == "__main__":
     unittest.main()
