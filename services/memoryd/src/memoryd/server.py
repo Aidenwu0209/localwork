@@ -12,10 +12,11 @@ grounds). Health check at /health for docker/orchestration.
 from __future__ import annotations
 
 import asyncio
-from typing import Annotated
+from typing import Annotated, TypeVar
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
+from pydantic import BaseModel
 
 from memoryd.config import Settings
 from memoryd.metrics import MemoryMetrics
@@ -35,6 +36,17 @@ from memoryd.stages import (
     StubSentinel,
 )
 from memoryd.storage import TimelineStore
+
+
+MetaT = TypeVar("MetaT", bound=BaseModel)
+
+
+def _validated_meta(meta: str, model: type[MetaT]) -> MetaT:
+    """Parse request metadata without reflecting malformed input to callers."""
+    try:
+        return model.model_validate_json(meta)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail={"code": "invalid_meta"}) from exc
 
 
 def _safe_url_origin(value: str) -> str:
@@ -153,12 +165,7 @@ def create_app(
         file: Annotated[UploadFile, File(description="webp/png/jpeg frame image")],
         meta: Annotated[str, Form(description="JSON FrameMeta")],
     ) -> IngestAck:
-        try:
-            meta_obj = FrameMeta.model_validate_json(meta)
-        except Exception as exc:
-            raise HTTPException(
-                status_code=422, detail=f"invalid meta JSON: {exc}"
-            ) from exc
+        meta_obj = _validated_meta(meta, FrameMeta)
         if not _accepting_frames(pipeline):
             raise HTTPException(
                 status_code=503,
@@ -181,12 +188,7 @@ def create_app(
     ) -> IngestAck:
         # Skeleton: parse + accept. Real wiring (perceive/whisper.cpp transcript
         # -> transcript event) lands with T1.7 once the audio path is decided.
-        try:
-            AudioMeta.model_validate_json(meta)
-        except Exception as exc:
-            raise HTTPException(
-                status_code=422, detail=f"invalid meta JSON: {exc}"
-            ) from exc
+        _validated_meta(meta, AudioMeta)
         raise HTTPException(
             status_code=501,
             detail={
@@ -202,12 +204,7 @@ def create_app(
         meta: Annotated[str, Form(description="JSON DocMeta")],
     ) -> IngestAck:
         # Skeleton: parse + accept. Real wiring (MarkItDown -> kb_chunks) is T2.3.
-        try:
-            DocMeta.model_validate_json(meta)
-        except Exception as exc:
-            raise HTTPException(
-                status_code=422, detail=f"invalid meta JSON: {exc}"
-            ) from exc
+        _validated_meta(meta, DocMeta)
         raise HTTPException(
             status_code=501,
             detail={

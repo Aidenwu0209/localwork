@@ -14,8 +14,10 @@ from memoryd.server import create_app
 class ScriptedPipeline:
     def __init__(self, acknowledgements: list[IngestAck]) -> None:
         self._acknowledgements = acknowledgements
+        self.calls = 0
 
     async def ingest_frame(self, image_bytes: bytes, meta: object) -> IngestAck:
+        self.calls += 1
         return self._acknowledgements.pop(0)
 
 
@@ -92,3 +94,24 @@ def test_audio_and_doc_are_honestly_unsupported_without_reading_body() -> None:
             data={"meta": "not-json"},
         )
         assert response.status_code == 422
+
+
+def test_invalid_meta_is_sanitized_without_reading_or_running_pipeline() -> None:
+    pipeline = ScriptedPipeline([])
+    client = client_for(pipeline)
+    marker = "not-json-SENSITIVE-123"
+    with patch(
+        "starlette.datastructures.UploadFile.read",
+        new=AsyncMock(side_effect=AssertionError("invalid meta read the upload")),
+    ) as read:
+        for kind in ("frame", "audio", "doc"):
+            response = client.post(
+                f"/v1/ingest/{kind}",
+                files={"file": ("synthetic.bin", b"not-consumed", "application/octet-stream")},
+                data={"meta": marker},
+            )
+            assert response.status_code == 422
+            assert response.json() == {"detail": {"code": "invalid_meta"}}
+            assert marker not in response.text
+    read.assert_not_awaited()
+    assert pipeline.calls == 0

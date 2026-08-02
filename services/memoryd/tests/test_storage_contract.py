@@ -77,3 +77,5 @@ def test_clean_schema_and_idempotent_migration_close_audit_reasons() -> None:
     assert "add column if not exists reason" in migration.lower()
     assert "pg_constraint" in migration.lower()
     assert "p313_sentinel_audit_reason_check" in migration
+    assert "conrelid = 'sentinel_audit'::regclass" in migration
+    assert "contype = 'c'" in migration

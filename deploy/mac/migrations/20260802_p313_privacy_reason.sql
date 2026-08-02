@@ -18,6 +18,8 @@ BEGIN
     SELECT 1
     FROM pg_constraint
     WHERE conname = 'p313_sentinel_audit_reason_check'
+      AND conrelid = 'sentinel_audit'::regclass
+      AND contype = 'c'
   ) THEN
     ALTER TABLE sentinel_audit
       ADD CONSTRAINT p313_sentinel_audit_reason_check
