@@ -135,6 +135,7 @@ class Pipeline:
             ocr_blocks=[b.model_dump() for b in ocr.blocks],
             screenshot_path=screenshot_path,
             embedding=vector,
+            app_context=event.app_context,
         )
 
         # Step 6 — Honcho throttled flush is stubbed in M3.2 (no-op); M2.6 wires

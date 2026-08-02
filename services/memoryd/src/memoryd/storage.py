@@ -11,6 +11,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import psycopg
 
@@ -79,8 +80,14 @@ class TimelineStore:
         ocr_blocks: list[dict[str, Any]],
         screenshot_path: str | None,
         embedding: list[float],
+        app_context: str | None = None,
     ) -> int:
-        """Persist a fully-processed frame as one timeline_events row."""
+        """Persist an allowed frame and its closed Honcho projection atomically.
+
+        The payload deliberately has no access to OCR, verbatim, browser, or
+        screenshot fields.  A failed outbox insert aborts the surrounding
+        Postgres transaction, so there is never an unprojectable stored row.
+        """
         with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
             cur.execute(
                 """INSERT INTO timeline_events
@@ -97,7 +104,24 @@ class TimelineStore:
                     embedding,
                 ),
             )
-            return int(cur.fetchone()[0])
+            event_id = int(cur.fetchone()[0])
+            payload = _projection_payload(
+                event_id=event_id,
+                ts=ts,
+                app_context=app_context or "other",
+                activity=activity or "",
+                topics=topics,
+            )
+            cur.execute(
+                """INSERT INTO honcho_outbox (event_id, payload, session_id)
+                   VALUES (%s, %s, %s)""",
+                (
+                    event_id,
+                    json.dumps(payload, separators=(",", ":")),
+                    _honcho_session_id(ts),
+                ),
+            )
+            return event_id
 
     def merge_into_previous(self, *, event_id: int, ts: str) -> None:
         """Extend an existing event's end_ts when the novelty gate merges."""
@@ -132,3 +156,25 @@ class TimelineStore:
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _honcho_session_id(ts: str) -> str:
+    """Stable daily session name using the required Japan local calendar."""
+    occurred_at = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    if occurred_at.tzinfo is None:
+        occurred_at = occurred_at.replace(tzinfo=timezone.utc)
+    return f"dejaview-{occurred_at.astimezone(ZoneInfo('Asia/Tokyo')).date().isoformat()}"
+
+
+def _projection_payload(
+    *, event_id: int, ts: str, app_context: str, activity: str, topics: list[str]
+) -> dict[str, object]:
+    """Return the *complete* public projection schema, never a filtered copy."""
+    return {
+        "schema": "dejaview.honcho_projection.v1",
+        "event_id": event_id,
+        "occurred_at": ts,
+        "app_context": app_context,
+        "activity": activity,
+        "topics": list(topics),
+    }
