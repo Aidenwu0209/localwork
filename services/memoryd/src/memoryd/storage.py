@@ -8,7 +8,8 @@ frames write ONLY to sentinel_audit, never to timeline or disk) lives here.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -21,6 +22,35 @@ from memoryd.models import (
     PerceiveEvent,
     SentinelVerdict,
 )
+
+
+@dataclass(frozen=True)
+class HonchoOutboxRow:
+    event_id: int
+    payload: dict[str, object]
+    session_id: str
+    attempt_count: int
+
+
+_HONCHO_LEASE_SQL = """
+WITH candidates AS (
+  SELECT event_id
+  FROM honcho_outbox
+  WHERE (state = 'pending' AND next_attempt_at <= %s)
+     OR (state = 'sending' AND lease_expires_at <= %s)
+  ORDER BY next_attempt_at, event_id
+  FOR UPDATE SKIP LOCKED
+  LIMIT %s
+)
+UPDATE honcho_outbox AS outbox
+SET state = 'sending',
+    attempt_count = attempt_count + 1,
+    lease_expires_at = %s,
+    updated_at = %s
+FROM candidates
+WHERE outbox.event_id = candidates.event_id
+RETURNING outbox.event_id, outbox.payload, outbox.session_id, outbox.attempt_count
+"""
 
 
 def _screenshot_path(data_root: Path, device_id: str, ts: str) -> Path:
@@ -131,6 +161,71 @@ class TimelineStore:
                 (ts, event_id),
             )
 
+    def projection_enabled(self) -> bool:
+        with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
+            cur.execute(
+                "SELECT enabled FROM honcho_projection_control WHERE singleton = true",
+                (),
+            )
+            row = cur.fetchone()
+            return bool(row[0]) if row is not None else True
+
+    def set_projection_enabled(self, *, enabled: bool) -> bool:
+        with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO honcho_projection_control (singleton, enabled)
+                   VALUES (true, %s)
+                   ON CONFLICT (singleton) DO UPDATE
+                   SET enabled = EXCLUDED.enabled, updated_at = now()
+                   RETURNING enabled""",
+                (enabled,),
+            )
+            return bool(cur.fetchone()[0])
+
+    def lease_honcho_rows(
+        self, *, batch_size: int, lease_seconds: int, now: datetime
+    ) -> list[HonchoOutboxRow]:
+        lease_until = now + timedelta(seconds=lease_seconds)
+        with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
+            cur.execute(
+                _HONCHO_LEASE_SQL,
+                (now, now, batch_size, lease_until, now),
+            )
+            rows = cur.fetchall()
+        return [_row_to_honcho_outbox(row) for row in rows]
+
+    def mark_honcho_sent(self, *, event_id: int, now: datetime) -> None:
+        with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
+            cur.execute(
+                """UPDATE honcho_outbox
+                   SET state = 'sent', sent_at = %s, updated_at = %s,
+                       lease_expires_at = NULL, last_error = NULL
+                   WHERE event_id = %s AND state = 'sending'""",
+                (now, now, event_id),
+            )
+
+    def retry_honcho_row(
+        self, *, event_id: int, error: str, next_attempt_at: datetime
+    ) -> None:
+        with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
+            cur.execute(
+                """UPDATE honcho_outbox
+                   SET state = 'pending', next_attempt_at = %s, last_error = %s,
+                       lease_expires_at = NULL, updated_at = now()
+                   WHERE event_id = %s AND state = 'sending'""",
+                (next_attempt_at, _safe_projection_error(error), event_id),
+            )
+
+    def fail_honcho_row(self, *, event_id: int, error: str, now: datetime) -> None:
+        with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
+            cur.execute(
+                """UPDATE honcho_outbox
+                   SET state = 'failed', last_error = %s, lease_expires_at = NULL,
+                       updated_at = %s
+                   WHERE event_id = %s AND state = 'sending'""",
+                (_safe_projection_error(error), now, event_id),
+            )
+
     def fetch_last_event_ocr(self, *, device_id: str, app: str | None) -> tuple[int | None, str | None]:
         """Used by the novelty gate: previous event id + OCR text in this window."""
         with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
@@ -178,3 +273,23 @@ def _projection_payload(
         "activity": activity,
         "topics": list(topics),
     }
+
+
+def _row_to_honcho_outbox(row: tuple[object, ...]) -> HonchoOutboxRow:
+    event_id, payload, session_id, attempt_count = row
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+    if not isinstance(payload, dict):
+        raise ValueError("honcho outbox payload is malformed")
+    return HonchoOutboxRow(
+        event_id=int(event_id),
+        payload=payload,
+        session_id=str(session_id),
+        attempt_count=int(attempt_count),
+    )
+
+
+def _safe_projection_error(error: str) -> str:
+    """Persist only fixed public error categories, never an upstream body."""
+    allowed = {"network_error", "upstream_4xx", "upstream_5xx", "unexpected_error"}
+    return error if error in allowed else "unexpected_error"
