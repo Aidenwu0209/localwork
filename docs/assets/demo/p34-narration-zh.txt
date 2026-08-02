@@ -1,0 +1,17 @@
+DejaView 不是普通的检索增强聊天。它是一具全本地数字记忆体：屏幕、文字、时间线、向量和用户画像留在这台电脑，Radeon 服务器只提供无状态算力。
+
+第一幕，AMD Radeon PRO W7900D 上常驻五个逻辑角色。brain、perceive、sentinel、fast 和 embed 统一通过 LiteLLM 路由。rocm-smi 证明设备为 gfx1100，Grafana 同屏展示 GPU 利用率、显存、每个角色的吞吐和记忆事件率。
+
+第二幕，三个安全的合成窗口进入真实管线。哨兵先判断，PP-OCRv6 提取逐字文本和坐标，perceive 生成具体语义，embed 写入一千零二十四维向量。时间线从一条历史种子增长到四条事件，数据仍只在本机。
+
+第三幕，银行登录画面在第一道隐私门被拦截。页面给出 BLOCKED、零文件、零时间线行和审计编号。被拒绝的像素没有进入可搜索记忆。
+
+第四幕，用户询问上周三下午看过的 ROCm PR。DejaView 回答 PR 一八四二，并给出事件编号、时间、应用、原始截图和文字边界框。回答来自可核验记忆，而不是模型猜测。
+
+第五幕，Honcho 不回答看过什么，而是回答哪一种方案更像我。九条隔离的合成结论共同指向本地、可检查、配置驱动的工作流；画像会话与真实用户数据完全隔离。
+
+第六幕，多智能体流水线生成今天的日报。Planner 规划章节，Retriever 只读取当天三条事件，Writer 用 brain 写作，Reviewer 校验每一个引用。第一份报告由 Radeon ROCm 完成。
+
+现在点击断开经过验证的 Radeon SSH 计算链路。Wi-Fi 保持连接，没有伪造物理拔线。页面明确变为 LINK DOWN、LOCAL READY，远端 brain 路由消失。
+
+再次运行同一条日报任务。Planner、Retriever、Writer 和 Reviewer 全部在独立验明的 Local Metal fallback 上完成，三个事件引用再次通过校验。远端算力可以消失，但本地记忆、代理流程和数据主权仍然存活。这就是 DejaView：Recall 和 Rewind 失败时，由 Radeon 安全复活，也能在断链后继续工作。

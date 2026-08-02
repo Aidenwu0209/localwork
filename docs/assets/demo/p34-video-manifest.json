@@ -1,0 +1,22 @@
+{
+  "artifact": "docs/assets/demo/dejaview-p34-six-act-20260802.mp4",
+  "recorded_at": "2026-08-02",
+  "duration_seconds": 157.2,
+  "resolution": "1920x1080",
+  "video_codec": "h264",
+  "audio_codec": "aac",
+  "size_bytes": 6407325,
+  "sha256": "5dc772cea426b215ce6a87c83b75f7dbf2c9f9ca5884e77686e449c2f3ae23ed",
+  "capture_method": "Frames captured from one live isolated browser run; only idle inference waits were removed.",
+  "fault_injection": "Visible termination of the exact attested Radeon SSH compute tunnel; Wi-Fi and host network interfaces remain untouched.",
+  "timeline": [
+    {"start": "00:00", "end": "00:31", "act": 1, "evidence": "data sovereignty, five logical roles, rocm-smi, live Grafana"},
+    {"start": "00:31", "end": "00:52", "act": 2, "evidence": "real pipeline running, three events created"},
+    {"start": "00:52", "end": "01:08", "act": 3, "evidence": "BLOCKED, zero files, zero timeline rows, audit id"},
+    {"start": "01:08", "end": "01:25", "act": 4, "evidence": "PR #1842, event citation, screenshot and bbox"},
+    {"start": "01:25", "end": "01:42", "act": 5, "evidence": "nine isolated Honcho conclusions"},
+    {"start": "01:42", "end": "02:02", "act": 6, "evidence": "Radeon ROCm daily report and Reviewer PASS"},
+    {"start": "02:02", "end": "02:17", "act": 6, "evidence": "verified disconnect, LINK DOWN, LOCAL READY"},
+    {"start": "02:17", "end": "02:37.2", "act": 6, "evidence": "LOCAL METAL FALLBACK daily report and Reviewer PASS"}
+  ]
+}

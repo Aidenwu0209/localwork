@@ -74,6 +74,14 @@ Day-to-day port map and known issues: [`STATUS.md`](STATUS.md).
 
 ---
 
+## Demo video
+
+[**Watch the 2:37 six-act demo**](docs/assets/demo/dejaview-p34-six-act-20260802.mp4) — live isolated synthetic data, evidence-backed recall, Honcho, privacy blocking, Radeon daily-report agents, visible verified SSH-compute-link disconnect, and the completed Local Metal fallback report. Wi-Fi remains untouched; idle inference waits are removed from the edit.
+
+Integrity and timecodes: [`docs/assets/demo/p34-video-manifest.json`](docs/assets/demo/p34-video-manifest.json).
+
+---
+
 ## Topology A smoke (clean machine)
 
 Prereqs: Docker Desktop · [`uv`](https://github.com/astral-sh/uv) · SSH host alias `radeon-cloud` to an AMD box with the inference stack (see [`DEPLOY.md`](deploy/server/DEPLOY.md)). Copy env templates first:
@@ -164,7 +172,7 @@ Do not copy AGPL code (OpenRecall is reference-only).
 
 ## Status & further reading
 
-**TASKBOARD:** G0+M+D **33/33 accept**. End-to-end pipeline verified; 54-min real-run acceptance passed. ROCm ablation, Grafana, README, licenses, sentinel, and perceive gates are accepted; only the ≤5-minute remote-link failover demo video remains — see [`STATUS.md`](STATUS.md).
+**TASKBOARD:** G0+M+D **33/33 accept** and Phase 3 engineering tasks **P3.1–P3.7 accept**. End-to-end pipeline, ROCm ablation, Grafana, README, licenses, sentinel, perceive, and the ≤5-minute remote-link failover demo are verified — see [`STATUS.md`](STATUS.md).
 
 | Doc | Purpose |
 |---|---|

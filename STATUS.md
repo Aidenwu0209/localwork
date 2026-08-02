@@ -12,11 +12,11 @@
 |---|---|
 | **已完成** | G0+M+D **33/33 accept**;**P3.1 ROCm 消融**;P3.3 README;P3.5 licenses;P3.6 哨兵;P3.7 perceive |
 | **P3.1 正式证据** | run `p31-w7900d-20260728T075653Z`;18 个 brain 量化×MTP×并发 cell + 3 个 perceive `-np` cell,均为 1 次 warm-up + 3 次实测;原始证据在 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`,截图在 `docs/assets/p31/p31-w7900d-20260728T075653Z/` |
-| **本次新增完成** | **P3.2 Grafana** 一屏验收:tokens/s、VRAM、GPU util、事件率;截图 `docs/assets/p32/grafana-rocm-live-20260802.png` |
-| **进行中** | **P3.4** 六幕演示视频;正式成片须可见断开 Radeon SSH 计算链路、Local Metal 继续完成日报且 ≤5min |
+| **本次新增完成** | **P3.2 Grafana** 一屏验收;**P3.4 六幕视频** 2:37 成片,含可见断开 Radeon SSH 计算链路与 Local Metal 第二次日报 |
+| **工程任务** | Phase 3 **P3.1–P3.7 全部 accept**;成片 `docs/assets/demo/dejaview-p34-six-act-20260802.mp4` |
 | **可砍** | MCP / 音频 / MarkItDown / 日报多 Agent UI |
 
-**下一优先:P3.4 演示视频正式录制**。
+**下一优先:人工提交检查**(AMD Developer Program、Rules、仓库公开、服务器仅演示数据)。
 
 ---
 
@@ -24,7 +24,7 @@
 
 1. `docs/EXECUTION_HANDBOOK.md` **§12**(含聊天决策:产品叙事、存算分离、五模型、OCR 不用 VL、git 纪律、Cursor trailer 坑)
 2. `docs/AGENT_KICKOFF_PROMPT.md`
-3. `TASKBOARD.json`(P3.1 / P3.2 已验收;只收尾 P3.4)
+3. `TASKBOARD.json`(Phase 3 工程任务已全部验收)
 
 ---
 
@@ -72,7 +72,7 @@ exporter 已为 P3.4 录制常驻;若实例重启,先 `rocm-smi` +
 | P3.6 | accept | normal 误杀类 15/81→0 |
 | P3.7 | accept | 20/20 具体 activity;verbatim⊆ocr |
 | P3.1 | **accept** | run `p31-w7900d-20260728T075653Z`;Q8/Q6/Q4×MTP×并发 + perceive `-np` 全矩阵;原始证据、hash、日志、rocm-smi 齐全 |
-| P3.4 | **doing** | §9 六幕链路已演练通过;待正式成片 + 可见软件断开远端计算链路 ≤5min |
+| P3.4 | **accept** | 2:37 六幕成片;可见软件断开已验证远端链路,Local Metal 完成第二次引用日报 |
 | P3.2 | **accept** | Grafana 一屏 + 实时 fail-closed 门禁 + 截图已入仓 |
 
 ---
@@ -83,4 +83,4 @@ exporter 已为 P3.4 录制常驻;若实例重启,先 `rocm-smi` +
 2. 起 GPU 前 `rocm-smi`,勿碰未知 KFD 进程;共租时勿 OOM Dolphin。
 3. commit 后检查无 `Co-authored-by`。
 4. 演示前清 timeline 库。
-5. 最高优先且唯一工程收尾:P3.4 正式成片。
+5. Phase 3 工程任务已收尾;后续只按 §10 做人工提交检查,勿扩需求。

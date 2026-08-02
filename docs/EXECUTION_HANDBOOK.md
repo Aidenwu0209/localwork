@@ -492,7 +492,7 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 - [ ] 仓库公开、README 双语、两张拓扑图、快速开始可复现 — **部分具备**(P3.3 README/拓扑/冒烟已成;`63b10d3`;仓库仍 private)
 - [x] `docs/benchmarks.md` + Grafana 截图 — **已具备**(OCR A/B +
   P3.1 ROCm 正式消融 + P3.2 一屏截图)
-- [ ] 演示视频(≤5 分钟) — **待**(P3.4;P3.1 前置已完成)
+- [x] 演示视频(≤5 分钟) — **已完成**(P3.4;2:37 六幕成片,含远端链路故障切换与 Local Metal 第二次日报)
 - [x] `docs/licenses.md`:Apache-2.0(ThinkingCap/MiniCPM/Honcho/Qwen3-Embedding;手册旧称 bge-m3 已替换)+ MIT(llama.cpp 等)+ **Gemma 单独标注** + 各 Python 依赖 — **已具备**(P3.5)
 - [x] 全部提示词/示例已去个人信息;仓库无任何真实隐私数据、无 API key — **基本具备**(演示前若真实采集须清库)
 - [ ] 比赛服务器上只有演示数据,赛后可一键销毁重建 — **部分具备**(无状态算力+模型引导脚本;提交前再确认演示数据)
@@ -540,7 +540,7 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 
 1. 通读本节 §12 全文 + `STATUS.md`。
 2. 打开 `TASKBOARD.json`,只做 `false` / `blocked` / 合法恢复的 `doing`
-   任务(当前只剩 **P3.4 doing**;P3.1/P3.2 已 `accept`,勿重跑)。
+   任务(Phase 3 工程任务已全部 `accept`;勿重跑,只按 §10 做人工提交检查)。
 3. 把 `docs/AGENT_KICKOFF_PROMPT.md` 整段丢给执行 agent 作为系统指令。
 
 | 顺序 | 文件 | 用途 |
@@ -561,8 +561,8 @@ T4.1:8/5 完成上传,8/6 只留缓冲。
 
 **全链路已跑通并验收**(Mac 采集 → memoryd → AMD ROCm →
 Postgres/Honcho → agentd 带证据引用)。`TASKBOARD`:**G0+M+D 33/33
-accept**;Phase3 中 **P3.1/P3.2/P3.3/P3.5/P3.6/P3.7 accept**;仅剩
-**P3.4 doing**(待正式远端计算链路故障切换成片)。P3.1 正式 run:
+accept**;Phase3 中 **P3.1–P3.7 全部 accept**。P3.4 正式六幕成片为
+`docs/assets/demo/dejaview-p34-six-act-20260802.mp4`(2:37)。P3.1 正式 run:
 `p31-w7900d-20260728T075653Z`,证据目录
 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`。
 
@@ -602,10 +602,10 @@ accept**;Phase3 中 **P3.1/P3.2/P3.3/P3.5/P3.6/P3.7 accept**;仅剩
 capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必要时 fast) → **perceive**(activity/topics;verbatim 必须来自 OCR) → embed → timeline + Honcho → **agentd**(tools + `[event#id HH:MM app]` 引用)。
 
 #### 部署与服务器铁律
-- 当前 SSH:`ssh root@36.150.116.200 -p 30189`(别名
-  `radeon-cloud`),实例 `u-4695-e6d1476b`。硬件:Radeon PRO W7900D
-  48GB(gfx1100)、ROCm 7.2.1、双 EPYC、Ubuntu 24.04。旧 `:30147`
-  是 2026-07-23～28 历史故障实例,仅保留作故障记录。
+- 当前 SSH:`ssh root@36.150.116.206 -p 31357`(别名
+  `radeon-cloud`),实例 `u-15420-7be0d6c9`。硬件:Radeon PRO W7900D
+  48GB(gfx1100)、ROCm 7.2.1、双 EPYC、Ubuntu 24.04。旧 `:30147` /
+  `:30189` 是历史实例,仅保留作故障记录。
 - **只有 `/workspace` 持久(~10GB)**;模型权重在 overlay
   `/root/dejaview-models/`(生产基线约 41GB;含 P3.1 Q8/Q6/Q4 benchmark
   quants 的完整集合约 81GB),重建靠
@@ -648,19 +648,19 @@ capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必�
 > 随后 SSH 中断,brain×MTP×并发当时未测。2026-07-28 换到 `:30189`
 > 实例后从持久 bootstrap 重建并完成上述正式 run,历史 `blocked` 已解除。
 
-### 12.4 未完成(接手主队列)
+### 12.4 Phase 3 收尾状态
 
-执行优先级:**P3.4 正式视频**。P3.1/P3.2 已完成,不要因旧
-`blocked` 文案、旧端口或旧状态重跑。其余可砍见 §1.5。
+Phase 3 工程任务已全部完成。不要因旧 `blocked` 文案、旧端口或旧状态
+重跑;下一步只做 §10 的人工提交检查。其余可砍见 §1.5。
 
 | ID | 状态 | 做什么 | 阻塞 |
 |---|---|---|---|
 | **P3.1** | **accept** | 正式 run、§2 表格、`[VERIFY]` 与 checksummed 原始证据已齐 | 历史 `:30147` SSH 阻塞已在 `:30189` replacement instance 解除 |
-| **P3.4** | doing | ≤5min 演示视频,手册 §9 六幕,**含可见远端链路故障切换** | 六幕链路已演练;待正式成片 |
+| **P3.4** | **accept** | 2:37 六幕演示视频,**含可见远端链路故障切换**与 Local Metal 第二次日报 | `docs/assets/demo/dejaview-p34-six-act-20260802.mp4` |
 | **P3.2** | **accept** | Grafana 一屏:tokens/s、VRAM、GPU util、事件率 | `docs/assets/p32/grafana-rocm-live-20260802.png` |
 | — | 可砍 | P3.8 MarkItDown / P3.9 日报多 Agent UI / P3.10 Open WebUI / MCP / 音频 | 时间不够按 §1.5 砍 |
 
-**§10 提交清单仍待人工**:全员 AMD Developer Program 注册、Rules 通读、仓库是否公开、演示视频、服务器仅演示数据确认。`licenses.md` 已有。
+**§10 提交清单仍待人工**:全员 AMD Developer Program 注册、Rules 通读、仓库是否公开、服务器仅演示数据确认。演示视频与 `licenses.md` 已有。
 
 ### 12.5 已知问题 / 技术债
 
@@ -669,7 +669,7 @@ capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必�
 | — | sentinel normal 误杀 | P3.6 已缓解(可再查 confidence 恒 0.5 语义) |
 | — | perceive 空泛 activity | P3.7 已缓解 |
 | — | P3.1 brain 消融曾未完成 | 已由 run `p31-w7900d-20260728T075653Z` 解除;勿重跑 |
-| 高 | P3.4 六幕视频尚未录成 | 先按 §9 完成≤5min成片,必须可见断开已验证 Radeon SSH 链路并由 Local Metal 完成第二次日报 |
+| — | P3.4 六幕视频尚未录成 | 已完成 2:37 成片;远端链路断开与 Local Metal 第二次日报均可见 |
 | — | P3.2 Grafana 尚未验收 | 已于 2026-08-02 完成一屏与实时门禁验收 |
 | 中 | 服务器端口可能随 replacement instance 漂移 | 当前 `36.150.116.206:31357`;每次先核对 `radeon-cloud` alias,旧端口仅历史 |
 | 中 | 网关偶发 `model=None` 400(~2%) | 待查(疑 Honcho health) |
@@ -715,11 +715,10 @@ GATEWAY_URL=http://127.0.0.1:14000/v1 uv run --project services/agentd python -m
 7. llama.cpp 视觉不支持 WebP → memoryd 已转 PNG。
 8. Docker `host.docker.internal` IPv6 → Honcho 用 IPv4 字面量。
 9. 模型在 overlay → `download-models.sh` 重建(wget+hf-mirror)。
-10. **唯一剩余工程收尾:P3.4 正式成片**;P3.1/P3.2 勿重跑。
+10. **Phase 3 工程任务已全部收尾**;勿重跑,只做 §10 人工提交检查。
 
 ### 12.8 给后续 Agent 的一句话开工
 
-> 读完 §12 与 `STATUS.md` → 继续 `TASKBOARD` 里的 P3.4,按 §9 录六幕
-> ≤5min 成片且必须包含可见的远端计算链路故障切换 → 严格遵守 git 作者与无
-> AI trailer → 完成即 accept+push。不要重做 33+5 项已 accept 的工作,
+> 读完 §12 与 `STATUS.md` → 核对 `TASKBOARD` 已全部 accept → 只做 §10
+> 人工提交检查。不要重做 33+7 项已 accept 的工作,
 > 尤其不要重跑 P3.1;不要改产品叙事与五模型分层。

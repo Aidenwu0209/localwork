@@ -74,6 +74,14 @@
 
 ---
 
+## 演示视频
+
+[**观看 2 分 37 秒六幕演示**](docs/assets/demo/dejaview-p34-six-act-20260802.mp4)——隔离合成数据、带证据回忆、Honcho、隐私拦截、Radeon 日报 Agent、可见断开已验证的 SSH 计算链路，以及 Local Metal fallback 完成第二次日报。Wi-Fi 保持不动，成片只移除了真实推理的等待段。
+
+完整性与时间码：[`docs/assets/demo/p34-video-manifest.json`](docs/assets/demo/p34-video-manifest.json)。
+
+---
+
 ## 形态 A 冒烟(干净机器)
 
 前置:Docker Desktop · [`uv`](https://github.com/astral-sh/uv) · SSH 别名 `radeon-cloud` 指向已就绪的 AMD 推理栈(见 [`DEPLOY.md`](deploy/server/DEPLOY.md))。先复制环境模板:
@@ -164,7 +172,7 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 
 ## 状态与延伸阅读
 
-**TASKBOARD:** G0+M+D **33/33 accept**。全链路已验收;54 分钟真实运行通过。Phase 3 材料(ROCm 消融、Grafana、演示视频、licenses)进行中——见 [`STATUS.md`](STATUS.md)。
+**TASKBOARD:** G0+M+D **33/33 accept**，Phase 3 工程任务 **P3.1–P3.7 全部 accept**。全链路、ROCm 消融、Grafana、licenses 与 ≤5 分钟故障切换视频均已验收——见 [`STATUS.md`](STATUS.md)。
 
 | 文档 | 用途 |
 |---|---|

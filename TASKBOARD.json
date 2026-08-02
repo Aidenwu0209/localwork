@@ -464,8 +464,8 @@
       "depends": [
         "P3.1"
       ],
-      "status": "doing",
-      "note": "2026-08-02 doing (user-approved requirement change): P3.1 dependency accepted; six-act stage and isolated synthetic data are ready. Act 6 no longer requires a physical cable pull. The visible failover test may terminate only the exact attested Radeon SSH tunnel, must leave Wi-Fi untouched, and must prove the independently attested Local Metal path completes the second grounded daily report. Final accept still requires a real ≤5 minute recording artifact."
+      "status": "accept",
+      "note": "2026-08-02 accept: formal six-act video docs/assets/demo/dejaview-p34-six-act-20260802.mp4 is 157.2s (1920x1080 H.264/AAC, sha256 5dc772cea426b215ce6a87c83b75f7dbf2c9f9ca5884e77686e449c2f3ae23ed). One isolated live run showed Radeon five-role/Grafana/rocm-smi evidence, three real pipeline events, Sentinel BLOCKED with 0 files and 0 timeline rows, grounded PR #1842 recall with screenshot+bbox, nine Honcho synthetic conclusions, a cited Radeon daily report, visible termination of the exact attested SSH tunnel with Wi-Fi untouched, and a second cited report completed as LOCAL METAL FALLBACK."
     },
     {
       "id": "P3.5",

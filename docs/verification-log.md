@@ -278,3 +278,40 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
 - **Status:** this verifies the revised disconnect mechanism, not the final
   P3.4 acceptance. `TASKBOARD.json` remains `doing` until a real ≤5-minute video
   artifact is inspected for all six acts and the completed Local Metal rerun.
+
+## 2026-08-02 ([VERIFY] P3.4 six-act video acceptance)
+
+- **Formal artifact:** `docs/assets/demo/dejaview-p34-six-act-20260802.mp4`;
+  `ffprobe` reports **157.2 seconds**, 1920×1080, 30 fps H.264 video plus mono
+  AAC narration, 6,407,325 bytes. SHA-256:
+  `5dc772cea426b215ce6a87c83b75f7dbf2c9f9ca5884e77686e449c2f3ae23ed`.
+  The timecode manifest is `docs/assets/demo/p34-video-manifest.json`.
+- **Formal isolated run:** the stage started with the exact seven-forward
+  Radeon tunnel at PID `6812`, five gateway roles and their dedicated metrics
+  endpoints healthy, live ROCm exporter, warmed PP-OCRv6, real memoryd pipeline
+  on `dejaview_demo`, isolated Honcho, and independently attested Local Metal.
+- **Acts 1–5:** the captured run shows the five-role Radeon/storage split plus
+  live Grafana and rocm-smi evidence; Act 2 creates three real pipeline events;
+  Act 3 reports `BLOCKED`, `0 FILES`, `0 ROWS`, and `AUDIT #4`; Act 4 resolves
+  PR #1842 to event #1 with the synthetic screenshot and bbox; Act 5 displays
+  nine isolated Honcho-derived conclusions.
+- **Act 6 remote and failover:** the first Planner→Retriever→Writer→Reviewer
+  run reports `RADEON ROCM`, retrieves events #2–#4, and ends with Reviewer
+  `PASS`. The visible disconnect control then terminates the exact attested
+  tunnel; the page shows `LINK DOWN · LOCAL READY` and
+  `RADEON LINK DISCONNECTED`. Wi-Fi and host interfaces are untouched.
+- **Act 6 Local Metal:** the second run reports `LOCAL METAL FALLBACK`, uses the
+  same three grounded event ids, completes the report, and ends with Reviewer
+  `PASS`. Post-run checks find no listener on `:14000`, `remote_radeon=false`,
+  `local_metal=true`, four timeline rows, four audits, and the newest audit is
+  `banking_finance|block`; the screenshot root contains only the historical PR
+  evidence and the three allowed Act 2 images.
+- **Media QA:** the first assembly was rejected after timestamp sampling exposed
+  reordered still frames and black gaps. The accepted re-encode creates twelve
+  normalized clips first, concatenates them in declared timecode order, and was
+  sampled at 13 points covering every act plus both sides of the disconnect.
+  Audio has mean volume -18.2 dB, max -2.9 dB, and no silence ≥2 seconds at
+  -45 dB. The accepted duration is **2:37.2**, below the five-minute gate.
+- **Conclusion:** all P3.4 verify conditions are satisfied. The task moves from
+  `doing` to `accept` in the same commit as the inspected video, manifest,
+  narration, README link, status update, and this `[VERIFY]` record.
