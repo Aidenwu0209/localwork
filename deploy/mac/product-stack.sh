@@ -31,45 +31,61 @@ privacy_runtime_dir() { printf '%s/privacy\n' "$RUNTIME_DIR"; }
 privacy_marker() { printf '%s/privacy.product-owned\n' "$RUNTIME_DIR"; }
 
 service_tree_revision() {
-  local service="$1" source_root="${DEJAVIEW_SERVICE_SOURCE_ROOT:-$ROOT}"
+  local service="$1" source_root="${DEJAVIEW_SERVICE_SOURCE_ROOT:-$ROOT}" untracked ignored tracked result
   if [[ "$source_root" == "$ROOT" ]]; then
-    if ! { git -C "$ROOT" ls-files --others --exclude-standard -z -- "services/$service"; git -C "$ROOT" ls-files --others --ignored --exclude-standard -z -- "services/$service"; } |
-      python3 -c '
+    untracked="$(mktemp "$RUNTIME_DIR/${service}.untracked.XXXXXX")" || return 1
+    ignored="$(mktemp "$RUNTIME_DIR/${service}.ignored.XXXXXX")" || { rm -f "$untracked"; return 1; }
+    tracked="$(mktemp "$RUNTIME_DIR/${service}.tracked.XXXXXX")" || { rm -f "$untracked" "$ignored"; return 1; }
+    if ! git -C "$ROOT" ls-files --others --exclude-standard -z -- "services/$service" > "$untracked"; then
+      rm -f "$untracked" "$ignored" "$tracked"
+      return 1
+    fi
+    if ! git -C "$ROOT" ls-files --others --ignored --exclude-standard -z -- "services/$service" > "$ignored"; then
+      rm -f "$untracked" "$ignored" "$tracked"
+      return 1
+    fi
+    if ! python3 - "$untracked" "$ignored" <<'PY'
 import os
 import sys
+
 safe_dirs = {".venv", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
-safe_suffixes = {".pyc", ".pyo", ".cache"}
-for raw in sys.stdin.buffer.read().split(b"\0"):
-    if not raw:
-        continue
-    path = raw.decode("utf-8")
-    base = os.path.basename(path)
-    if base == ".env" or base.startswith(".env."):
+for listing in sys.argv[1:]:
+    for raw in open(listing, "rb").read().split(b"\0"):
+        if not raw:
+            continue
+        path = raw.decode("utf-8")
+        base = os.path.basename(path)
+        if base == ".env" or base.startswith(".env."):
+            raise SystemExit(1)
+        if set(path.split("/")) & safe_dirs:
+            continue
         raise SystemExit(1)
-    parts = set(path.split("/"))
-    if parts & safe_dirs or os.path.splitext(path)[1] in safe_suffixes:
-        continue
-    raise SystemExit(1)
-'; then
+PY
+    then
+      rm -f "$untracked" "$ignored" "$tracked"
       return 1
     fi
-    if ! git -C "$ROOT" ls-files -z -- "services/$service" |
-      python3 -c '
+    if ! git -C "$ROOT" ls-files -z -- "services/$service" > "$tracked"; then
+      rm -f "$untracked" "$ignored" "$tracked"
+      return 1
+    fi
+    if ! python3 - "$tracked" <<'PY'
 import os
 import sys
-paths = [path.decode("utf-8") for path in sys.stdin.buffer.read().split(b"\0") if path]
+paths = [path.decode("utf-8") for path in open(sys.argv[1], "rb").read().split(b"\0") if path]
 raise SystemExit(1 if any(os.path.basename(path) == ".env" or os.path.basename(path).startswith(".env.") for path in paths) else 0)
-'; then
+PY
+    then
+      rm -f "$untracked" "$ignored" "$tracked"
       return 1
     fi
-    git -C "$ROOT" ls-files -z -- "services/$service" |
-      python3 -c '
+    result="$(python3 - "$ROOT" "$tracked" <<'PY'
 import hashlib
 import os
 import sys
 
 root = sys.argv[1]
-paths = sorted(path for path in sys.stdin.buffer.read().split(b"\0") if path)
+paths = sorted(path for path in open(sys.argv[2], "rb").read().split(b"\0") if path)
 if not paths:
     raise SystemExit(1)
 digest = hashlib.sha256()
@@ -80,27 +96,100 @@ for raw in paths:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
 print(digest.hexdigest())
-' "$ROOT"
+PY
+    )" || { rm -f "$untracked" "$ignored" "$tracked"; return 1; }
+    rm -f "$untracked" "$ignored" "$tracked"
+    printf '%s\n' "$result"
   else
-    (cd "$source_root" && find "services/$service" -type f -print0) |
-      python3 -c '
+    python3 - "$source_root" "services/$service" <<'PY'
 import hashlib
 import os
+import stat
 import sys
 
-root = sys.argv[1]
-paths = sorted(path for path in sys.stdin.buffer.read().split(b"\0") if path)
+root = os.path.abspath(sys.argv[1])
+relative_root = sys.argv[2]
+source = os.path.abspath(os.path.join(root, relative_root))
+safe_dirs = {".venv", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+
+def forbidden_env_name(name):
+    return name == ".env" or name.startswith(".env.")
+
+def traversal_error(_error):
+    raise SystemExit(1)
+
+if any(forbidden_env_name(part) for part in source.split(os.sep) if part):
+    raise SystemExit(1)
+try:
+    if os.path.commonpath([root, source]) != root:
+        raise SystemExit(1)
+except ValueError:
+    raise SystemExit(1)
+
+# The walk start itself is followed by os.walk even when it is a symlink.
+# Audit the source root and every component below the configured root first.
+current = root
+try:
+    mode = os.lstat(current).st_mode
+except OSError:
+    raise SystemExit(1)
+if not stat.S_ISDIR(mode) or stat.S_ISLNK(mode):
+    raise SystemExit(1)
+for part in relative_root.split(os.sep):
+    if not part or part == ".":
+        continue
+    if part == "..":
+        raise SystemExit(1)
+    current = os.path.join(current, part)
+    try:
+        mode = os.lstat(current).st_mode
+    except OSError:
+        raise SystemExit(1)
+    if not stat.S_ISDIR(mode) or stat.S_ISLNK(mode):
+        raise SystemExit(1)
+
+# Audit every path before pruning generated caches or opening file contents.
+# This makes .env names, unreadable directories, symlinks, FIFOs and other
+# non-regular entries fail closed without ever reading their payloads.
+for directory, directories, filenames in os.walk(source, topdown=True, onerror=traversal_error):
+    for name in directories + filenames:
+        if forbidden_env_name(name):
+            raise SystemExit(1)
+        path = os.path.join(directory, name)
+        try:
+            mode = os.lstat(path).st_mode
+        except OSError:
+            raise SystemExit(1)
+        if name in directories:
+            if not stat.S_ISDIR(mode) or stat.S_ISLNK(mode):
+                raise SystemExit(1)
+        elif not stat.S_ISREG(mode):
+            raise SystemExit(1)
+
+paths = []
+for directory, directories, filenames in os.walk(source, topdown=True, onerror=traversal_error):
+    directories[:] = [name for name in directories if name not in safe_dirs]
+    for name in filenames:
+        path = os.path.join(directory, name)
+        relative = os.path.relpath(path, root)
+        try:
+            mode = os.lstat(path).st_mode
+        except OSError:
+            raise SystemExit(1)
+        if not stat.S_ISREG(mode):
+            raise SystemExit(1)
+        paths.append(relative.encode("utf-8"))
 if not paths:
     raise SystemExit(1)
 digest = hashlib.sha256()
-for raw in paths:
+for raw in sorted(paths):
     path = raw.decode("utf-8")
     digest.update(raw + b"\0")
     with open(os.path.join(root, path), "rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
 print(digest.hexdigest())
-' "$source_root"
+PY
   fi
 }
 
@@ -272,9 +361,9 @@ privacy_listener_owned() {
   listener_fingerprint="$(process_fingerprint "$listener")"
   [[ -n "$listener_fingerprint" ]] || return 1
   pid_is_descendant_or_self "$listener" "$owner" || return 1
+  [[ "$(listener_pid "$port")" == "$listener" ]] || return 1
   [[ "$(process_fingerprint "$owner")" == "$owner_fingerprint" ]] || return 1
   [[ "$(process_fingerprint "$listener")" == "$listener_fingerprint" ]] || return 1
-  [[ "$(listener_pid "$port")" == "$listener" ]]
 }
 
 privacy_stack_owned() {
@@ -334,9 +423,9 @@ service_listener_owned() {
   listener_fingerprint="$(process_fingerprint "$listener")"
   [[ -n "$listener_fingerprint" ]] || return 1
   pid_is_descendant_or_self "$listener" "$owner" || return 1
+  [[ "$(listener_pid "$port")" == "$listener" ]] || return 1
   [[ "$(process_fingerprint "$owner")" == "$OWNED_FINGERPRINT" ]] || return 1
   [[ "$(process_fingerprint "$listener")" == "$listener_fingerprint" ]] || return 1
-  [[ "$(listener_pid "$port")" == "$listener" ]]
 }
 
 preflight_service_ports() {
@@ -359,6 +448,16 @@ preflight_service_ports() {
   done
 }
 
+preflight_service_sources() {
+  local service
+  for service in ocrd memoryd agentd; do
+    if ! service_tree_revision "$service" >/dev/null; then
+      echo "error: $service source contract failed before startup" >&2
+      return 1
+    fi
+  done
+}
+
 start_privacy_stack() {
   [[ "$SKIP_PRIVACY_STACK" == "1" ]] && return 0
   if ! command -v lsof >/dev/null 2>&1; then
@@ -367,7 +466,7 @@ start_privacy_stack() {
   fi
   export SENTINEL_GATEWAY_URL="${SENTINEL_GATEWAY_URL:-${LOCAL_GATEWAY_URL:-http://127.0.0.1:4000/v1}}"
   if gateway_has_owned_sentinel; then
-    if privacy_stack_owned; then return 0; fi
+    if privacy_stack_owned && privacy_listener_owned sentinel 8003 && privacy_listener_owned gateway 4000; then return 0; fi
     echo "error: privacy gateway is pre-existing or unowned; refusing to adopt it" >&2
     return 1
   fi
@@ -455,7 +554,7 @@ start_service() {
   local service="$1" port="$2" pf pid project
   pf="$(pidfile "$service")"
   if service_state "$service"; then
-    if health_contract "$service" "http://127.0.0.1:${port}/health"; then
+    if health_contract "$service" "http://127.0.0.1:${port}/health" && service_listener_owned "$service" "$port"; then
       echo "$service already running (pid $OWNED_PID)"
       return 0
     fi
@@ -619,6 +718,7 @@ preflight() {
 
 cmd_up() {
   if ! preflight_service_ports; then return 1; fi
+  if ! preflight_service_sources; then return 1; fi
   if ! start_privacy_stack; then return 1; fi
   if ! preflight; then
     rollback_privacy_started || true
@@ -631,6 +731,12 @@ cmd_up() {
     fi
   fi
   if ! start_service ocrd 8006 || ! start_service memoryd 8090 || ! start_service agentd 8101; then
+    rollback_started
+    rollback_infra || true
+    rollback_privacy_started || true
+    return 1
+  fi
+  if ! cmd_status; then
     rollback_started
     rollback_infra || true
     rollback_privacy_started || true

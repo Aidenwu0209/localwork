@@ -775,6 +775,241 @@ class ProductStackTest(unittest.TestCase):
                 finally:
                     subprocess.run([script, "down"], env=env, capture_output=True, text=True)
 
+    def test_repeated_up_refuses_replaced_owned_listeners_before_ready(self) -> None:
+        """A second up must re-check the exact listeners, not only HTTP health."""
+        for port in ("8003", "4000", "8006"):
+            with self.subTest(port=port), tempfile.TemporaryDirectory() as raw:
+                tmp = Path(raw)
+                if port in {"8003", "4000"}:
+                    env, _ = self._privacy_environment(tmp)
+                else:
+                    env = self._environment(tmp)
+                first = subprocess.run([SCRIPT, "up"], env=env, capture_output=True, text=True)
+                self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+                try:
+                    retry = subprocess.run(
+                        [SCRIPT, "up"],
+                        env=env
+                        | {
+                            "DEJAVIEW_TEST_UNRELATED_PORT": port,
+                            "DEJAVIEW_TEST_LISTENER_PID": str(os.getpid()),
+                        },
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertNotEqual(retry.returncode, 0, retry.stdout + retry.stderr)
+                    self.assertNotIn("DejaView product ready", retry.stdout)
+                finally:
+                    subprocess.run([SCRIPT, "down"], env=env, capture_output=True, text=True)
+
+    def test_source_root_rejects_dotenv_fifo_without_opening_it(self) -> None:
+        """A source override must reject .env names before any content read can block."""
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            fixture_root = tmp / "source-fixture"
+            for service in ("ocrd", "memoryd", "agentd"):
+                shutil.copytree(ROOT / "services" / service, fixture_root / "services" / service)
+            env = self._environment(tmp) | {"DEJAVIEW_SERVICE_SOURCE_ROOT": str(fixture_root)}
+            up = subprocess.run([SCRIPT, "up"], env=env, capture_output=True, text=True)
+            self.assertEqual(up.returncode, 0, up.stdout + up.stderr)
+            dotenv_fifo = fixture_root / "services" / "ocrd" / ".env.blocking"
+            os.mkfifo(dotenv_fifo)
+            try:
+                status = subprocess.run(
+                    [SCRIPT, "status"], env=env, capture_output=True, text=True, timeout=3
+                )
+                self.assertNotEqual(status.returncode, 0, status.stdout + status.stderr)
+                self.assertIn("NOT_READY", status.stdout)
+            finally:
+                dotenv_fifo.unlink(missing_ok=True)
+                subprocess.run([SCRIPT, "down"], env=env, capture_output=True, text=True)
+
+    def test_source_root_rejects_symlinked_service_roots(self) -> None:
+        """The override root and service entrypoints must be real directories."""
+        for symlink_target in ("services", "services/ocrd"):
+            with self.subTest(symlink_target=symlink_target), tempfile.TemporaryDirectory() as raw:
+                tmp = Path(raw)
+                fixture_root = tmp / "source-fixture"
+                actual_root = tmp / "actual"
+                if symlink_target == "services":
+                    for service in ("ocrd", "memoryd", "agentd"):
+                        shutil.copytree(ROOT / "services" / service, actual_root / "services" / service)
+                    fixture_root.mkdir(parents=True)
+                    (fixture_root / "services").symlink_to(actual_root / "services", target_is_directory=True)
+                else:
+                    (fixture_root / "services").mkdir(parents=True)
+                    shutil.copytree(ROOT / "services" / "ocrd", actual_root / "ocrd")
+                    (fixture_root / "services" / "ocrd").symlink_to(
+                        actual_root / "ocrd", target_is_directory=True
+                    )
+                    for service in ("memoryd", "agentd"):
+                        shutil.copytree(ROOT / "services" / service, fixture_root / "services" / service)
+                env = self._environment(tmp) | {
+                    "DEJAVIEW_SERVICE_SOURCE_ROOT": str(fixture_root)
+                }
+                result = subprocess.run([SCRIPT, "up"], env=env, capture_output=True, text=True)
+                self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertNotIn("DejaView product ready", result.stdout)
+                self.assertFalse((tmp / "uv-started").exists())
+
+    def test_production_root_rejects_ignored_bytecode_outside_cache_directories(self) -> None:
+        rejected = (
+            "top.pyc",
+            "top.pyo",
+            "top.cache",
+            "package/value.pyc",
+            "package/value.pyo",
+            "package/value.cache",
+        )
+        for relative in rejected:
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as raw:
+                tmp = Path(raw)
+                repo = tmp / "repo"
+                script = repo / "deploy" / "mac" / "product-stack.sh"
+                script.parent.mkdir(parents=True)
+                shutil.copy2(SCRIPT, script)
+                for service in ("ocrd", "memoryd", "agentd"):
+                    source = repo / "services" / service / "src" / service
+                    source.mkdir(parents=True)
+                    (source / "__init__.py").write_text("", encoding="utf-8")
+                (repo / ".gitignore").write_text(
+                    "services/ocrd/**\n!services/ocrd/src/\n!services/ocrd/src/ocrd/\n"
+                    "!services/ocrd/src/ocrd/__init__.py\n",
+                    encoding="utf-8",
+                )
+                subprocess.run(["git", "init", "-q", repo], check=True)
+                subprocess.run(["git", "-C", repo, "add", "."], check=True)
+                subprocess.run(
+                    ["git", "-C", repo, "-c", "user.name=t", "-c", "user.email=t@x", "commit", "-qm", "x"],
+                    check=True,
+                )
+                env = self._environment(tmp)
+                setup = tmp / "setup"
+                setup.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+                setup.chmod(0o755)
+                env |= {"DEJAVIEW_SETUP_HONCHO_SCRIPT": str(setup)}
+                self.assertEqual(subprocess.run([script, "up"], env=env, capture_output=True, text=True).returncode, 0)
+                target = repo / "services" / "ocrd" / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(b"compiled")
+                try:
+                    status = subprocess.run([script, "status"], env=env, capture_output=True, text=True)
+                    self.assertNotEqual(status.returncode, 0, relative)
+                finally:
+                    subprocess.run([script, "down"], env=env, capture_output=True, text=True)
+
+    def test_listener_revalidates_same_pid_fingerprint_after_final_lsof_lookup(self) -> None:
+        """A listener can be replaced between lsof reads while keeping the same PID text."""
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            env = self._environment(tmp)
+            up = subprocess.run([SCRIPT, "up"], env=env, capture_output=True, text=True)
+            self.assertEqual(up.returncode, 0, up.stdout + up.stderr)
+            ocrd_record = (tmp / "run" / "ocrd.pid").read_text(encoding="utf-8").strip().split("|")
+            ocrd_pid = ocrd_record[0]
+            self.assertTrue(ocrd_record[1].startswith("ps:"), ocrd_record[1])
+            original_lstart = ocrd_record[1].removeprefix("ps:")
+            ps = tmp / "bin" / "ps"
+            ps.write_text(
+                "#!/bin/sh\n"
+                'case "$*" in\n'
+                '  *"lstart="*) case "$*" in *"-p ' + ocrd_pid + '"*) [ -f "$DEJAVIEW_RUNTIME_DIR/listener-replaced" ] && printf "changed fingerprint\\n" || printf "' + original_lstart + '\\n" ;; *) /bin/ps "$@" ;; esac ;;\n'
+                '  *) /bin/ps "$@" ;;\n'
+                "esac\n",
+                encoding="utf-8",
+            )
+            ps.chmod(0o755)
+            lsof = tmp / "bin" / "lsof"
+            lsof.write_text(
+                "#!/bin/sh\n"
+                'case "$*" in\n'
+                '  *"TCP:8006"*) case "$*" in *-t*) n=$(cat "$DEJAVIEW_RUNTIME_DIR/lsof-count" 2>/dev/null || echo 0); n=$((n + 1)); echo "$n" > "$DEJAVIEW_RUNTIME_DIR/lsof-count"; [ "$n" -ge 2 ] && touch "$DEJAVIEW_RUNTIME_DIR/listener-replaced"; cut -d "|" -f1 "$DEJAVIEW_RUNTIME_DIR/ocrd.pid" ;; esac ;;\n'
+                '  *"TCP:8090"*) case "$*" in *-t*) cut -d "|" -f1 "$DEJAVIEW_RUNTIME_DIR/memoryd.pid" ;; esac ;;\n'
+                '  *"TCP:8101"*) case "$*" in *-t*) cut -d "|" -f1 "$DEJAVIEW_RUNTIME_DIR/agentd.pid" ;; esac ;;\n'
+                "esac\n"
+                "exit 0\n",
+                encoding="utf-8",
+            )
+            lsof.chmod(0o755)
+            try:
+                status = subprocess.run([SCRIPT, "status"], env=env, capture_output=True, text=True)
+                self.assertNotEqual(status.returncode, 0, status.stdout + status.stderr)
+                self.assertIn("NOT_READY", status.stdout)
+            finally:
+                subprocess.run([SCRIPT, "down"], env=env, capture_output=True, text=True)
+
+    def test_git_failure_in_first_untracked_query_fails_closed(self) -> None:
+        """The first git ls-files failure must not be masked by a later query."""
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            env = self._environment(tmp)
+            real_git = shutil.which("git")
+            self.assertIsNotNone(real_git)
+            fake_git = tmp / "bin" / "git"
+            fake_git.write_text(
+                "#!/bin/sh\n"
+                'if printf "%s\\n" "$*" | grep -q -- "--others --exclude-standard"; then\n'
+                '  count_file="$DEJAVIEW_RUNTIME_DIR/git-query-count"; count=$(cat "$count_file" 2>/dev/null || echo 0); count=$((count + 1)); echo "$count" > "$count_file"\n'
+                '  [ "$count" -eq 1 ] && exit 7\n'
+                "fi\n"
+                f'exec "{real_git}" "$@"\n',
+                encoding="utf-8",
+            )
+            fake_git.chmod(0o755)
+            result = subprocess.run([SCRIPT, "up"], env=env, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertNotIn("DejaView product ready", result.stdout)
+            self.assertFalse((tmp / "uv-started").exists())
+
+    def test_git_failure_in_ignored_query_fails_closed(self) -> None:
+        """The ignored-path query is an independent fail-closed preflight."""
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            env = self._environment(tmp)
+            real_git = shutil.which("git")
+            self.assertIsNotNone(real_git)
+            fake_git = tmp / "bin" / "git"
+            fake_git.write_text(
+                "#!/bin/sh\n"
+                'if printf "%s\\n" "$*" | grep -q -- "--others --ignored --exclude-standard"; then\n'
+                "  exit 8\n"
+                "fi\n"
+                f'exec "{real_git}" "$@"\n',
+                encoding="utf-8",
+            )
+            fake_git.chmod(0o755)
+            result = subprocess.run([SCRIPT, "up"], env=env, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertNotIn("DejaView product ready", result.stdout)
+            self.assertFalse((tmp / "uv-started").exists())
+
+    def test_status_rejects_distinct_privacy_processes_with_swapped_roles(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            env, _ = self._privacy_environment(tmp)
+            self.assertNotEqual(env["DEJAVIEW_TEST_SENTINEL_PID"], env["DEJAVIEW_TEST_GATEWAY_PID"])
+            up = subprocess.run([SCRIPT, "up"], env=env, capture_output=True, text=True)
+            self.assertEqual(up.returncode, 0, up.stdout + up.stderr)
+            sentinel_pid = env["DEJAVIEW_TEST_SENTINEL_PID"]
+            gateway_pid = env["DEJAVIEW_TEST_GATEWAY_PID"]
+            ps = tmp / "bin" / "ps"
+            ps.write_text(
+                "#!/bin/sh\n"
+                'case "$*" in\n'
+                '  *"stat="*) printf "S\\n" ;;\n'
+                '  *"lstart="*) printf "Mon Aug 3 00:00:00 2026\\n" ;;\n'
+                f'  *"command="*) case "$*" in *"-p {sentinel_pid}"*) printf "python -m litellm --config %s/deploy/mac/server/litellm.yaml --host 127.0.0.1 --port 4000\\n" "$DEJAVIEW_TEST_ROOT" ;; *"-p {gateway_pid}"*) printf "llama-server -m fixture --alias sentinel --host 127.0.0.1 --port 8003\\n" ;; *) printf "uv run --project %s/services/ocrd --project %s/services/memoryd --project %s/services/agentd python -m ocrd python -m memoryd python -m agentd\\n" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" "$DEJAVIEW_TEST_ROOT" ;; esac ;;\n'
+                "esac\n",
+                encoding="utf-8",
+            )
+            ps.chmod(0o755)
+            try:
+                status = subprocess.run([SCRIPT, "status"], env=env, capture_output=True, text=True)
+                self.assertNotEqual(status.returncode, 0, status.stdout + status.stderr)
+                self.assertIn("NOT_READY", status.stdout)
+            finally:
+                subprocess.run([SCRIPT, "down"], env=env, capture_output=True, text=True)
+
 
 if __name__ == "__main__":
     unittest.main()
