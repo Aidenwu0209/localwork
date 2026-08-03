@@ -3,7 +3,7 @@ COMPOSE_DATA := docker compose -f deploy/mac/compose.data.yml
 COMPOSE_DEMO_DATA := docker compose -f deploy/mac/compose.demo-data.yml
 COMPOSE_MONITORING := docker compose -f deploy/mac/compose.monitoring.yml
 
-.PHONY: setup doctor test test-capture product-up product-down product-status capture \
+.PHONY: setup doctor test submission-check test-capture product-up product-down product-status capture \
 	data-up data-down data-logs data-psql data-reset \
 	demo-data-up demo-data-down demo-data-reset demo-data-logs \
 	monitoring-up monitoring-down monitoring-logs help
@@ -12,6 +12,7 @@ help:
 	@echo "setup       initialize the pinned, patched Honcho submodule"
 	@echo "doctor      read-only prerequisite and release-state checks"
 	@echo "test        run the offline first-party release test suite"
+	@echo "submission-check validate the exact public submission bundle"
 	@echo "test-capture run the macOS-only capture client suite"
 	@echo "product-up  start owned local privacy runtime, data, Honcho, ocrd, memoryd, and agentd"
 	@echo "product-down stop only DejaView-managed local services (data preserved)"
@@ -37,6 +38,9 @@ doctor:
 
 test:
 	./scripts/test-first-party.sh
+
+submission-check:
+	python3 scripts/submission_check.py
 
 test-capture:
 	uv run --project clients/capture --with pytest pytest -q clients/capture/tests

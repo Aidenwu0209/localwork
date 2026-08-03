@@ -644,3 +644,50 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   from `doing` to `accept`; TASKBOARD is **48/48 accept**. Remaining work is
   submission ownership and contest administration, not another engineering
   task.
+
+## 2026-08-03 — P3.19 partial handoff checkpoint (`doing`, not accepted)
+
+- **[VERIFY] Managed runtime foundation:** the product-owned local privacy
+  runtime and strict READY lifecycle are already pushed at commit
+  `f1d2b8041e99ab86a1643c8d68b54faff9287bc5`. Its focused release gate passed
+  49/49 before this checkpoint; this handoff does not relabel it as a complete
+  current UI/live-product acceptance.
+- **[VERIFY] Executable submission contract:** `make submission-check` now
+  validates the exact public bundle fail-closed. Thirty-one focused regression
+  tests pass, covering path/symlink confinement, Git tracked-file proof,
+  manifest types and immutable accepted evidence, exact six-act SRT/timeline,
+  MP4 container and streams, OOXML structure/safety, README links/instructions,
+  privacy patterns, and controlled failures. The current real bundle reports
+  **19/19 PASS**. A final independent clean review after the last hardening
+  changes is still required.
+- **[VERIFY] English submission video:** the new
+  `dejaview-p34-six-act-20260802-en-3m.mp4` is 195.2 seconds, 1920×1080 at
+  30 fps, H.264/AAC, 8,981,138 bytes, SHA-256
+  `99c2542a45f81e0b184453fa456bd5e4846fbc2d9c2eb4ea3e5d8ed9c08c1216`.
+  Its 22-cue SRT SHA-256 is
+  `4901b8c0320af22b8df086e6a2ec3d3f221cc35d3e35ae1224c4f16831f86df9`.
+  Audio measured -16.1 LUFS integrated with -1.5 dB peak; fifteen boundary
+  frames were inspected without black/loading/cropped frames. The accepted
+  157.2-second original and its hash remain unchanged.
+- **[VERIFY] Specification sync:** English/Chinese README, manifest, Markdown
+  specification, and DOCX now distinguish the immutable 2:37 evidence cut from
+  the compliant 3:15.2 English-primary submission cut. The edited DOCX was
+  rendered again; all eight PNG pages decoded and were visually inspected,
+  with no orphan ninth page or clipping. Its accessibility audit reported
+  **0 high / 0 medium / 0 low** findings.
+- **[VERIFY] Local offline regression at handoff:** `make test` passed release
+  **85**, agentd **101**, memoryd **82 + 6 subtests**, capture **22**,
+  browser-product **9**, Mac launcher/monitoring **20**, and server
+  launcher/ROCm-support **46** tests. The output still contains the previously
+  known FastAPI/TestClient deprecation warnings. This is one working-tree run,
+  not clean-checkout or post-push CI proof.
+- **Incomplete at handoff:** the editable PPTX still contains the stale
+  `2:37 demo disclosed` rail and old slide-7 notes because its template-preserving
+  writeback was interrupted before the repository file changed. No fresh
+  desktop/mobile monitoring-page capture, axe/current-product live gate,
+  immutable-SHA Actions update, clean-checkout full suite, or post-push final CI
+  has been completed for this working tree.
+- **Conclusion:** P3.19 deliberately remains `doing`; TASKBOARD remains
+  **48/49 accept**. Continue from `docs/P3.19_HANDOFF_PROMPT.md`. Registration,
+  Rules, official-repository fork/English PR, repository visibility, final
+  upload, and last server demo-data inspection remain human-only gates.

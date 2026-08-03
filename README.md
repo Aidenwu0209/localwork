@@ -84,16 +84,21 @@ optimisation bonus is not claimed by this all-local contest path.
 
 ## Demo video
 
-[**Watch the 2:37 English-captioned submission demo**](docs/assets/demo/dejaview-p34-six-act-20260802-en.mp4) — live isolated synthetic data, evidence-backed recall, Honcho, privacy blocking, Radeon daily-report agents, visible verified SSH-compute-link disconnect, and the completed Local Metal fallback report. Wi-Fi remains untouched; idle inference waits are removed from the edit. The accepted [original evidence cut](docs/assets/demo/dejaview-p34-six-act-20260802.mp4) remains unchanged; the submission cut adds complete burned-in English captions without altering the demonstrated run.
+[**Watch the 3:15 English-primary submission demo**](docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.mp4) — authentic submission slides lead into the unchanged live isolated run: synthetic data, evidence-backed recall, Honcho, privacy blocking, Radeon daily-report agents, visible verified SSH-compute-link disconnect, and the completed Local Metal fallback report. Wi-Fi remains untouched. The accepted [original evidence cut](docs/assets/demo/dejaview-p34-six-act-20260802.mp4) remains unchanged; the submission cut replaces the live-run audio with English narration and supplies complete English captions.
 
-Integrity, caption hash, and timecodes: [`docs/assets/demo/p34-video-manifest.json`](docs/assets/demo/p34-video-manifest.json). Editable captions: [`dejaview-p34-six-act-20260802-en.srt`](docs/assets/demo/dejaview-p34-six-act-20260802-en.srt). The official 3–5 minute duration is a recommendation; this 2:37 evidence cut is disclosed as shorter.
+Integrity, caption hash, and timecodes: [`docs/assets/demo/p34-video-manifest.json`](docs/assets/demo/p34-video-manifest.json). Editable captions: [`dejaview-p34-six-act-20260802-en-3m.srt`](docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.srt). The submission cut is 3:15.2, within the official 3–5 minute window.
 
 ### Submission package
 
 - Project specification: [Markdown](docs/submission/PROJECT_SPECIFICATION.md) · [editable DOCX](docs/submission/DejaView-Project-Specification.docx)
 - Supplementary presentation: [editable PPTX](docs/submission/DejaView-Track2-Presentation.pptx)
-- Demo: [English-captioned MP4](docs/assets/demo/dejaview-p34-six-act-20260802-en.mp4) · [manifest](docs/assets/demo/p34-video-manifest.json)
+- Demo: [English-primary MP4](docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.mp4) · [editable SRT](docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.srt) · [manifest](docs/assets/demo/p34-video-manifest.json)
 - Radeon/ROCm optimisation: [benchmark report](docs/benchmarks.md) · [checksummed P3.1 evidence](docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/)
+
+**Human-only submission step:** before the final upload, fork the official
+competition repository and open the required English pull request from that
+fork. This checkout does not claim that account-owned contest step is complete;
+the repository checker keeps it as an explicit human boundary.
 
 ---
 

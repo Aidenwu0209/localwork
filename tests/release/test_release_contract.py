@@ -19,19 +19,21 @@ class ReleaseContractTest(unittest.TestCase):
             ".github/workflows/first-party.yml",
             "scripts/doctor.sh",
             "scripts/test-first-party.sh",
+            "scripts/submission_check.py",
+            "scripts/build_submission_video.py",
             "deploy/mac/product-stack.sh",
             "docs/submission/PROJECT_SPECIFICATION.md",
             "docs/submission/DejaView-Project-Specification.docx",
             "docs/submission/DejaView-Track2-Presentation.pptx",
-            "docs/assets/demo/dejaview-p34-six-act-20260802-en.mp4",
-            "docs/assets/demo/dejaview-p34-six-act-20260802-en.srt",
+            "docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.mp4",
+            "docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.srt",
         ):
             with self.subTest(relative=relative):
                 self.assertTrue((ROOT / relative).is_file(), relative)
 
     def test_make_exposes_operator_entry_points(self) -> None:
         makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-        for target in ("setup", "doctor", "product-up", "product-down", "product-status", "test"):
+        for target in ("setup", "doctor", "product-up", "product-down", "product-status", "test", "submission-check"):
             with self.subTest(target=target):
                 self.assertRegex(makefile, rf"(?m)^{re.escape(target)}:")
 
@@ -39,6 +41,7 @@ class ReleaseContractTest(unittest.TestCase):
         workflow = ROOT / ".github/workflows/first-party.yml"
         self.assertTrue(workflow.is_file())
         self.assertIn("make test", workflow.read_text(encoding="utf-8"))
+        self.assertIn("make submission-check", workflow.read_text(encoding="utf-8"))
 
     def test_first_party_suite_declares_release_dependencies_and_all_launchers(self) -> None:
         suite = (ROOT / "scripts/test-first-party.sh").read_text(encoding="utf-8")

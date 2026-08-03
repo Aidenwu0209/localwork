@@ -8,27 +8,25 @@
   "size_bytes": 6407325,
   "sha256": "5dc772cea426b215ce6a87c83b75f7dbf2c9f9ca5884e77686e449c2f3ae23ed",
   "submission_artifact": {
-    "artifact": "docs/assets/demo/dejaview-p34-six-act-20260802-en.mp4",
-    "language": "Chinese narration with complete burned-in English captions",
-    "duration_seconds": 157.2,
+    "artifact": "docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.mp4",
+    "language": "English-primary narration with complete English captions",
+    "duration_seconds": 195.2,
     "resolution": "1920x1080",
     "video_codec": "h264",
     "audio_codec": "aac",
-    "size_bytes": 8969304,
-    "sha256": "4b326db90e38282abb8467d34e01b39989dc27dc6b1fb92807f0b56fcc81b4ed",
-    "caption_source": "docs/assets/demo/dejaview-p34-six-act-20260802-en.srt",
-    "caption_sha256": "b0a8f5c0f3f3b841520f1a86d562ba5b943f088c28c3eafbf6d22b37cd0ed3dd"
+    "size_bytes": 8981138,
+    "sha256": "99c2542a45f81e0b184453fa456bd5e4846fbc2d9c2eb4ea3e5d8ed9c08c1216",
+    "caption_source": "docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.srt",
+    "caption_sha256": "4901b8c0320af22b8df086e6a2ec3d3f221cc35d3e35ae1224c4f16831f86df9"
   },
-  "capture_method": "Frames captured from one live isolated browser run; only idle inference waits were removed.",
+  "capture_method": "A 30-second wrapper uses authentic submission slides, followed by the unchanged 157.2-second English-captioned live run and an 8-second truthful close; the original accepted evidence file remains immutable.",
   "fault_injection": "Visible termination of the exact attested Radeon SSH compute tunnel; Wi-Fi and host network interfaces remain untouched.",
   "timeline": [
-    {"start": "00:00", "end": "00:31", "act": 1, "evidence": "data sovereignty, five logical roles, rocm-smi, live Grafana"},
-    {"start": "00:31", "end": "00:52", "act": 2, "evidence": "real pipeline running, three events created"},
-    {"start": "00:52", "end": "01:08", "act": 3, "evidence": "BLOCKED, zero files, zero timeline rows, audit id"},
-    {"start": "01:08", "end": "01:25", "act": 4, "evidence": "PR #1842, event citation, screenshot and bbox"},
-    {"start": "01:25", "end": "01:42", "act": 5, "evidence": "nine isolated Honcho conclusions"},
-    {"start": "01:42", "end": "02:02", "act": 6, "evidence": "Radeon ROCm daily report and Reviewer PASS"},
-    {"start": "02:02", "end": "02:17", "act": 6, "evidence": "verified disconnect, LINK DOWN, LOCAL READY"},
-    {"start": "02:17", "end": "02:37.2", "act": 6, "evidence": "LOCAL METAL FALLBACK daily report and Reviewer PASS"}
+    {"start": "00:00", "end": "01:01", "act": 1, "evidence": "product promise, sovereign boundary, ROCm matrix, five logical roles, rocm-smi, live Grafana"},
+    {"start": "01:01", "end": "01:22", "act": 2, "evidence": "real pipeline running, three events created"},
+    {"start": "01:22", "end": "01:38", "act": 3, "evidence": "BLOCKED, zero files, zero timeline rows, audit id"},
+    {"start": "01:38", "end": "01:55", "act": 4, "evidence": "PR #1842, event citation, screenshot and bbox"},
+    {"start": "01:55", "end": "02:12", "act": 5, "evidence": "nine isolated Honcho conclusions"},
+    {"start": "02:12", "end": "03:15.2", "act": 6, "evidence": "Radeon ROCm daily report, verified disconnect and LINK DOWN, then LOCAL METAL FALLBACK report with Reviewer PASS and truthful close"}
   ]
 }

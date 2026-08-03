@@ -79,15 +79,15 @@
 
 ## 演示视频
 
-[**观看 2 分 37 秒英文烧录字幕提交版**](docs/assets/demo/dejaview-p34-six-act-20260802-en.mp4)——隔离合成数据、带证据回忆、Honcho、隐私拦截、Radeon 日报 Agent、可见断开已验证的 SSH 计算链路，以及 Local Metal fallback 完成第二次日报。Wi-Fi 保持不动，成片只移除了真实推理的等待段。[原始验收证据片](docs/assets/demo/dejaview-p34-six-act-20260802.mp4)保持不变，提交版只增加完整英文字幕。
+[**观看 3 分 15 秒英文主旁白提交版**](docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.mp4)——真实提交材料片头后接完整隔离实录：合成数据、带证据回忆、Honcho、隐私拦截、Radeon 日报 Agent、可见断开已验证的 SSH 计算链路，以及 Local Metal fallback 完成第二次日报。Wi-Fi 保持不动。[原始验收证据片](docs/assets/demo/dejaview-p34-six-act-20260802.mp4)保持不变；提交版替换为英文旁白并提供完整英文字幕。
 
-完整性、字幕哈希与时间码：[`docs/assets/demo/p34-video-manifest.json`](docs/assets/demo/p34-video-manifest.json)；可编辑字幕：[`dejaview-p34-six-act-20260802-en.srt`](docs/assets/demo/dejaview-p34-six-act-20260802-en.srt)。官方 3–5 分钟是建议；本片 2:37 的时长差异保持公开说明。
+完整性、字幕哈希与时间码：[`docs/assets/demo/p34-video-manifest.json`](docs/assets/demo/p34-video-manifest.json)；可编辑字幕：[`dejaview-p34-six-act-20260802-en-3m.srt`](docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.srt)。提交版时长 3:15.2，满足官方 3–5 分钟窗口。
 
 ### 提交材料直达
 
 - 项目规格：[Markdown](docs/submission/PROJECT_SPECIFICATION.md) · [可编辑 DOCX](docs/submission/DejaView-Project-Specification.docx)
 - 补充演示：[可编辑 PPTX](docs/submission/DejaView-Track2-Presentation.pptx)
-- 视频：[英文烧录字幕 MP4](docs/assets/demo/dejaview-p34-six-act-20260802-en.mp4) · [清单](docs/assets/demo/p34-video-manifest.json)
+- 视频：[英文主旁白 MP4](docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.mp4) · [可编辑 SRT](docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.srt) · [清单](docs/assets/demo/p34-video-manifest.json)
 - Radeon/ROCm 优化：[benchmark 报告](docs/benchmarks.md) · [P3.1 哈希证据](docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/)
 
 ---
