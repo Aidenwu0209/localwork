@@ -40,8 +40,18 @@ class ReleaseContractTest(unittest.TestCase):
     def test_ci_uses_the_same_first_party_test_entry_point(self) -> None:
         workflow = ROOT / ".github/workflows/first-party.yml"
         self.assertTrue(workflow.is_file())
-        self.assertIn("make test", workflow.read_text(encoding="utf-8"))
-        self.assertIn("make submission-check", workflow.read_text(encoding="utf-8"))
+        text = workflow.read_text(encoding="utf-8")
+        self.assertIn("make test", text)
+        self.assertIn("make submission-check", text)
+        self.assertEqual(
+            text.count("actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1"),
+            2,
+        )
+        self.assertEqual(
+            text.count("astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2"),
+            2,
+        )
+        self.assertNotRegex(text, r"uses:\s+(?:actions/checkout|astral-sh/setup-uv)@v\d+")
 
     def test_first_party_suite_declares_release_dependencies_and_all_launchers(self) -> None:
         suite = (ROOT / "scripts/test-first-party.sh").read_text(encoding="utf-8")

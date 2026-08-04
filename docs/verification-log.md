@@ -691,3 +691,36 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   **48/49 accept**. Continue from `docs/P3.19_HANDOFF_PROMPT.md`. Registration,
   Rules, official-repository fork/English PR, repository visibility, final
   upload, and last server demo-data inspection remain human-only gates.
+
+## 2026-08-04 — P3.19 continuation checkpoint (`doing`, not accepted)
+
+- **[VERIFY] PPTX synchronization:** `docs/submission/DejaView-Track2-Presentation.pptx`
+  now uses `3:15 English-primary demo` on the slide-7 `release-limitations`
+  rail. The notes retain the immutable 2:37 evidence statement and identify the
+  3:15.2 English-primary cut as the compliant submission version. ZIP comparison
+  found only `slide7.xml` and `notesSlide7.xml` changes; all seven rendered
+  slides were inspected for clipping and overflow.
+- **[VERIFY] Submission checker independent review:** the focused suite is now
+  33 tests on this Windows host: 29 pass and four POSIX-only filesystem tests
+  are skipped by capability guards. With the isolated audit `ffprobe` binary,
+  the real public bundle is **19/19 PASS**; the original accepted video SHA is
+  unchanged. The default Windows `ffprobe` command is absent, so a bare
+  `python scripts/submission_check.py` reports only that local toolchain gap.
+- **[VERIFY] CI pinning:** `.github/workflows/first-party.yml` pins the official
+  Node-24 actions at checkout v7.0.1 and setup-uv v8.3.2 commit SHAs. The release
+  contract test requires both occurrences and rejects floating major tags.
+- **[VERIFY] Isolated UI audit:** desktop 1440×900 and mobile 390×844 synthetic
+  flows produced a Radeon citation and capability-gated evidence image. axe
+  4.12.1 reported zero violations, `scrollWidth == clientWidth`, the mobile
+  evidence drawer fit exactly, and Escape restored the citation focus. The
+  screenshots and traces remain untracked under `.superpowers/p319-ui-audit/`.
+- **[VERIFY] Gate limitation:** this Windows host had no stale 8090/8101 listener,
+  but `make product-up` stopped at the documented `lsof is required` prerequisite;
+  Docker, the local model stack, and the authorized `radeon-cloud` SSH alias are
+  unavailable. No real managed Radeon recall, Honcho projection, or Local Metal
+  fallback is claimed. Shell-parser/full-suite, clean-checkout, and pushed CI
+  evidence therefore remain open.
+- **Conclusion:** P3.19 remains `doing` and TASKBOARD remains **48/49 accept**.
+  This is a partial engineering checkpoint, not mature-product final acceptance;
+  human AMD registration, Rules, official fork/English PR, visibility, upload,
+  and final server demo-data checks remain explicitly unclaimed.
