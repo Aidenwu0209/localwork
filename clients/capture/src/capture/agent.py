@@ -11,11 +11,10 @@ Behavior:
   - While the display is asleep or the session is locked, PAUSE: don't capture,
     don't upload, and don't reset the change detector.
 
-Lock/session detection: macOS does not expose a synchronous "is locked?" API
-through pyobjc, so we subscribe to the distributed notifications
+Lock/session detection: macOS subscribes to the distributed notifications
 `com.apple.screenIsLocked` / `com.apple.screenIsUnlocked` (and the screen-saver
-equivalents) via CoreFoundation and maintain an in-process flag. On startup we
-assume unlocked and let the first frame correct that if needed.
+equivalents) via CoreFoundation. Windows probes the interactive input desktop
+and pauses while Winlogon owns the secure desktop.
 
 All uploads are fire-and-forget in the sense that a dropped frame is simply
 gone — no disk cache (handbook §5.2 privacy invariant).
@@ -24,8 +23,10 @@ gone — no disk cache (handbook §5.2 privacy invariant).
 from __future__ import annotations
 
 import asyncio
+import ctypes
 import io
 import logging
+import os
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -205,6 +206,30 @@ def _pump_runloop(timeout: float) -> None:
         pass
 
 
+def _windows_session_locked() -> bool:
+    """Return whether Windows can open the interactive input desktop.
+
+    ``OpenInputDesktop`` fails while Winlogon owns the secure desktop (for
+    example during lock/UAC), so capture pauses before touching pixels.
+    Non-Windows platforms retain the existing notification-based path.
+    """
+    if os.name != "nt":
+        return False
+    try:
+        user32 = ctypes.WinDLL("user32", use_last_error=True)
+        user32.OpenInputDesktop.argtypes = [ctypes.c_ulong, ctypes.c_bool, ctypes.c_ulong]
+        user32.OpenInputDesktop.restype = ctypes.c_void_p
+        user32.CloseDesktop.argtypes = [ctypes.c_void_p]
+        user32.CloseDesktop.restype = ctypes.c_bool
+        desktop = user32.OpenInputDesktop(0, False, 0x0100)
+        if not desktop:
+            return True
+        user32.CloseDesktop(desktop)
+        return False
+    except (AttributeError, OSError):
+        return True
+
+
 async def run_agent(config: "CaptureConfig") -> int:
     """Main capture loop. Runs until cancelled (Ctrl-C / SIGTERM)."""
     logging.basicConfig(
@@ -249,6 +274,12 @@ async def run_agent(config: "CaptureConfig") -> int:
         while True:
             try:
                 _pump_runloop(0.05)
+
+                if os.name == "nt":
+                    locked = _windows_session_locked()
+                    if locked != lock_state.locked:
+                        lock_state.locked = locked
+                        log.info("Windows session %s — pausing capture", "locked" if locked else "unlocked")
 
                 now = time.monotonic()
                 if now - last_heartbeat_ts >= 30.0:

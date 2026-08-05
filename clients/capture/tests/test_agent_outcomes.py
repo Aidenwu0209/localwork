@@ -10,6 +10,7 @@ from capture.agent import (
     recovery_pending,
     run_agent,
     should_commit_frame,
+    _windows_session_locked,
 )
 from capture.config import CaptureConfig
 from capture.permissions import PermissionCheck
@@ -96,6 +97,10 @@ def test_failed_heartbeat_keeps_recovery_pending() -> None:
     assert recovery_pending(had_upload_failure=True, heartbeat_accepted=True) is False
 
 
+def test_windows_session_lock_probe_is_noop_off_windows() -> None:
+    assert _windows_session_locked() is False
+
+
 class FixtureAsyncClient:
     async def __aenter__(self) -> "FixtureAsyncClient":
         return self
@@ -132,6 +137,7 @@ def test_locked_agent_sends_due_heartbeat_without_using_capture_apis() -> None:
             return_value=PermissionCheck(True, "granted"),
         ),
         patch("capture.agent._install_lock_observer", side_effect=lock_agent),
+        patch("capture.agent._windows_session_locked", return_value=True),
         patch("capture.agent._pump_runloop"),
         patch("capture.agent.time", FixtureClock(0.0, 0.0, 31.0)),
         patch("capture.agent.httpx.AsyncClient", return_value=FixtureAsyncClient()),

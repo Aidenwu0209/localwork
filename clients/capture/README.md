@@ -1,4 +1,4 @@
-# DejaView capture client (macOS MVP)
+# DejaView capture client (macOS + Windows)
 
 Continuously senses the user's screen: captures a frame whenever the frontmost
 window or its title changes (with a 30s periodic fallback) and POSTs it
@@ -8,12 +8,14 @@ then dropped (handbook §5.2 privacy invariant).
 
 ## What it does
 
-- Captures the primary display at native (Retina) resolution via `mss`.
+- Captures the primary display at native resolution via `mss` (macOS) or the
+  visible Win32 window region (Windows).
 - Scales the frame down to width ≤ 2560px and encodes it to WebP quality 80,
   all in memory.
-- Reads the frontmost app name + window title via `NSWorkspace` +
-  `CGWindowListCopyWindowInfo`.
-- Optionally probes the active browser tab URL via `osascript` (best effort).
+- Reads the frontmost app name + window title via Cocoa on macOS or user32 on
+  Windows.
+- Optionally probes the active browser tab URL via `osascript` (macOS only,
+  best effort; Windows reports `null`).
 - POSTs `{file, meta}` to memoryd as `multipart/form-data`.
 - Pauses window reads, screenshots, and frame uploads while the session is
   locked or the screensaver is running; its metadata-only heartbeat continues.
@@ -41,7 +43,7 @@ memoryd must be running first:
 cd services/memoryd && uv run python -m memoryd   # listens on 127.0.0.1:8090
 ```
 
-## Screen Recording permission (required, one-time grant)
+## Screen Recording permission (macOS)
 
 macOS 10.15+ blocks pixel capture until you grant Screen Recording permission.
 Without it, `mss` returns a valid frame object whose pixels are all black — so
@@ -62,6 +64,12 @@ the client detects this on startup and prints guidance. To grant:
 The first non-black frame confirms it worked. Until then, capture exits with
 status `2` before it creates its HTTP client or starts a capture loop. Grant
 the permission, fully relaunch the authorized app, then run capture again.
+
+On Windows there is no equivalent one-time Screen Recording toggle. Capture
+requires an interactive, unlocked desktop session; the client probes the secure
+desktop and pauses before reading pixels when the session is locked or
+unavailable. The Windows backend does not probe browser URLs, so that field is
+`null`.
 
 > Note: AppleScript automation (for the optional browser-URL probe) needs a
 > separate one-time grant under **Privacy & Security → Automation**. If you
@@ -96,8 +104,8 @@ src/capture/
   __main__.py      thin wrapper for `python -m capture`
   config.py        capture.yaml loader + defaults (device_id <- hostname)
   screenshot.py    mss capture -> scale to <=2560px -> WebP q80 (in memory)
-  windows.py       get_active_window() via NSWorkspace + CGWindowListCopyWindowInfo
-  permissions.py   Screen Recording permission detection (black-frame heuristic) + guidance
+  windows.py       Cocoa or Win32 window inventory + in-memory PNG capture
+  permissions.py   black-frame heuristic + platform-specific guidance
   url_probe.py     osascript probe for Safari/Chrome active-tab URL (best effort)
   uploader.py      async httpx POST /v1/ingest/frame (multipart); drops on failure
   agent.py         main loop: 3s change detect, 30s periodic, lock/screensaver pause
