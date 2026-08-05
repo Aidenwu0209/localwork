@@ -692,7 +692,7 @@ P3.19 只清理最终提交风险。不要因旧 `blocked` 文案、旧端口或
 | **P3.12–P3.16** | **accept** | 成熟产品设计、隐私采集、真实降级、Honcho 闭环、日常产品页 | 新鲜测试与独立复审已入 verification-log |
 | **P3.17** | **accept** | 干净检出、doctor/quickstart/CI、LICENSE/NOTICE、双语发布一致性、英文规格与 PPT 均通过 QA | 证据见 verification-log |
 | **P3.18** | **accept** | CI 全绿;当前源码隔离 Radeon Recall/引用/受控证据图;发布、隐私与既有 live-flow 证据总验收 | 证据见 verification-log |
-| **P3.19** | **doing** | 有信息量的3–5分钟英文主音轨提交版;默认受管本地隐私/产品栈;submission-check;当前UI/运行复验 | 设计见 `docs/superpowers/specs/2026-08-03-final-contest-polish-design.md` |
+| **P3.19** | **doing** | PPTX/Actions/UI/fallback/干净检出本地已过;待最终 CI 后 accept | 设计见 `docs/superpowers/specs/2026-08-03-final-contest-polish-design.md` |
 
 **§10 提交清单仍待人工**:全员 AMD Developer Program 注册、Rules 通读、仓库可见性、服务器仅演示数据、最终提交平台/格式确认。
 
