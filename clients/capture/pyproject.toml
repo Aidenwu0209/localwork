@@ -1,7 +1,7 @@
 [project]
 name = "capture"
 version = "0.1.0"
-description = "DejaView macOS capture client: screen + window metadata -> memoryd (handbook §5.1/§5.2)"
+description = "DejaView macOS/Windows capture client: screen + window metadata -> memoryd (handbook §5.1/§5.2)"
 readme = "README.md"
 authors = [
     { name = "Aidenwu0209", email = "1418557225@qq.com" }
@@ -12,9 +12,9 @@ dependencies = [
     "imagehash>=4.3.2",
     "mss>=10.2.0",
     "pillow>=12.3.0",
-    "pyobjc-core>=12.2.1",
-    "pyobjc-framework-cocoa>=12.2.1",
-    "pyobjc-framework-quartz>=12.2.1",
+    "pyobjc-core>=12.2.1; sys_platform == 'darwin'",
+    "pyobjc-framework-cocoa>=12.2.1; sys_platform == 'darwin'",
+    "pyobjc-framework-quartz>=12.2.1; sys_platform == 'darwin'",
     "pyyaml>=6.0.3",
 ]
 

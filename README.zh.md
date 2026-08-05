@@ -43,8 +43,8 @@
                          SENTINEL_GATEWAY_URL 保持本地;仅放行帧才会使用 GATEWAY_URL
 ```
 
-- **有状态只在 Mac:** Postgres、Redis、截图与审计日志。单一可移植 `DATA_ROOT`;当前不支持音频/文档写入。
-- **已交付采集客户端:** macOS。Windows 仍是数据主权架构目标,不声称 P3.17 已交付 Windows 可执行程序。
+- **有状态只在数据主权端:** Postgres、Redis、截图与审计日志。单一可移植 `DATA_ROOT`;当前不支持音频/文档写入。
+- **采集客户端:** macOS 仍是比赛已验证客户端;P3.19 已加入 Win32/mss Windows 后端,内存处理像素并在安全桌面暂停。完整 Windows 产品栈仍在门禁中,见 [`deploy/windows/README.md`](deploy/windows/README.md)。
 - **服务器纯无状态:** 模型服务 + 网关(+ 可选 EPYC OCR)。不落用户数据、不落 prompt 日志。
 - **隐私顺序:** memoryd 先把原始帧发送到 `SENTINEL_GATEWAY_URL` 配置的本地 Sentinel；仅放行帧才会经 `GATEWAY_URL` 请求 Radeon 算力。
 - **网络:** LAN 或 Tailscale/WireGuard;冒烟用 SSH 隧道即可(见下)。
@@ -98,6 +98,10 @@
 与已下载的本地 Sentinel 权重 · SSH 别名 `radeon-cloud`
 指向已授权的 AMD 推理栈(见 [`DEPLOY.md`](deploy/server/DEPLOY.md))。
 下列命令均从克隆根目录执行;`REPO_ROOT` 保证后台进程不受后续 `cd` 影响:
+
+Windows 使用 PowerShell 包装器运行等价生命周期:`deploy\\windows\\dejaview.cmd doctor`、
+`tunnel-up`、`product-up`、`product-status`、`capture`;本地 Sentinel 门禁不变,
+原始画面永不经过 Radeon 隧道。
 
 ```bash
 git submodule update --init --recursive

@@ -1,4 +1,4 @@
-# DejaView — 项目状态交接(2026-08-03)
+# DejaView — 项目状态交接(2026-08-04)
 
 > 人话版快照。完整决策与进度以 `docs/EXECUTION_HANDBOOK.md` **§12** 为准(已含 7/20–7/28 会话决策摘要)。状态机:`TASKBOARD.json`。踩坑:`docs/verification-log.md`。开工指令:`docs/AGENT_KICKOFF_PROMPT.md`。
 
@@ -6,17 +6,17 @@
 
 ## 一句话现状
 
-**DejaView** = 全本地数字记忆体(赛道 AMD Hackathon Track 2 · Agentic AI)。比赛六幕、ROCm 证据与成熟产品加固 P3.12–P3.18 均已验收;P3.19 已完成英文 3:15.2 视频、submission-check 19/19、PPTX 同步、受管 READY、Radeon recall/evidence、断链 Local Metal fallback、桌面/移动 axe 与干净检出。截止 **2026-08-06 23:59 UTC+8**;P3.19 仍为 `doing`,等待最终 push 后 CI 全绿再 accept。
+**DejaView** = 全本地数字记忆体(赛道 AMD Hackathon Track 2 · Agentic AI)。比赛六幕、ROCm 证据与成熟产品加固 P3.12–P3.18 均已验收;P3.19 已完成英文 3:15.2 视频、submission-check、DOCX/PPTX、Actions 固定 SHA、Windows capture 后端，以及 Mac 授权环境下的受管 READY、Radeon recall/evidence、断链 Local Metal fallback、桌面/移动 axe 与干净检出。截止 **2026-08-06 23:59 UTC+8**;P3.19 仍为 `doing`，等待最终 push 后 CI 全绿再 accept。
 
 | 状态 | 内容 |
 |---|---|
 | **已完成** | G0+M+D **33/33 accept**;**P3.1 ROCm 消融**;P3.3 README;P3.5 licenses;P3.6 哨兵;P3.7 perceive |
 | **P3.1 正式证据** | run `p31-w7900d-20260728T075653Z`;18 个 brain 量化×MTP×并发 cell + 3 个 perceive `-np` cell,均为 1 次 warm-up + 3 次实测;原始证据在 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`,截图在 `docs/assets/p31/p31-w7900d-20260728T075653Z/` |
 | **本次新增完成** | **P3.2 Grafana** 一屏验收;**P3.4 六幕视频** 2:37 成片;**P3.11 Grafana 系统自检**含 READY/DEGRADED/FAILED、数据新鲜度、本机核心与算力路径 |
-| **工程任务** | TASKBOARD 当前 **48/49 accept**,**P3.19 doing**;P3.1–P3.18 不重做;P3.19 本地证据已齐(PPTX/UI/axe/fallback/干净检出),只差最终 push CI 与人工提交门槛 |
+| **工程任务** | TASKBOARD 当前 **48/49 accept**,**P3.19 doing**;P3.1–P3.18 不重做;已合并 Windows capture 与 Mac 实机门禁证据;只差最终 push CI 与人工提交门槛 |
 | **产品化边界** | 单用户、屏幕记忆优先、隐私 fail-closed、真实 Radeon→Local Metal 降级、Honcho 自动成长、可点击证据产品页、干净机器复现 |
 
-**下一优先:push 当前 P3.19 工程提交并等待 Linux/macOS CI 全绿后将 P3.19 `doing→accept`;**AMD Developer Program、Rules、官方 fork/英文 PR、仓库可见性、服务器仅演示数据与最终平台上传仍需队员本人确认。
+**下一优先:push 合并后的 P3.19 工程提交并等待 Linux/macOS CI 全绿后将 P3.19 `doing→accept`;**AMD Developer Program、Rules、官方 fork/英文 PR、仓库可见性、服务器仅演示数据与最终平台上传仍需队员本人确认。
 
 ---
 
@@ -85,7 +85,7 @@ brain 按需启动。若出现 Dolphin/未知 KFD 共租,brain 用 Q6_K、先停
 | P3.16 | **accept** | 默认日常产品页;能力签名证据+CSRF+本地控制边界;四档无溢出;axe 0 violations;独立安全/UX 复审 PASS |
 | P3.17 | **accept** | 干净检出全套通过;幂等 Honcho setup、只读 doctor、第一方 CI、受管生命周期、LICENSE/NOTICE、双语文档、英文规格与可编辑 PPT 均完成 QA |
 | P3.18 | **accept** | CI 全绿 + 当前源码隔离 Radeon Recall/引用/受控证据图 + 发布/隐私/历史 live-flow 证据总验收 |
-| P3.19 | **doing** | 2026-08-05: PPTX 已同步 3:15、Actions 已钉 SHA、受管 READY、Radeon recall/evidence、Local Metal fallback、axe 0、干净检出通过;待最终 CI 后 accept |
+| P3.19 | **doing** | 2026-08-05: Windows capture + Mac READY/recall/fallback/axe/干净检出已齐;待最终 CI 后 accept |
 
 ---
 

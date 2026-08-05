@@ -422,6 +422,30 @@ def _release_text_paths(root: Path, dynamic_caption: Optional[Path]) -> list[Pat
     return list(dict.fromkeys(paths))
 
 
+def _visible_markdown(text: str) -> str:
+    """Return prose and links that are rendered outside comments/code blocks."""
+    text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+    visible: list[str] = []
+    fence_char = ""
+    fence_length = 0
+    for line in text.splitlines():
+        if fence_char:
+            if re.fullmatch(rf"\s{{0,3}}{re.escape(fence_char)}{{{fence_length},}}\s*", line):
+                fence_char = ""
+                fence_length = 0
+            continue
+        opening = re.match(r"^\s{0,3}(`{3,}|~{3,})", line)
+        if opening:
+            marker = opening.group(1)
+            fence_char = marker[0]
+            fence_length = len(marker)
+            continue
+        if line.startswith("\t") or line.startswith("    "):
+            continue
+        visible.append(line)
+    return re.sub(r"`+[^`\n]*`+", "", "\n".join(visible))
+
+
 def check_submission(root: Path, *, ffprobe: str = "ffprobe") -> list[CheckResult]:
     trusted, root_detail = _trusted_root(Path(root))
     if trusted is None:
@@ -686,7 +710,10 @@ def check_submission(root: Path, *, ffprobe: str = "ffprobe") -> list[CheckResul
             continue
         for finding in _privacy_findings(text):
             privacy_errors.append(f"{path.relative_to(root)}: {finding}")
-    for label, text in ((DOCX_PATH, _ooxml_raw_text(docx)), (PPTX_PATH, _ooxml_raw_text(pptx))):
+    for label, text in (
+        (DOCX_PATH, "\n".join((docx_text, _ooxml_raw_text(docx)))),
+        (PPTX_PATH, "\n".join((pptx_text, _ooxml_raw_text(pptx)))),
+    ):
         for finding in _privacy_findings(text):
             privacy_errors.append(f"{label}: {finding}")
     add("submission-privacy-content", not privacy_errors, "; ".join(privacy_errors[:12]) or "release-facing text and OOXML contain no public coordinates or credentials")
@@ -698,7 +725,8 @@ def check_submission(root: Path, *, ffprobe: str = "ffprobe") -> list[CheckResul
     if readme is not None:
         try:
             readme_text = readme.read_text(encoding="utf-8")
-            for raw in re.findall(r"\[[^\]]*\]\(([^)]+)\)", readme_text):
+            visible_readme = _visible_markdown(readme_text)
+            for raw in re.findall(r"\[[^\]]*\]\(([^)]+)\)", visible_readme):
                 target = unquote(raw.strip().strip("<>").split("#", 1)[0].split("?", 1)[0])
                 if target and not re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", target):
                     links.add(target)
@@ -720,8 +748,7 @@ def check_submission(root: Path, *, ffprobe: str = "ffprobe") -> list[CheckResul
             link_errors.append(f"README target invalid: {required}")
     if P31_DIR not in links:
         link_errors.append(f"README lacks {P31_DIR}")
-    visible_readme = re.sub(r"<!--.*?-->", "", readme_text, flags=re.DOTALL)
-    visible_readme = re.sub(r"(?ms)^\s*(```|~~~).*?^\s*\1\s*$", "", visible_readme)
+    visible_readme = _visible_markdown(readme_text)
     readme_folded = re.sub(r"\s+", " ", visible_readme.casefold())
     instruction_patterns = (
         (r"\bofficial competition repository\b", "official competition repository"),

@@ -5,6 +5,7 @@ import json
 import os
 import stat
 import subprocess
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -16,7 +17,7 @@ from scripts.submission_check import _office_check, _ooxml_raw_text, check_submi
 
 class SubmissionCheckTest(unittest.TestCase):
     def make_tree(self, *, duration: float = 180.0) -> tuple[Path, Path]:
-        self.temp = tempfile.TemporaryDirectory(dir="/private/tmp")
+        self.temp = tempfile.TemporaryDirectory()
         root = Path(self.temp.name).resolve()
         for item in (
             "README.md", "README.zh.md", "LICENSE", "NOTICE", "docs/licenses.md",
@@ -68,7 +69,8 @@ class SubmissionCheckTest(unittest.TestCase):
         return root, probe
 
     def tearDown(self) -> None:
-        self.temp.cleanup()
+        if hasattr(self, "temp"):
+            self.temp.cleanup()
 
     @staticmethod
     def write_office(
@@ -102,7 +104,17 @@ class SubmissionCheckTest(unittest.TestCase):
                 archive.writestr("docProps/core.xml", "<core/>")
 
     def names(self, root: Path, probe: Path) -> set[str]:
-        with mock.patch("scripts.submission_check.ACCEPTED_ORIGINAL_SHA", self.original_sha):
+        real_run = subprocess.run
+
+        def portable_run(args: list[str], *positional: object, **keywords: object) -> subprocess.CompletedProcess[object]:
+            if args and os.fspath(args[0]) == os.fspath(probe):
+                args = [sys.executable, os.fspath(probe), *args[1:]]
+            return real_run(args, *positional, **keywords)
+
+        with (
+            mock.patch("scripts.submission_check.ACCEPTED_ORIGINAL_SHA", self.original_sha),
+            mock.patch("scripts.submission_check.subprocess.run", side_effect=portable_run),
+        ):
             return {result.name for result in check_submission(root, ffprobe=str(probe)) if not result.ok}
 
     def test_synthetic_package_passes_with_fake_ffprobe(self) -> None:
@@ -240,6 +252,7 @@ class SubmissionCheckTest(unittest.TestCase):
         subprocess.run(["git", "-C", root, "add", ".env"], check=True)
         self.assertIn("submission-privacy-tracked-files", self.names(root, probe))
 
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "requires FIFO support")
     def test_tracked_env_fifo_is_never_opened(self) -> None:
         root, probe = self.make_tree()
         dotenv = root / ".env"
@@ -285,6 +298,7 @@ class SubmissionCheckTest(unittest.TestCase):
         failures = self.names(root, probe)
         self.assertTrue({"submission-privacy-content", "submission-readme-links"} <= failures)
 
+    @unittest.skipUnless(os.name == "posix", "requires POSIX symlink support")
     def test_rejects_symlink_and_ooxml_traversal(self) -> None:
         root, probe = self.make_tree()
         (root / "NOTICE").unlink()
@@ -367,6 +381,7 @@ class SubmissionCheckTest(unittest.TestCase):
         )
         self.assertIn("submission-pptx", self.names(root, probe))
 
+    @unittest.skipUnless(os.name == "posix", "requires POSIX symlink support")
     def test_symlink_repository_root_fails(self) -> None:
         root, probe = self.make_tree()
         link = root.parent / "linked-root"
@@ -377,6 +392,7 @@ class SubmissionCheckTest(unittest.TestCase):
         finally:
             link.unlink(missing_ok=True)
 
+    @unittest.skipUnless(os.name == "posix", "requires POSIX symlink support")
     def test_symlink_repository_ancestor_fails(self) -> None:
         root, probe = self.make_tree()
         parent_link = root.parent / f"{root.name}-parent-link"
@@ -416,6 +432,26 @@ class SubmissionCheckTest(unittest.TestCase):
             encoding="utf-8",
         )
         self.assertIn("submission-readme-links", self.names(root, probe))
+
+    def test_readme_links_hidden_in_long_fence_are_rejected(self) -> None:
+        root, probe = self.make_tree()
+        readme = root / "README.md"
+        hidden_links = readme.read_text(encoding="utf-8").split("Human-only step:", 1)[0]
+        readme.write_text(
+            "````markdown\n"
+            + hidden_links
+            + "````\nHuman-only step: fork the official competition repository and open the English pull request. This checkout does not claim completion.\n",
+            encoding="utf-8",
+        )
+        self.assertIn("submission-readme-links", self.names(root, probe))
+
+    def test_ooxml_entity_encoded_credential_is_rejected(self) -> None:
+        root, probe = self.make_tree()
+        self.write_office(
+            root / "docs/submission/DejaView-Project-Specification.docx",
+            "DejaView Track 2 ROCm privacy limitations &#115;&#107;&#45;" + "A" * 24,
+        )
+        self.assertIn("submission-privacy-content", self.names(root, probe))
 
 
 if __name__ == "__main__":
