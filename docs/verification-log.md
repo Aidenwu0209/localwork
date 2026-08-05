@@ -724,3 +724,28 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   This is a partial engineering checkpoint, not mature-product final acceptance;
   human AMD registration, Rules, official fork/English PR, visibility, upload,
   and final server demo-data checks remain explicitly unclaimed.
+
+## 2026-08-05 — P3.19 Windows adaptation checkpoint (`doing`, not accepted)
+
+- **[VERIFY] Windows capture backend:** `clients/capture/src/capture/windows.py`
+  now lazily selects Cocoa on macOS and Win32 on Windows. The Windows path
+  enumerates visible titled windows with `EnumWindows`, captures the selected
+  region through `mss`, encodes PNG/WebP in memory, and treats the secure desktop
+  as locked. pyobjc dependencies are now Darwin-only. The capture suite passed
+  **23/23** on this Windows host; a real foreground window was captured and
+  decoded from memory as a 1090x760 PNG, with no screenshot file written.
+- **[VERIFY] Windows control plane:** `deploy/windows/dejaview.ps1` and its
+  `dejaview.cmd` wrapper provide doctor, exact-owned SSH tunnel, product
+  lifecycle, status, and capture commands. PowerShell syntax and six Windows
+  contract tests pass. Product status correctly returns `NOT_READY` for missing
+  services; product-up refuses a missing local Sentinel before starting data or
+  remote compute, preserving the privacy order.
+- **[VERIFY] SSH boundary:** the user-supplied remote endpoint is stored only in
+  the user's untracked SSH config as logical alias `radeon-cloud`; no public
+  coordinate is present in the repository or release text. A connection attempt
+  reached the host but was rejected because this Windows account's public key is
+  not authorized. No password or private key was requested, read, or printed.
+- **[VERIFY] Remaining blockers:** Docker Desktop/Compose, local Sentinel model
+  gateway, and an authorized SSH key are still required for Windows
+  `product-up/status/down`; Linux/macOS full suite, clean checkout, and pushed CI
+  remain open. P3.19 remains `doing`; this is not final product acceptance.

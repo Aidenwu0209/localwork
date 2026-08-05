@@ -6,7 +6,7 @@
 
 ## 一句话现状
 
-**DejaView** = 全本地数字记忆体(赛道 AMD Hackathon Track 2 · Agentic AI)。比赛六幕、ROCm 证据与成熟产品加固 P3.12–P3.18 均已验收;最终风险清零任务 P3.19 已完成英文 3:15.2 视频、提交检查器、DOCX/PPTX 同步、Actions 固定 SHA 与隔离 UI/axe 审计，但 Windows 当前无法启动真实受管产品栈，干净检出与推送 CI 仍未完成。截止 **2026-08-06 23:59 UTC+8**,当前仍是 `doing` 交接点。
+**DejaView** = 全本地数字记忆体(赛道 AMD Hackathon Track 2 · Agentic AI)。比赛六幕、ROCm 证据与成熟产品加固 P3.12–P3.18 均已验收;最终风险清零任务 P3.19 已完成英文 3:15.2 视频、提交检查器、DOCX/PPTX 同步、Actions 固定 SHA、隔离 UI/axe 审计与 Windows capture 后端，但 Windows 当前缺 Docker/本地 Sentinel/授权 SSH key，完整受管产品栈、干净检出与推送 CI 仍未完成。截止 **2026-08-06 23:59 UTC+8**,当前仍是 `doing` 交接点。
 
 | 状态 | 内容 |
 |---|---|
@@ -85,7 +85,7 @@ brain 按需启动。若出现 Dolphin/未知 KFD 共租,brain 用 Q6_K、先停
 | P3.16 | **accept** | 默认日常产品页;能力签名证据+CSRF+本地控制边界;四档无溢出;axe 0 violations;独立安全/UX 复审 PASS |
 | P3.17 | **accept** | 干净检出全套通过;幂等 Honcho setup、只读 doctor、第一方 CI、受管生命周期、LICENSE/NOTICE、双语文档、英文规格与可编辑 PPT 均完成 QA |
 | P3.18 | **accept** | CI 全绿 + 当前源码隔离 Radeon Recall/引用/受控证据图 + 发布/隐私/历史 live-flow 证据总验收 |
-| P3.19 | **doing** | 已完成严格受管隐私/产品栈、3:15.2 英文主音轨 MP4/SRT、submission-check 19/19、DOCX/PPTX QA、Actions 固定 SHA 与隔离 UI/axe 审计；待授权环境真实产品/Radeon/Honcho/fallback 门禁、干净检出和最终 CI |
+| P3.19 | **doing** | 已完成严格受管隐私/产品栈、3:15.2 英文主音轨 MP4/SRT、submission-check 19/19、DOCX/PPTX QA、Actions 固定 SHA、隔离 UI/axe 审计与 Windows Win32/mss capture；待授权环境真实产品/Radeon/Honcho/fallback 门禁、干净检出和最终 CI |
 
 ---
 

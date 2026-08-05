@@ -1,4 +1,4 @@
-"""DejaView capture client — macOS MVP (handbook §5.1 / §5.2).
+"""DejaView macOS/Windows capture client (handbook §5.1 / §5.2).
 
 Continuously senses the user's screen: grabs a frame on frontmost-window
 change (with a 30s periodic fallback) and POSTs it in memory to memoryd's

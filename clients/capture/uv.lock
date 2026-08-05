@@ -24,9 +24,9 @@ dependencies = [
     { name = "imagehash" },
     { name = "mss" },
     { name = "pillow" },
-    { name = "pyobjc-core" },
-    { name = "pyobjc-framework-cocoa" },
-    { name = "pyobjc-framework-quartz" },
+    { name = "pyobjc-core", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-quartz", marker = "sys_platform == 'darwin'" },
     { name = "pyyaml" },
 ]
 
@@ -36,9 +36,9 @@ requires-dist = [
     { name = "imagehash", specifier = ">=4.3.2" },
     { name = "mss", specifier = ">=10.2.0" },
     { name = "pillow", specifier = ">=12.3.0" },
-    { name = "pyobjc-core", specifier = ">=12.2.1" },
-    { name = "pyobjc-framework-cocoa", specifier = ">=12.2.1" },
-    { name = "pyobjc-framework-quartz", specifier = ">=12.2.1" },
+    { name = "pyobjc-core", marker = "sys_platform == 'darwin'", specifier = ">=12.2.1" },
+    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'", specifier = ">=12.2.1" },
+    { name = "pyobjc-framework-quartz", marker = "sys_platform == 'darwin'", specifier = ">=12.2.1" },
     { name = "pyyaml", specifier = ">=6.0.3" },
 ]
 

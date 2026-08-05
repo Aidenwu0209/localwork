@@ -45,8 +45,8 @@ uses `RADEON_GATEWAY_URL` first and `LOCAL_GATEWAY_URL` for a verified fallback
                           SENTINEL_GATEWAY_URL stays local; only allowed frames use GATEWAY_URL
 ```
 
-- **Stateful on Mac only:** Postgres, Redis, screenshots, and audit logs. One portable `DATA_ROOT`; audio/document ingest is currently unsupported.
-- **Shipped capture client:** macOS. Windows remains a data-sovereignty architecture target, not a claimed P3.17 binary.
+- **Stateful on the sovereignty device:** Postgres, Redis, screenshots, and audit logs. One portable `DATA_ROOT`; audio/document ingest is currently unsupported.
+- **Capture clients:** macOS remains the contest-verified client; P3.19 now includes a Windows Win32/mss backend with in-memory pixels and secure-desktop pause. The full Windows product stack remains an in-progress gate and is documented in [`deploy/windows/README.md`](deploy/windows/README.md).
 - **Server is stateless:** model services + gateway (+ optional EPYC OCR). No user data, no prompt logs on disk.
 - **Privacy order:** memoryd sends raw frames to the local Sentinel configured by
   `SENTINEL_GATEWAY_URL` before OCR, disk, or any allowed Radeon request through
@@ -109,6 +109,10 @@ plus the downloaded local Sentinel weights · SSH host alias `radeon-cloud`
 to an authorised AMD box with the inference stack (see
 [`DEPLOY.md`](deploy/server/DEPLOY.md)). Run every command below from the clone
 root; `REPO_ROOT` keeps background launches independent of later `cd` calls.
+
+On Windows, use `deploy\\windows\\dejaview.cmd doctor`, then `tunnel-up`,
+`product-up`, `product-status`, and `capture`. The local Sentinel requirement is
+unchanged; raw frames never use the Radeon tunnel.
 
 ```bash
 git submodule update --init --recursive

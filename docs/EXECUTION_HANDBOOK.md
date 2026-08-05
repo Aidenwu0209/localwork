@@ -102,7 +102,7 @@ flowchart LR
 ### 2.2 部署原则
 
 - **有状态的全在数据主权端**:Postgres、Redis、放行截图、时间线、Honcho 和审计日志。单一数据根目录 `DATA_ROOT`(默认 `~/dejaview-data`),可整体打包迁移;当前不写入音频/文档。
-- **已交付平台边界**:capture 客户端当前是 macOS-only;Windows 是同一数据主权架构的目标,不在 P3.17 声称已交付。
+- **已交付平台边界**:P3.19 已加入 Windows Win32/mss capture 后端;macOS 仍是比赛实机验证客户端。Windows 完整产品栈、Docker/Honcho/本地 Sentinel 与 SSH tunnel 仍须独立门禁,不得把后端单测写成最终产品 accept。
 - **服务器纯无状态**:默认只有模型服务 + 网关 + 监控;单机评委拓扑可在 EPYC 运行 ocrd。llama-server 用 `--log-disable`,LiteLLM 关闭请求/支出日志,prompt 不作为用户记忆落服务器磁盘。
 - **网络**:LAN 直连或 Tailscale/WireGuard。Honcho 的 Redis 队列天然容错,断网积压重试。
 - **两种形态(与双语 README 同名)**:
@@ -217,7 +217,7 @@ localwork/                 # 远程 github.com/Aidenwu0209/localwork(项目代�
 │   ├── memoryd/           # 摄取编排(哨兵→OCR→新颖度门→理解→入库→Honcho)
 │   ├── ocrd/              # PP-OCRv6 逐字层微服务(部署在算力端 CPU)
 │   └── agentd/            # 主脑 Agent(tool calling, 日报, OpenAI 兼容出口)
-├── clients/capture/       # 已交付 macOS 屏幕采集;Windows 仅架构目标
+├── clients/capture/       # macOS + Windows 屏幕采集后端;产品门禁分开验证
 ├── third_party/honcho     # submodule → honcho-dejaview @ 钉死 commit
 └── Makefile               # make server-up / data-up / bench / demo-seed
 ```
@@ -233,18 +233,19 @@ localwork/                 # 远程 github.com/Aidenwu0209/localwork(项目代�
 
 ## 5. 感知客户端规格(clients/capture)
 
-### 5.1 当前交付边界(macOS screen-only)
+### 5.1 当前交付边界(macOS + Windows screen-only)
 
 | 能力 | 已交付 macOS 客户端 | Windows 状态 |
 |---|---|---|
-| 截屏 | `mss`(Quartz 后端),内存中编码后立即 POST | 架构目标,未交付 |
-| 前台应用/窗口标题 | pyobjc:`NSWorkspace` + `CGWindowListCopyWindowInfo` | 架构目标,未交付 |
-| 浏览器 URL(尽力而为) | osascript 问 Safari/Chrome | 架构目标,未交付 |
+| 截屏 | `mss`(Quartz 后端),内存中编码后立即 POST | Win32 可见窗口区域 + `mss`,内存中编码后立即 POST |
+| 前台应用/窗口标题 | pyobjc:`NSWorkspace` + `CGWindowListCopyWindowInfo` | user32 `EnumWindows` + 进程名/标题 |
+| 浏览器 URL(尽力而为) | osascript 问 Safari/Chrome | 不探测,字段为 `null` |
 | 音频/文档 | 未交付;memoryd 明确返回 `501 unsupported_media` | 未交付 |
-| 权限 | 需一次性授予「屏幕录制」 | 未交付 |
+| 权限 | 需一次性授予「屏幕录制」 | 交互解锁桌面;安全桌面不可用时 fail-closed |
 
-服务器端(Ubuntu)**不需要**任何截屏能力。Windows 仍可作为未来的数据主权
-端适配目标,但当前比赛交付不得写成已有 Windows 可执行程序。
+服务器端(Ubuntu)**不需要**任何截屏能力。Windows 运行入口见
+`deploy/windows/README.md`;完整 Windows 产品栈仍是 P3.19 doing 门禁,不等同于
+比赛最终验收。
 
 ### 5.2 行为规范
 
@@ -692,7 +693,7 @@ P3.19 只清理最终提交风险。不要因旧 `blocked` 文案、旧端口或
 | **P3.12–P3.16** | **accept** | 成熟产品设计、隐私采集、真实降级、Honcho 闭环、日常产品页 | 新鲜测试与独立复审已入 verification-log |
 | **P3.17** | **accept** | 干净检出、doctor/quickstart/CI、LICENSE/NOTICE、双语发布一致性、英文规格与 PPT 均通过 QA | 证据见 verification-log |
 | **P3.18** | **accept** | CI 全绿;当前源码隔离 Radeon Recall/引用/受控证据图;发布、隐私与既有 live-flow 证据总验收 | 证据见 verification-log |
-| **P3.19** | **doing** | 3:15.2英文主音轨提交版、submission-check 19/19、DOCX/PPTX QA、Actions 固定 SHA、隔离 UI/axe 审计已完成;Windows 无法完成真实受管产品/Radeon/Honcho/fallback 门禁，仍待干净检出与推送 CI | 设计见 `docs/superpowers/specs/2026-08-03-final-contest-polish-design.md` |
+| **P3.19** | **doing** | 3:15.2英文主音轨提交版、submission-check 19/19、DOCX/PPTX QA、Actions 固定 SHA、隔离 UI/axe 审计、Windows capture 后端已完成;Windows Docker/本地 Sentinel/SSH 授权与真实产品/Radeon/Honcho/fallback 门禁仍未完成，另待干净检出与推送 CI | 设计见 `docs/superpowers/specs/2026-08-03-final-contest-polish-design.md` |
 
 **§10 提交清单仍待人工**:全员 AMD Developer Program 注册、Rules 通读、仓库可见性、服务器仅演示数据、最终提交平台/格式确认。
 

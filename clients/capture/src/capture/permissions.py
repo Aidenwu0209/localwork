@@ -1,4 +1,4 @@
-"""Screen Recording permission detection + user guidance (handbook §5.2).
+"""Capture permission/availability detection and guidance (handbook §5.2).
 
 On macOS 10.15+, Screen Recording permission gates whether `mss`/Quartz can
 read pixel data. When permission is MISSING the API still "works" — it returns
@@ -101,6 +101,15 @@ def _count_nonblack_pixels(img: Image.Image, *, tolerance: int = 8) -> int:
 
 def _print_permission_guidance(*, detail: str) -> None:
     """Print clear, actionable steps to grant Screen Recording permission."""
+    if sys.platform == "win32":
+        sys.stderr.write(
+            "\nDejaView capture: Windows desktop capture is unavailable or black.\n"
+            f"  reason: {detail}\n"
+            "Check that the interactive session is unlocked and that the capture\n"
+            "process has access to the active desktop, then relaunch it.\n\n"
+        )
+        sys.stderr.flush()
+        return
     lines = [
         "",
         "=" * 72,
