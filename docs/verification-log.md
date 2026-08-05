@@ -818,3 +818,30 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   TASKBOARD remains **48/49 accept** / P3.19 `doing` until the exact pushed CI
   is green and the accept commit is made.
 
+## 2026-08-06 — P3.19 accepted (post-push CI green)
+
+- **[VERIFY] Final first-party CI:** pushed SHA
+  `c83920f3d40dca9baec87359256881124b8ece2c` completed GitHub Actions run
+  [`31033305322`](https://github.com/Aidenwu0209/localwork/actions/runs/31033305322)
+  with conclusion **success**. Jobs: `offline-contract` **success**,
+  `macos-capture` **success**.
+- **[VERIFY] Linux submission-check dependency:** earlier push failed
+  `make submission-check` on `ubuntu-latest` because `ffprobe` was missing
+  (`[Errno 2] No such file or directory: 'ffprobe'` → 15/19). Workflow now runs
+  `sudo apt-get update && sudo apt-get install -y ffmpeg` before
+  `make submission-check`; that SHA is the accepted tip.
+- **[VERIFY] Preceding Linux fixture fixes on the path to green CI:** privacy and
+  listener fingerprint fixtures were aligned to Linux `/proc` fingerprints
+  (`proc:`) so `make test` matches macOS and Linux runners (commits `3bd4e08`,
+  `bc09cb5`).
+- **Retained prior live evidence (not re-claimed as new):** Mac managed READY;
+  isolated `dejaview_demo` Radeon recall/citation/68170-byte evidence; exact
+  tunnel disconnect → Local Metal fallback with citation; desktop/mobile axe 0;
+  clean staged-tree setup×2; submission-check 19/19 with 3:15.2 English-primary
+  demo; PPTX slide7 sync; Actions immutable SHAs; Windows Win32/mss capture.
+- **Human-only gates (explicitly not claimed):** AMD Developer Program
+  registration, Rules acknowledgement, official-repo fork/English PR, repository
+  visibility, final portal upload, and last server demo-data inspection.
+- **Conclusion:** P3.19 `doing → accept`. TASKBOARD **49/49 accept**. Remaining
+  work is human contest submission only.
+

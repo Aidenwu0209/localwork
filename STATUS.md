@@ -1,4 +1,4 @@
-# DejaView — 项目状态交接(2026-08-04)
+# DejaView — 项目状态交接(2026-08-06)
 
 > 人话版快照。完整决策与进度以 `docs/EXECUTION_HANDBOOK.md` **§12** 为准(已含 7/20–7/28 会话决策摘要)。状态机:`TASKBOARD.json`。踩坑:`docs/verification-log.md`。开工指令:`docs/AGENT_KICKOFF_PROMPT.md`。
 
@@ -6,23 +6,23 @@
 
 ## 一句话现状
 
-**DejaView** = 全本地数字记忆体(赛道 AMD Hackathon Track 2 · Agentic AI)。比赛六幕、ROCm 证据与成熟产品加固 P3.12–P3.18 均已验收;P3.19 已完成英文 3:15.2 视频、submission-check、DOCX/PPTX、Actions 固定 SHA、Windows capture 后端，以及 Mac 授权环境下的受管 READY、Radeon recall/evidence、断链 Local Metal fallback、桌面/移动 axe 与干净检出。截止 **2026-08-06 23:59 UTC+8**;P3.19 仍为 `doing`，等待最终 push 后 CI 全绿再 accept。
+**DejaView** = 全本地数字记忆体(赛道 AMD Hackathon Track 2 · Agentic AI)。比赛六幕、ROCm 证据与成熟产品加固 P3.12–P3.18 均已验收;**P3.19 已 `accept`**(最终 push CI 全绿)。工程侧交付含英文 3:15.2 视频、submission-check、DOCX/PPTX、Actions 固定 SHA、Windows capture、Mac 受管 READY/Radeon recall/evidence、断链 Local Metal fallback、桌面/移动 axe、干净检出。截止 **2026-08-06 23:59 UTC+8**。
 
 | 状态 | 内容 |
 |---|---|
 | **已完成** | G0+M+D **33/33 accept**;**P3.1 ROCm 消融**;P3.3 README;P3.5 licenses;P3.6 哨兵;P3.7 perceive |
 | **P3.1 正式证据** | run `p31-w7900d-20260728T075653Z`;18 个 brain 量化×MTP×并发 cell + 3 个 perceive `-np` cell,均为 1 次 warm-up + 3 次实测;原始证据在 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`,截图在 `docs/assets/p31/p31-w7900d-20260728T075653Z/` |
 | **本次新增完成** | **P3.2 Grafana** 一屏验收;**P3.4 六幕视频** 2:37 成片;**P3.11 Grafana 系统自检**含 READY/DEGRADED/FAILED、数据新鲜度、本机核心与算力路径 |
-| **工程任务** | TASKBOARD 当前 **48/49 accept**,**P3.19 doing**;P3.1–P3.18 不重做;已合并 Windows capture 与 Mac 实机门禁证据;只差最终 push CI 与人工提交门槛 |
+| **工程任务** | TASKBOARD 当前 **49/49 accept**;P3.1–P3.19 不重做;余下仅为人工提交门槛 |
 | **产品化边界** | 单用户、屏幕记忆优先、隐私 fail-closed、真实 Radeon→Local Metal 降级、Honcho 自动成长、可点击证据产品页、干净机器复现 |
 
-**下一优先:push 合并后的 P3.19 工程提交并等待 Linux/macOS CI 全绿后将 P3.19 `doing→accept`;**AMD Developer Program、Rules、官方 fork/英文 PR、仓库可见性、服务器仅演示数据与最终平台上传仍需队员本人确认。
+**下一优先:队员本人完成人工提交门槛** — AMD Developer Program、Rules、官方 fork/英文 PR、仓库可见性、服务器仅演示数据与最终平台上传。工程侧 P3.19 已关闭。
 
 ---
 
 ## 交给其他 Agent 时丢这三样
 
-1. `docs/P3.19_HANDOFF_PROMPT.md`（当前可复制的继续执行指令）
+1. `docs/P3.19_HANDOFF_PROMPT.md`（现为 accept 后人工门槛指引）
 2. `docs/EXECUTION_HANDBOOK.md` **§12**(含聊天决策:产品叙事、存算分离、五模型、OCR 不用 VL、git 纪律、Cursor trailer 坑)
 3. `TASKBOARD.json` + `docs/verification-log.md` 最后章节
 
@@ -85,14 +85,15 @@ brain 按需启动。若出现 Dolphin/未知 KFD 共租,brain 用 Q6_K、先停
 | P3.16 | **accept** | 默认日常产品页;能力签名证据+CSRF+本地控制边界;四档无溢出;axe 0 violations;独立安全/UX 复审 PASS |
 | P3.17 | **accept** | 干净检出全套通过;幂等 Honcho setup、只读 doctor、第一方 CI、受管生命周期、LICENSE/NOTICE、双语文档、英文规格与可编辑 PPT 均完成 QA |
 | P3.18 | **accept** | CI 全绿 + 当前源码隔离 Radeon Recall/引用/受控证据图 + 发布/隐私/历史 live-flow 证据总验收 |
-| P3.19 | **doing** | 2026-08-05: Windows capture + Mac READY/recall/fallback/axe/干净检出已齐;待最终 CI 后 accept |
+| P3.19 | **accept** | 2026-08-06: SHA `c83920f` / Actions run `31033305322` Linux+macOS 全绿;ffmpeg/ffprobe 已装入 CI;人工门槛仍未勾选 |
 
 ---
 
 ## 接手纪律(最短版)
 
-1. 勿重做 TASKBOARD 48 个已 accept 项,尤其不要重跑 P3.1 正式矩阵;只做 P3.19。
+1. 勿重做 TASKBOARD 49 个已 accept 项,尤其不要重跑 P3.1 正式矩阵或 P3.19 工程门禁。
 2. 起 GPU 前 `rocm-smi`,勿碰未知 KFD 进程;共租时勿 OOM Dolphin。
 3. commit 后检查无 `Co-authored-by`。
 4. 演示前清 timeline 库。
-5. 只按 P3.12 设计实施 P3.13–P3.18;不扩到账户、同步、安装器或未定义模型。
+5. 只按 P3.12 设计实施已验收范围;不扩到账户、同步、安装器或未定义模型。
+6. 人工门槛(注册/官方 PR/上传)不得写成已完成,除非有队员本人证据。

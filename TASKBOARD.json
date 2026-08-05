@@ -611,8 +611,8 @@
       "depends": [
         "P3.18"
       ],
-      "status": "doing",
-      "note": "2026-08-05 merged checkpoint, still doing until post-push CI is green: Windows Win32/mss capture + deploy/windows control plane landed; Mac authorized environment completed managed READY, isolated dejaview_demo Radeon recall/citation/68170-byte evidence, exact-tunnel Local Metal fallback with citation, desktop/mobile axe 0, and clean staged worktree setup×2 + make test + submission-check 19/19. PPTX slide7 synced to 3:15 English-primary demo; Actions pinned to checkout@3d3c42e / setup-uv@11f9893. Do not accept until Linux offline-contract and macOS macos-capture pass on the pushed SHA. Human gates remain unclaimed."
+      "status": "accept",
+      "note": "2026-08-06 accept: pushed SHA c83920f3d40dca9baec87359256881124b8ece2c passed GitHub first-party run 31033305322 (Linux offline-contract + macOS macos-capture both success) after installing ffmpeg/ffprobe for submission-check on ubuntu-latest. Prior engineering evidence retained: 3:15.2 English-primary demo + submission-check 19/19; PPTX slide7 synced; Actions pinned to checkout@3d3c42e / setup-uv@11f9893; Windows Win32/mss capture; Mac managed READY; isolated dejaview_demo Radeon recall/citation/68170-byte evidence; exact-tunnel Local Metal fallback with citation; desktop/mobile axe 0; clean staged worktree setup×2 + make test. Human-only gates remain unclaimed: AMD Developer Program, Rules, official fork/English PR, repo visibility, portal upload, server demo-data check."
     }
   ]
 }

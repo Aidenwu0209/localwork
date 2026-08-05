@@ -102,7 +102,7 @@ flowchart LR
 ### 2.2 部署原则
 
 - **有状态的全在数据主权端**:Postgres、Redis、放行截图、时间线、Honcho 和审计日志。单一数据根目录 `DATA_ROOT`(默认 `~/dejaview-data`),可整体打包迁移;当前不写入音频/文档。
-- **已交付平台边界**:P3.19 已加入 Windows Win32/mss capture 后端;macOS 仍是比赛实机验证客户端。Windows 完整产品栈、Docker/Honcho/本地 Sentinel 与 SSH tunnel 仍须独立门禁,不得把后端单测写成最终产品 accept。
+- **已交付平台边界**:P3.19 已加入并验收 Windows Win32/mss capture 后端;macOS 仍是比赛实机验证客户端。Windows 完整产品栈、Docker/Honcho/本地 Sentinel 与 SSH tunnel 仍须独立门禁,不得把后端单测写成完整产品栈已验收。
 - **服务器纯无状态**:默认只有模型服务 + 网关 + 监控;单机评委拓扑可在 EPYC 运行 ocrd。llama-server 用 `--log-disable`,LiteLLM 关闭请求/支出日志,prompt 不作为用户记忆落服务器磁盘。
 - **网络**:LAN 直连或 Tailscale/WireGuard。Honcho 的 Redis 队列天然容错,断网积压重试。
 - **两种形态(与双语 README 同名)**:
@@ -244,8 +244,9 @@ localwork/                 # 远程 github.com/Aidenwu0209/localwork(项目代�
 | 权限 | 需一次性授予「屏幕录制」 | 交互解锁桌面;安全桌面不可用时 fail-closed |
 
 服务器端(Ubuntu)**不需要**任何截屏能力。Windows 运行入口见
-`deploy/windows/README.md`;完整 Windows 产品栈仍是 P3.19 doing 门禁,不等同于
-比赛最终验收。
+`deploy/windows/README.md`;Windows capture 后端已随 P3.19 accept 入仓,完整
+Windows 产品栈(Docker/Honcho/本地 Sentinel/SSH tunnel)仍须独立门禁,不得把
+后端单测写成已验证产品栈。
 
 ### 5.2 行为规范
 
@@ -567,7 +568,7 @@ sentinel 4×/16×压缩、novelty-gate 节流收益、EPYC ocrd 并发和完整�
 
 1. 通读本节 §12 全文 + `STATUS.md`。
 2. 打开 `TASKBOARD.json`,只做 `false` / `blocked` / 合法恢复的 `doing`
-   任务。当前 P3.1–P3.18 均已 `accept`,勿重做;只执行用户新增的 P3.19 与后续人工提交门槛。
+   任务。当前 P3.1–P3.19 均已 `accept`,勿重做;仅协助人工提交门槛。
 3. 把 `docs/AGENT_KICKOFF_PROMPT.md` 整段丢给执行 agent 作为系统指令。
 
 | 顺序 | 文件 | 用途 |
@@ -582,15 +583,14 @@ sentinel 4×/16×压缩、novelty-gate 节流收益、EPYC ocrd 并发和完整�
 | 8 | 本手册 §0–§11 | 当前规格 + 显式标注的历史 WBS |
 | 9 | `docs/AGENT_KICKOFF_PROMPT.md` | 可直接粘贴的开工指令 |
 
-### 12.1 一句话现状(2026-08-03)
+### 12.1 一句话现状(2026-08-06)
 
 **产品代号 DejaView**(déjà vu + view / 全本地数字记忆体)。赛道:AMD AI DevMaster Hackathon Track 2 · Agentic AI。基础评分 60(功能)+40(ROCm),可选云模型奖励 +20 **未申报**。截止 **2026-08-06 23:59 UTC+8**。
 
 **全链路已跑通并验收**(Mac 采集 → memoryd → AMD ROCm →
 Postgres/Honcho → agentd 带证据引用)。`TASKBOARD`:**G0+M+D 33/33
-accept**;当前总计 **48/49 accept**,P3.17 干净复现/发布一致性与
-P3.18 最终证据化全链路验收均为 `accept`,P3.19 最终风险清零为
-`doing`(2026-08-05 本地证据已齐,待 push 后 CI)。P3.4 正式六幕成片为
+accept**;当前总计 **49/49 accept**(含 P3.19 最终风险清零,push CI
+`c83920f` / run `31033305322` 全绿)。P3.4 正式六幕成片为
 `docs/assets/demo/dejaview-p34-six-act-20260802.mp4`(2:37),英文主音轨提交版为
 `docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.mp4`(3:15.2)。P3.1 正式 run:
 `p31-w7900d-20260728T075653Z`,证据目录
@@ -682,8 +682,8 @@ capture → **sentinel** → **ocrd**(verbatim) → 新颖度门(Jaccard→必�
 
 ### 12.4 Phase 3 收尾状态
 
-比赛功能、ROCm、演示、发布复现与成熟产品最终验收均已完成;用户新增
-P3.19 只清理最终提交风险。不要因旧 `blocked` 文案、旧端口或旧状态重跑已 accept 任务。
+比赛功能、ROCm、演示、发布复现、成熟产品最终验收与 P3.19 最终风险清零均已
+`accept`。不要因旧 `blocked` 文案、旧端口或旧状态重跑已 accept 任务。
 
 | ID | 状态 | 做什么 | 阻塞 |
 |---|---|---|---|
@@ -693,7 +693,7 @@ P3.19 只清理最终提交风险。不要因旧 `blocked` 文案、旧端口或
 | **P3.12–P3.16** | **accept** | 成熟产品设计、隐私采集、真实降级、Honcho 闭环、日常产品页 | 新鲜测试与独立复审已入 verification-log |
 | **P3.17** | **accept** | 干净检出、doctor/quickstart/CI、LICENSE/NOTICE、双语发布一致性、英文规格与 PPT 均通过 QA | 证据见 verification-log |
 | **P3.18** | **accept** | CI 全绿;当前源码隔离 Radeon Recall/引用/受控证据图;发布、隐私与既有 live-flow 证据总验收 | 证据见 verification-log |
-| **P3.19** | **doing** | Windows capture + Mac READY/recall/fallback/axe/干净检出已齐;待最终 CI 后 accept | 设计见 `docs/superpowers/specs/2026-08-03-final-contest-polish-design.md` |
+| **P3.19** | **accept** | 最终 push CI 全绿(SHA `c83920f` / run `31033305322`);英文 3:15.2 + Windows capture + Mac live 门禁齐 | 设计见 `docs/superpowers/specs/2026-08-03-final-contest-polish-design.md` |
 
 **§10 提交清单仍待人工**:全员 AMD Developer Program 注册、Rules 通读、仓库可见性、服务器仅演示数据、最终提交平台/格式确认。
 
@@ -757,10 +757,11 @@ make capture
 7. llama.cpp 视觉不支持 WebP → memoryd 已转 PNG。
 8. Docker `host.docker.internal` IPv6 → Honcho 用 IPv4 字面量。
 9. 模型在 overlay → `download-models.sh` 重建(wget+hf-mirror)。
-10. **P3.1–P3.18 已验收;P3.19 doing**。勿重跑已 accept 任务;只做风险清零与人工提交门槛。
+10. **P3.1–P3.19 已验收**。勿重跑已 accept 任务;只做人工提交门槛(注册/官方 PR/上传)。
 
 ### 12.8 给后续 Agent 的一句话开工
 
-> 读完 §12 与 `STATUS.md` → 以 `TASKBOARD` 核对 P3.19 doing → 执行最终风险清零。
-> 不要重做 48 项已 accept 的工作,尤其不要重跑 P3.1;
-> 不要改数字记忆体叙事与五个逻辑模型层级。
+> 读完 §12 与 `STATUS.md` → 以 `TASKBOARD` 确认 **49/49 accept** → 仅协助人工提交门槛。
+> 不要重做已 accept 的工程工作,尤其不要重跑 P3.1 / P3.19 门禁;
+> 不要改数字记忆体叙事与五个逻辑模型层级;
+> 不要把 AMD 注册/官方 PR/平台上传写成已完成,除非有队员本人证据。
