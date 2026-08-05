@@ -232,6 +232,23 @@ class ProductStackTest(unittest.TestCase):
             self.assertIn("compose.honcho.yml down", commands)
             self.assertNotIn("compose.data.yml down", commands)
 
+    @staticmethod
+    def _process_fingerprint(pid: int) -> str:
+        """Match deploy/mac/product-stack.sh process_fingerprint() on Linux and macOS.
+
+        Linux prefers /proc/<pid>/stat starttime (`proc:`). macOS uses `ps -o
+        lstart=`. The privacy fixture's fake `ps` always prints a fixed lstart, so
+        non-Linux fingerprints must use that same fixed value.
+        """
+        proc_stat = Path(f"/proc/{pid}/stat")
+        if proc_stat.is_file():
+            raw = proc_stat.read_text(encoding="utf-8")
+            rest = raw.split(")", 1)[1].strip().split()
+            # field 22 in /proc/<pid>/stat is starttime; after ") " the index is 19
+            if len(rest) >= 20 and rest[19].isdigit():
+                return f"proc:{rest[19]}"
+        return "ps:Mon Aug 3 00:00:00 2026"
+
     def _privacy_environment(self, tmp: Path) -> tuple[dict[str, str], Path]:
         env = self._environment(tmp)
         privacy_ready = tmp / "privacy-ready"
@@ -244,6 +261,8 @@ class ProductStackTest(unittest.TestCase):
                 process.wait(timeout=5)
         self.addCleanup(cleanup_owner, sentinel_owner)
         self.addCleanup(cleanup_owner, gateway_owner)
+        sentinel_fp = self._process_fingerprint(sentinel_owner.pid)
+        gateway_fp = self._process_fingerprint(gateway_owner.pid)
         ps = tmp / "bin" / "ps"
         ps.write_text(
             "#!/bin/sh\n"
@@ -255,13 +274,14 @@ class ProductStackTest(unittest.TestCase):
             encoding="utf-8",
         )
         ps.chmod(0o755)
+        # Record the fingerprint product-stack will recompute for these PIDs.
         dev_stack.write_text(
             "#!/bin/sh\n"
             'printf "privacy %s\\n" "$*" >> "$DEJAVIEW_TEST_ORDER_LOG"\n'
             'if [ "$1" = up ]; then\n'
             '  mkdir -p "$DEJAVIEW_RUNTIME_DIR"\n'
-            '  printf "%s|ps:Mon Aug 3 00:00:00 2026|sentinel\\n" "$DEJAVIEW_TEST_SENTINEL_PID" > "$DEJAVIEW_RUNTIME_DIR/dejaview-sentinel.pid"\n'
-            '  printf "%s|ps:Mon Aug 3 00:00:00 2026|gateway\\n" "$DEJAVIEW_TEST_GATEWAY_PID" > "$DEJAVIEW_RUNTIME_DIR/dejaview-gateway.pid"\n'
+            f'  printf "%s|{sentinel_fp}|sentinel\\n" "$DEJAVIEW_TEST_SENTINEL_PID" > "$DEJAVIEW_RUNTIME_DIR/dejaview-sentinel.pid"\n'
+            f'  printf "%s|{gateway_fp}|gateway\\n" "$DEJAVIEW_TEST_GATEWAY_PID" > "$DEJAVIEW_RUNTIME_DIR/dejaview-gateway.pid"\n'
             '  touch "$DEJAVIEW_TEST_PRIVACY_READY"\n'
             'elif [ "$1" = down ]; then\n'
             '  [ "${DEJAVIEW_TEST_PRIVACY_DOWN_FAIL:-0}" = 1 ] && exit 9\n'
@@ -270,6 +290,10 @@ class ProductStackTest(unittest.TestCase):
             "exit 0\n",
             encoding="utf-8",
         )
+        # Fill fingerprints after the non-f-string parts above were written with
+        # placeholders via f-strings already interpolated.
+        assert sentinel_fp in dev_stack.read_text(encoding="utf-8")
+        assert gateway_fp in dev_stack.read_text(encoding="utf-8")
         dev_stack.chmod(0o755)
         env |= {
             "DEJAVIEW_SKIP_PRIVACY_STACK": "0",
