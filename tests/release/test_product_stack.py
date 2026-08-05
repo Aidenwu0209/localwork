@@ -931,18 +931,49 @@ class ProductStackTest(unittest.TestCase):
             self.assertEqual(up.returncode, 0, up.stdout + up.stderr)
             ocrd_record = (tmp / "run" / "ocrd.pid").read_text(encoding="utf-8").strip().split("|")
             ocrd_pid = ocrd_record[0]
-            self.assertTrue(ocrd_record[1].startswith("ps:"), ocrd_record[1])
-            original_lstart = ocrd_record[1].removeprefix("ps:")
-            ps = tmp / "bin" / "ps"
-            ps.write_text(
-                "#!/bin/sh\n"
-                'case "$*" in\n'
-                '  *"lstart="*) case "$*" in *"-p ' + ocrd_pid + '"*) [ -f "$DEJAVIEW_RUNTIME_DIR/listener-replaced" ] && printf "changed fingerprint\\n" || printf "' + original_lstart + '\\n" ;; *) /bin/ps "$@" ;; esac ;;\n'
-                '  *) /bin/ps "$@" ;;\n'
-                "esac\n",
-                encoding="utf-8",
+            fingerprint = ocrd_record[1]
+            self.assertTrue(
+                fingerprint.startswith("ps:") or fingerprint.startswith("proc:"),
+                fingerprint,
             )
-            ps.chmod(0o755)
+            if fingerprint.startswith("ps:"):
+                original_lstart = fingerprint.removeprefix("ps:")
+                ps = tmp / "bin" / "ps"
+                ps.write_text(
+                    "#!/bin/sh\n"
+                    'case "$*" in\n'
+                    '  *"lstart="*) case "$*" in *"-p ' + ocrd_pid + '"*) [ -f "$DEJAVIEW_RUNTIME_DIR/listener-replaced" ] && printf "changed fingerprint\\n" || printf "' + original_lstart + '\\n" ;; *) /bin/ps "$@" ;; esac ;;\n'
+                    '  *) /bin/ps "$@" ;;\n'
+                    "esac\n",
+                    encoding="utf-8",
+                )
+                ps.chmod(0o755)
+            else:
+                # Linux prefers /proc/<pid>/stat starttime; mutate that path via a
+                # PATH-shadowed sed once the second lsof marks the listener replaced.
+                original_start = fingerprint.removeprefix("proc:")
+                sed = tmp / "bin" / "sed"
+                sed.write_text(
+                    "#!/bin/sh\n"
+                    'target=""\n'
+                    "for arg; do\n"
+                    '  case "$arg" in /proc/' + ocrd_pid + '/stat) target="$arg" ;; esac\n'
+                    "done\n"
+                    'if [ -n "$target" ]; then\n'
+                    '  if [ -f "$DEJAVIEW_RUNTIME_DIR/listener-replaced" ]; then\n'
+                    # product-stack runs: sed 's/^[^)]*) //' /proc/PID/stat | awk '{print $20}'
+                    # Emit the already-stripped form so awk field 20 changes.
+                    '    printf "S 1 1 1 1 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 999999999\\n"\n'
+                    "  else\n"
+                    '    /bin/sed "$@"\n'
+                    "  fi\n"
+                    "  exit 0\n"
+                    "fi\n"
+                    'exec /bin/sed "$@"\n',
+                    encoding="utf-8",
+                )
+                sed.chmod(0o755)
+                self.assertEqual(original_start.isdigit(), True, fingerprint)
             lsof = tmp / "bin" / "lsof"
             lsof.write_text(
                 "#!/bin/sh\n"
