@@ -691,3 +691,72 @@ Resolved `[VERIFY]` items and load-bearing empirical findings. Append-only; newe
   **48/49 accept**. Continue from `docs/P3.19_HANDOFF_PROMPT.md`. Registration,
   Rules, official-repository fork/English PR, repository visibility, final
   upload, and last server demo-data inspection remain human-only gates.
+
+## 2026-08-05 — P3.19 final risk-clearance re-verification (`doing` until CI)
+
+- **[VERIFY] Submission package consistency:** independent `python3 -m unittest
+  tests.release.test_submission_check -v` passed **31/31**. Real
+  `python3 scripts/submission_check.py` reported **19/19 PASS** after the PPTX
+  sync, including video hash/duration 195.2s, SRT, DOCX, PPTX, README links,
+  privacy scans, and human-boundary wording. `git diff --check` was clean.
+- **[VERIFY] PPTX sync:** `docs/submission/DejaView-Track2-Presentation.pptx`
+  slide 7 release-limitations rail now reads
+  `3:15 English-primary demo`. Speaker notes keep the immutable 2:37 evidence
+  cut and state that the English-primary submission cut is 3:15.2 within the
+  official window. LibreOffice rendered all 7 pages; visual QA found no
+  overflow on the edited slide.
+- **[VERIFY] GitHub Actions pin:** `.github/workflows/first-party.yml` now uses
+  immutable SHAs `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1`
+  (# v7.0.1) and
+  `astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990` (# v8.3.2),
+  verified against the upstream tags.
+- **[VERIFY] Managed product READY:** after Docker Desktop recovery,
+  detached `make product-up` reached
+  `READY: product runtime contracts verified` for owned ocrd/memoryd/agentd,
+  local Sentinel privacy gateway, data compose, and Honcho compose.
+  `make product-status` remained READY across a stability recheck. Health
+  schemas were recorded under `.superpowers/p319-live/` (untracked QA).
+- **[VERIFY] Current-source Radeon recall → citation → evidence:** isolated
+  agentd on `127.0.0.1:18101` against synthetic `dejaview_demo` answered
+  PR #1842 with `[event#1 15:18 Chrome]`; compute metadata was
+  `backend=radeon`, `physical_model=brain`, `logical_model=brain`,
+  `degraded=false`, `reason=primary_ok` (~35.7s). Product `/api/ask` repeated
+  the grounded answer. Capability-gated evidence metadata excluded
+  `screenshot_path`/OCR/private paths; evidence PNG was **68,170** bytes with
+  `private, no-store` and `nosniff`.
+- **[VERIFY] Privacy/profile endpoints:** `/api/privacy/summary` and
+  `/api/profile/status` responded on the isolated product surface. Profile
+  remained honestly `unknown`/unverified without claiming a seeded Honcho
+  dialectic success beyond endpoint availability.
+- **[VERIFY] Disconnect → Local Metal fallback:** exact attested SSH tunnel PID
+  for `radeon-cloud` local forward `:14000` was TERM'd after command match;
+  `:14000` closed. With local Metal perceive on `:8002`, chat completion
+  returned `backend=local_metal`, `physical_model=perceive`,
+  `logical_model=brain`, `degraded=true`, `reason=remote_connection_error`,
+  and the same `[event#1 15:18 Chrome]` citation for PR #1842. Managed
+  `make product-status` stayed READY after disconnect. Tunnel was later
+  restored via `ssh -f -N -L 14000:127.0.0.1:4000 radeon-cloud` only.
+- **[VERIFY] Desktop/mobile UI + monitoring:** Playwright audit at 1440×900 and
+  390×844 captured home/answer/evidence/privacy-profile flows against the
+  isolated daily UI; axe reported **0** violations on both widths; horizontal
+  overflow checks were false; keyboard Tab probe collected 12 focus steps.
+  Grafana monitoring page was captured; top banners showed READY/FRESH while
+  some ROCm metric panels reported FAILED/NO DATA in the live window — recorded
+  honestly, not rewritten as green.
+- **[VERIFY] Working-tree offline suite:** `make test` passed release **85**,
+  agentd **101**, memoryd **82 + 6 subtests**, capture **22**, browser **9**,
+  Mac **20**, server **46** (known FastAPI/TestClient deprecation warnings only).
+- **[VERIFY] Clean staged-tree checkout:** temporary commit
+  `ff1b91d0e5c9b24c193a8f05b4ac12fe4889430e` from the exact staged PPTX+Actions
+  tree was checked out via worktree; Honcho submodule pinned at `340175ad`;
+  `make setup` passed twice; `make doctor` passed; `make test` and
+  `make submission-check` (**19/19**) passed; worktree removed afterward.
+- **Incomplete for accept:** post-push GitHub Actions Linux `offline-contract`
+  + macOS `macos-capture` on the final pushed SHA are still required. Human-only
+  gates remain unchecked: AMD Developer Program registration, Rules
+  acknowledgement, official-repo fork/English PR, repository visibility, final
+  portal upload, and last server demo-data inspection.
+- **Conclusion:** engineering evidence for P3.19 is substantially complete, but
+  TASKBOARD remains **48/49 accept** / P3.19 `doing` until the exact pushed CI
+  is green and the accept commit is made.
+

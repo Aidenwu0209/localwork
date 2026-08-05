@@ -612,7 +612,7 @@
         "P3.18"
       ],
       "status": "doing",
-      "note": "2026-08-03 claimed by root after the user's explicit request to implement every remaining optimization and verify a mature product. Selected design: docs/superpowers/specs/2026-08-03-final-contest-polish-design.md. Handoff checkpoint: managed runtime hardening, 195.2-second English-primary MP4/SRT, submission-check 19/19, 31 checker regressions, and 8-page DOCX QA are complete. P3.19 remains doing: PPTX still has the stale 2:37 limitation/notes; final independent checker review, current UI/monitoring/axe live audit, clean-checkout/full CI, and final accept are not complete. Continue from docs/P3.19_HANDOFF_PROMPT.md; accepted P3.1–P3.18 evidence remains immutable and human contest gates remain unclaimed."
+      "note": "2026-08-05 local evidence complete but still doing until post-push CI is green: PPTX slide7 synced to 3:15 English-primary demo with honest 2:37 immutable-notes; Actions pinned to checkout@3d3c42e / setup-uv@11f9893; submission-check 19/19 + 31 regressions; managed product READY; isolated dejaview_demo Radeon recall/citation/68170-byte evidence; exact-tunnel disconnect Local Metal fallback with citation; desktop/mobile axe 0 and no overflow; clean staged worktree setup×2 + make test + submission-check passed. Do not accept until Linux offline-contract and macOS macos-capture pass on the pushed SHA. Human gates remain unclaimed."
     }
   ]
 }

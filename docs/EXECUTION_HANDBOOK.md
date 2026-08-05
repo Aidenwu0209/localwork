@@ -589,9 +589,9 @@ sentinel 4×/16×压缩、novelty-gate 节流收益、EPYC ocrd 并发和完整�
 Postgres/Honcho → agentd 带证据引用)。`TASKBOARD`:**G0+M+D 33/33
 accept**;当前总计 **48/49 accept**,P3.17 干净复现/发布一致性与
 P3.18 最终证据化全链路验收均为 `accept`,P3.19 最终风险清零为
-`doing`。P3.4 正式六幕成片为
-`docs/assets/demo/dejaview-p34-six-act-20260802.mp4`(2:37),英文烧录字幕提交版为
-`docs/assets/demo/dejaview-p34-six-act-20260802-en.mp4`。P3.1 正式 run:
+`doing`(2026-08-05 本地证据已齐,待 push 后 CI)。P3.4 正式六幕成片为
+`docs/assets/demo/dejaview-p34-six-act-20260802.mp4`(2:37),英文主音轨提交版为
+`docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.mp4`(3:15.2)。P3.1 正式 run:
 `p31-w7900d-20260728T075653Z`,证据目录
 `docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/`。
 
