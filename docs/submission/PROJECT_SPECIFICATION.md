@@ -127,7 +127,7 @@ The offline suite and the final hardware acceptance are separate checks. A passi
 - [English demo video](../assets/demo/dejaview-p34-six-act-20260802-en-3m.mp4), [SRT](../assets/demo/dejaview-p34-six-act-20260802-en-3m.srt), and [manifest](../assets/demo/p34-video-manifest.json)
 - [ROCm benchmark report](../benchmarks.md) and [P3.1 evidence](../benchmark-evidence/p31/p31-w7900d-20260728T075653Z/)
 
-All project descriptions and PR text for the competition must be in English. The official submission is a human step: fork the competition repository and open a PR with a title such as `Track 2, Aidenwu0209, DejaView`.
+All project descriptions and PR text for the competition must be in English. The official submission is a human step: fork the competition repository and open a PR with the title `Track 2, DeepSleep, DejaView`.
 
 ## 11. License
 
