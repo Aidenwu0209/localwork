@@ -1,10 +1,14 @@
-# Windows local data-sovereignty client
+# Windows capture client
 
-Windows supports the DejaView daily client, local service lifecycle, and a
-managed SSH tunnel to the stateless Radeon compute plane. Raw frames still pass
-through a local `sentinel` role before any allowed text or embeddings can use
-Radeon. The script never embeds a public host or credential; configure the
-logical SSH alias `radeon-cloud` in the user's SSH config.
+The repository includes a Windows capture backend and PowerShell lifecycle
+wrapper. It keeps frame pixels in memory, pauses on the secure desktop, and
+uses a local `sentinel` role before an allowed request can reach the stateless
+Radeon host.
+
+The contest-verified product path is still macOS. Treat this page as the
+Windows setup and capture contract, not as a claim that the full Windows stack
+has passed final live acceptance. The wrapper uses the logical SSH alias
+`radeon-cloud`; it never stores a public host, port, or credential in the repo.
 
 ## Prerequisites
 

@@ -1,26 +1,21 @@
 # DejaView
 
-> Continuously perceives your screen and turns digital life into **queryable memory with evidence**; uses Honcho psychological modeling to understand *who you are*; a privacy sentinel gates *what must never be remembered*. **Primary agentic compute runs on Radeon PRO W7900D (ROCm) after a device-local Sentinel privacy gate**; data stays on your own devices, with Local Metal available for verified fallback. Audio and document ingest are not supported in the current service.
+DejaView is a local screen-memory application. It records permitted screen activity as a searchable timeline, answers questions with links back to the supporting event or screenshot, and keeps a small Honcho profile of the user's work patterns.
 
-Product codename: **DejaView** (déjà vu + view — your machine has “seen this before”).
-中文叙事名:**全本地数字记忆体** · [中文 README](README.zh.md)
+The privacy decision happens before OCR, storage, embeddings, or remote inference. A device-local Sentinel can block a frame; blocked pixels do not leave the device and do not become a timeline event.
 
-Built for the [AMD AI DevMaster Hackathon](https://luma.com/amd-4dhi) · **Track 2 · Agentic AI**.
+This is a single-user MVP for the [AMD AI DevMaster Hackathon](https://luma.com/amd-4dhi), Track 2. The current release accepts screen frames only. Audio and document ingestion return `501 unsupported_media`. macOS is the contest-verified capture client. The repository also contains a Windows capture backend, but the full Windows product stack has not passed the same live acceptance checks.
 
----
+中文说明见 [README.zh.md](README.zh.md)。
 
-## Why this exists (award narrative)
+## What the repository contains
 
-Microsoft Recall nearly crashed on privacy; Rewind.ai pivoted away — this product form was sentenced to death by the cloud. We resurrect it safely with a single **48 GB Radeon**, and add two layers they lacked:
+- `memoryd` runs the ingest pipeline: Sentinel, OCR, novelty detection, visual understanding, storage, and the Honcho outbox.
+- `agentd` provides tool-calling retrieval, evidence-backed answers, daily reports, and Radeon-first routing with a verified Local Metal fallback.
+- `ocrd` performs deterministic OCR with PP-OCRv6 or RapidOCR. It is a separate service, not an LLM role.
+- The AMD side runs llama.cpp with HIP on a Radeon PRO W7900D. The data device keeps Postgres, Redis, screenshots, timeline events, audit records, and Honcho state.
 
-1. **User psychology modeling** (Honcho reasoning-first profile + dialectic Q&A — understands, not just remembers)
-2. **Model-level privacy sentinel** (local memory has internal permission tiers; sensitive frames are blocked before OCR or disk)
-
-**Precedents we differentiate from:** Microsoft Recall (cloud trust crisis), Rewind.ai (pivoted), OpenRecall (open-source AGPL — screenshot + OCR + search, no understanding layer).
-
-**Our edges:** ① Honcho user model · ② pre-ingest privacy sentinel · ③ Agent closed loop (tool calling, multi-agent daily report) · ④ five logical model roles with measured VRAM-aware residency + ROCm report · ⑤ storage/compute split for data sovereignty.
-
-**Four pillars (never cut):** privacy sentinel · evidence-backed Q&A · daily-report multi-agent flow · ROCm optimisation report.
+The repository contains synthetic fixtures only. Do not use a real account or real screenshots for a public demo.
 
 ---
 
@@ -30,6 +25,8 @@ Same codebase and compose stack. Stateful services use `GATEWAY_URL`; agentd
 uses `RADEON_GATEWAY_URL` first and `LOCAL_GATEWAY_URL` for a verified fallback
 (see `docs/EXECUTION_HANDBOOK.md` §2.2).
 **Topology A** below is the path a stranger can smoke today. **Topology B** is the all-in-one AMD box for judge reproduction / demo day.
+
+For first-time Radeon Cloud setup, follow [docs/Radeon-Cloud-QUICKSTART.md](docs/Radeon-Cloud-QUICKSTART.md). It explains how to copy the instance SSH details into a local `radeon-cloud` alias without putting temporary coordinates or keys in the repository.
 
 ### Topology A — Mac data sovereignty + AMD stateless compute
 
@@ -91,6 +88,7 @@ Integrity, caption hash, and timecodes: [`docs/assets/demo/p34-video-manifest.js
 ### Submission package
 
 - Project specification: [Markdown](docs/submission/PROJECT_SPECIFICATION.md) · [editable DOCX](docs/submission/DejaView-Project-Specification.docx)
+- PDF project specification: [DejaView-Project-Specification.pdf](docs/submission/DejaView-Project-Specification.pdf)
 - Supplementary presentation: [editable PPTX](docs/submission/DejaView-Track2-Presentation.pptx)
 - Demo: [English-primary MP4](docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.mp4) · [editable SRT](docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.srt) · [manifest](docs/assets/demo/p34-video-manifest.json)
 - Radeon/ROCm optimisation: [benchmark report](docs/benchmarks.md) · [checksummed P3.1 evidence](docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/)
@@ -206,6 +204,10 @@ roles on Radeon subject to the measured VRAM policy.
 - Repo contains **synthetic fixtures only** (no real PII, no API keys). Clear the timeline DB before public demos if you ran real capture.
 - SearXNG stays **disabled** by default (conflicts with “data never leaves the device”).
 
+## Current limits
+
+The release is intentionally small. It is a single-user screen-memory MVP, not a hosted service. It does not include accounts, billing, cross-device sync, mobile clients, or an installer. The capture client validated for the contest is macOS. Windows has a capture backend, but its complete managed stack still needs live acceptance. Audio and document ingestion are explicit `501 unsupported_media` boundaries. The ROCm report measures isolated benchmark cells; it does not claim a full-pipeline latency number or simultaneous residency for every model role.
+
 ---
 
 ## License
@@ -232,6 +234,7 @@ remote-link failover demo — see [`STATUS.md`](STATUS.md).
 | Doc | Purpose |
 |---|---|
 | [`STATUS.md`](STATUS.md) | Human snapshot: start table, known issues, next steps — **read first** |
+| [`docs/Radeon-Cloud-QUICKSTART.md`](docs/Radeon-Cloud-QUICKSTART.md) | First-time AMD instance setup and SSH alias configuration |
 | [`docs/EXECUTION_HANDBOOK.md`](docs/EXECUTION_HANDBOOK.md) | Single source of truth (architecture, specs, handoff §12) |
 | [`docs/verification-log.md`](docs/verification-log.md) | Resolved `[VERIFY]` + pitfalls |
 | [`docs/benchmarks.md`](docs/benchmarks.md) | OCR A/B + ROCm ablation (P3.1) |

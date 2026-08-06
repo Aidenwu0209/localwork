@@ -26,6 +26,7 @@ MANIFEST_PATH = "docs/assets/demo/p34-video-manifest.json"
 ACCEPTED_ORIGINAL_PATH = "docs/assets/demo/dejaview-p34-six-act-20260802.mp4"
 ACCEPTED_ORIGINAL_SHA = "5dc772cea426b215ce6a87c83b75f7dbf2c9f9ca5884e77686e449c2f3ae23ed"
 DOCX_PATH = "docs/submission/DejaView-Project-Specification.docx"
+PDF_PATH = "docs/submission/DejaView-Project-Specification.pdf"
 PPTX_PATH = "docs/submission/DejaView-Track2-Presentation.pptx"
 P31_DIR = "docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/"
 MAX_OFFICE_UNCOMPRESSED = 100 * 1024 * 1024
@@ -50,6 +51,7 @@ REQUIRED_FILES = (
     f"{P31_DIR}SHA256SUMS",
     f"{P31_DIR}p31-summary.md",
     "docs/submission/PROJECT_SPECIFICATION.md",
+    PDF_PATH,
     DOCX_PATH,
     PPTX_PATH,
     MANIFEST_PATH,
@@ -689,8 +691,10 @@ def check_submission(root: Path, *, ffprobe: str = "ffprobe") -> list[CheckResul
         timeline_errors.append("timeline is empty")
     add("submission-timeline", not timeline_errors, "; ".join(timeline_errors) or "timeline continuously covers acts 1–6")
 
+    pdf, pdf_detail = _safe_regular(root, PDF_PATH)
     docx, docx_detail = _safe_regular(root, DOCX_PATH)
     pptx, pptx_detail = _safe_regular(root, PPTX_PATH)
+    add("submission-pdf", pdf is not None, pdf_detail if pdf is None else "PDF specification is present")
     docx_ok, docx_check_detail, docx_text = _office_check(docx, "docx") if docx else (False, docx_detail, "")
     pptx_ok, pptx_check_detail, pptx_text = _office_check(pptx, "pptx") if pptx else (False, pptx_detail, "")
     add("submission-docx", docx_ok, docx_check_detail)
@@ -735,7 +739,7 @@ def check_submission(root: Path, *, ffprobe: str = "ffprobe") -> list[CheckResul
     else:
         link_errors.append(readme_detail)
     exact_links = {
-        "docs/submission/PROJECT_SPECIFICATION.md", DOCX_PATH, PPTX_PATH,
+        "docs/submission/PROJECT_SPECIFICATION.md", PDF_PATH, DOCX_PATH, PPTX_PATH,
         MANIFEST_PATH, "docs/benchmarks.md", "docs/licenses.md",
     }
     for dynamic in (sub.get("artifact"), sub.get("caption_source")):

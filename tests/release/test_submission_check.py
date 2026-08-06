@@ -43,6 +43,9 @@ class SubmissionCheckTest(unittest.TestCase):
             "1\n00:00:00,000 --> 00:03:00,000\nACT 1 ACT 2 ACT 3 ACT 4 ACT 5 ACT 6 Radeon ROCm LINK DOWN LOCAL READY Local Metal fallback\n",
             encoding="utf-8",
         )
+        pdf = root / "docs/submission/DejaView-Project-Specification.pdf"
+        pdf.parent.mkdir(parents=True, exist_ok=True)
+        pdf.write_bytes(b"%PDF-1.4\n% synthetic project specification\n")
         self.write_office(root / "docs/submission/DejaView-Project-Specification.docx", "DejaView Track 2 ROCm privacy limitations")
         self.write_office(root / "docs/submission/DejaView-Track2-Presentation.pptx", "DejaView Track 2 ROCm Privacy Radeon Evidence", pptx=True)
         digest = hashlib.sha256(video.read_bytes()).hexdigest()
@@ -56,7 +59,7 @@ class SubmissionCheckTest(unittest.TestCase):
         }
         (root / "docs/assets/demo/p34-video-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
         (root / "README.md").write_text(
-            "\n".join(f"[{p}]({p})" for p in ("docs/submission/PROJECT_SPECIFICATION.md", "docs/submission/DejaView-Project-Specification.docx", "docs/submission/DejaView-Track2-Presentation.pptx", "docs/assets/demo/p34-video-manifest.json", "docs/assets/demo/submission.mp4", "docs/assets/demo/submission.srt", "docs/benchmarks.md", "docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/", "docs/licenses.md"))
+            "\n".join(f"[{p}]({p})" for p in ("docs/submission/PROJECT_SPECIFICATION.md", "docs/submission/DejaView-Project-Specification.pdf", "docs/submission/DejaView-Project-Specification.docx", "docs/submission/DejaView-Track2-Presentation.pptx", "docs/assets/demo/p34-video-manifest.json", "docs/assets/demo/submission.mp4", "docs/assets/demo/submission.srt", "docs/benchmarks.md", "docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/", "docs/licenses.md"))
             + "\nHuman-only step: fork the official competition repository and open the English pull request. This checkout does not claim completion.\n",
             encoding="utf-8",
         )

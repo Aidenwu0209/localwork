@@ -1,17 +1,22 @@
-# AMD 服务器部署指南(算力端)
+# AMD server deployment
 
-> 连接入口统一为本机已授权的 `ssh radeon-cloud` 别名。Radeon Cloud
-> 实例和公网端口会更换;不在公开发布文档固化临时 IP、端口或实例 ID。
-> 硬件:AMD Radeon PRO W7900D 48GB(gfx1100)+ 双路 EPYC 9334 / 128 逻辑核
-> + 1007.56 GiB RAM。
-> 已验收环境为 ROCm 7.2.1。P3.1 正式 run 时容器分配 GPU 上无 KFD
-> 共租进程;早期共享实例曾有 Dolphin-v2-ROCm 常驻(~10.6GB
-> VRAM)。任何实例一旦出现 Dolphin/未知 KFD 进程都视为共租,
-> **不得影响**。
+This guide covers the stateless inference side of DejaView. It assumes that
+the operator has already created an AMD Radeon Cloud instance and configured
+the local `radeon-cloud` SSH alias. The first-time platform setup is documented
+in [`docs/Radeon-Cloud-QUICKSTART.md`](../../docs/Radeon-Cloud-QUICKSTART.md).
+
+Radeon Cloud instances and forwarded ports change over time. Do not copy a
+temporary host, port, instance ID, SSH key, or model API key into this guide or
+any other public file.
+
+The accepted reference machine was a Radeon PRO W7900D with 48 GB VRAM,
+`gfx1100`, dual EPYC 9334 CPUs, and ROCm 7.2.1. A new instance may have a
+different memory layout or unrelated processes. Check the current machine
+before starting a model.
 
 ---
 
-## 0. 前置:只读体检(每次操作前先做)
+## 0. Read-only preflight
 
 ```bash
 ssh radeon-cloud \
@@ -19,10 +24,12 @@ ssh radeon-cloud \
    rocm-smi --showpids verbose; echo '---'; \
    cd /root/dejaview-launch && ./server-stack.sh status"
 ```
-确认 alias 命中已授权的当前实例,GPU/KFD 进程身份清楚且 VRAM 足够。
-禁止凭旧端口、旧 PID 判断 Dolphin;若有任何未知共租进程,先停止并确认操作范围。
+Confirm that the alias reaches the intended instance, the GPU/KFD process list
+is understood, and enough VRAM is available. Do not identify a shared process
+from an old port or PID. If an unknown KFD process is present, stop and confirm
+the ownership before launching anything.
 
-## 1. 推理引擎(llama.cpp HIP,已编译)
+## 1. Inference engine
 
 已在 `/root/llama.cpp/build/bin/llama-server`(commit
 `76f46ad29d61fd8c1401e8221842934bf62a6064`,GGML_HIP=ON,gfx1100)。

@@ -1,26 +1,21 @@
 # DejaView · 全本地数字记忆体
 
-> 持续感知你的屏幕,把数字生活变成**可问答、带证据的记忆**;用 Honcho 心理建模理解「你是谁」;隐私哨兵把关「什么不该被记住」。**原始画面先经过设备本地 Sentinel 隐私门,主要 Agentic 算力再由 Radeon PRO W7900D(ROCm)执行**,数据始终留在用户自己的设备上,并保留已验证的 Local Metal 降级能力。当前服务不支持音频和文档写入。
+DejaView 把允许记录的屏幕活动整理成一条可以搜索的时间线。用户可以追问过去做过的工作，答案会带回对应事件或截图；Honcho 只保存经过压缩的工作活动摘要，用来回答与个人习惯有关的问题。
 
-产品代号:**DejaView**(déjà vu + view:你的机器替你「似曾相识」)。
-英文主文档:[README.md](README.md)
+隐私判断发生在 OCR、存储、向量化和远程推理之前。设备本地的 Sentinel 可以直接拒绝一帧画面；被拒绝的像素不会离开设备，也不会生成时间线事件。
 
-面向 [AMD AI DevMaster Hackathon](https://luma.com/amd-4dhi) · **赛道 2 · Agentic AI**。
+这是 AMD AI DevMaster Hackathon 的 Track 2 单用户 MVP。当前版本只接收屏幕帧，音频和文档入口明确返回 `501 unsupported_media`。比赛实机验证的是 macOS 客户端，仓库里也有 Windows capture 后端，但完整 Windows 产品栈还没有完成同等的现场验收。
 
----
+英文主文档见 [README.md](README.md)。
 
-## 为什么做这个(获奖叙事)
+## 仓库里有什么
 
-微软 Recall 因隐私几乎翻车、Rewind 卖身——这个产品形态被云端判了死刑。我们用一块 **48 GB Radeon** 把它安全复活,且比它们多两层:
+- `memoryd` 负责从 Sentinel、OCR、新颖度判断到入库和 Honcho outbox 的完整流程。
+- `agentd` 提供带工具调用的检索、证据问答、日报，以及 Radeon 优先、Local Metal 降级的路由。
+- `ocrd` 使用 PP-OCRv6 或 RapidOCR 做逐字 OCR。它是独立服务，不是 LLM 角色。
+- AMD 端使用带 HIP 的 llama.cpp，数据主权端保存 Postgres、Redis、截图、时间线、审计记录和 Honcho 状态。
 
-1. **用户心理建模**(Honcho reasoning-first 画像 + dialectic 问答——不只记得,还理解)
-2. **模型级隐私哨兵**(本地记忆内部也有权限分级;敏感帧在 OCR / 落盘前就被拦截)
-
-**同品类先例:** Microsoft Recall(云端信任危机)、Rewind.ai(已转向)、OpenRecall(开源 AGPL——截屏+OCR+搜索,无理解层)。
-
-**我们的差异:** ① Honcho 用户画像 · ② 入库前隐私哨兵 · ③ Agent 任务闭环(tool calling、日报多 Agent 流) · ④ 五个逻辑模型角色与经实测的显存编排 + ROCm 优化报告 · ⑤ 存储/计算分离的数据主权架构。
-
-**四根柱子(永不砍):** 隐私哨兵 · 带截图证据的问答 · 日报多 Agent 流 · ROCm 优化报告。
+仓库里的截图和测试数据都是合成数据。公开演示不要接入真实账号或真实截图。
 
 ---
 
@@ -28,6 +23,8 @@
 
 同一套代码与 compose,靠 `GATEWAY_URL` / profile 切换(见 `docs/EXECUTION_HANDBOOK.md` §2.2)。
 下方 **形态 A** 是陌生人今天就能冒烟的路径;**形态 B** 是评委复现 / 演示日用的单机 AMD 拓扑。
+
+第一次使用 Radeon Cloud 时,先看 [Radeon Cloud 快速开始](docs/Radeon-Cloud-QUICKSTART.md)。文档说明如何从当前实例复制 SSH 信息,在本机配置 `radeon-cloud` 别名,并在不提交临时坐标和密钥的前提下启动服务。
 
 ### 形态 A — Mac 数据主权 + AMD 无状态算力
 
@@ -86,6 +83,7 @@
 ### 提交材料直达
 
 - 项目规格：[Markdown](docs/submission/PROJECT_SPECIFICATION.md) · [可编辑 DOCX](docs/submission/DejaView-Project-Specification.docx)
+- 项目规格 PDF：[DejaView-Project-Specification.pdf](docs/submission/DejaView-Project-Specification.pdf)
 - 补充演示：[可编辑 PPTX](docs/submission/DejaView-Track2-Presentation.pptx)
 - 视频：[英文主旁白 MP4](docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.mp4) · [可编辑 SRT](docs/assets/demo/dejaview-p34-six-act-20260802-en-3m.srt) · [清单](docs/assets/demo/p34-video-manifest.json)
 - Radeon/ROCm 优化：[benchmark 报告](docs/benchmarks.md) · [P3.1 哈希证据](docs/benchmark-evidence/p31/p31-w7900d-20260728T075653Z/)
@@ -187,6 +185,10 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 - 仓库只有**合成测试资产**(无真实 PII、无 API key)。若跑过真实采集,公开演示前请清库。
 - SearXNG 默认 **disabled**(与「数据不出设备」叙事冲突)。
 
+## 当前边界
+
+这是单用户的屏幕记忆 MVP,不是带账号的 SaaS。当前没有账户、计费、跨设备同步、移动端或安装器。比赛验证过的是 macOS capture；Windows 有 capture 后端,但完整受管产品栈仍需现场验收。音频和文档入口返回 `501 unsupported_media`。ROCm 报告来自独立 benchmark cell,不能当作完整链路延迟或五套模型同时常驻的证明。
+
 ---
 
 ## 许可证
@@ -210,6 +212,7 @@ curl -s http://127.0.0.1:8101/v1/chat/completions \
 | 文档 | 用途 |
 |---|---|
 | [`STATUS.md`](STATUS.md) | 人话快照:起服表、已知问题、下一步——**先读** |
+| [`docs/Radeon-Cloud-QUICKSTART.md`](docs/Radeon-Cloud-QUICKSTART.md) | 第一次创建 AMD 实例和配置 SSH 别名 |
 | [`docs/EXECUTION_HANDBOOK.md`](docs/EXECUTION_HANDBOOK.md) | 唯一事实来源(架构 / 规格 / 交接 §12) |
 | [`docs/verification-log.md`](docs/verification-log.md) | 已解 `[VERIFY]` 与踩坑 |
 | [`docs/benchmarks.md`](docs/benchmarks.md) | OCR A/B + ROCm 消融(P3.1) |
